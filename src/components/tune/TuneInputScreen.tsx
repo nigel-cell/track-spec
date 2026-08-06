@@ -420,7 +420,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   return (
 
-    <div className="mx-auto max-w-[820px] px-6 py-4 pb-28">
+    <div className="mx-auto flex min-h-full max-w-[820px] flex-col px-4 py-4 pb-2 sm:px-6">
 
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -429,19 +429,21 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             {carsLoading ? "Loading car database…" : `${carCount || 644} cars in database`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           {onMyTunes && (
-            <Button variant="outline" className="h-9 px-3 text-xs" onClick={onMyTunes}>
+            <Button variant="outline" className="flex-1 px-3 text-xs sm:flex-none" onClick={onMyTunes}>
               My tunes
             </Button>
           )}
-          <SegmentedControl options={["quick", "full"] as const} value={mode} onChange={setMode} />
+          <div className="flex-1 sm:w-[150px] sm:flex-none">
+            <SegmentedControl options={["quick", "full"] as const} value={mode} onChange={setMode} />
+          </div>
         </div>
       </header>
 
       <TuneSummaryChips
         items={[
-          { label: "Car", value: `${make} ${model}`.slice(0, 28) },
+          { label: "Car", value: `${make} ${model}` },
           { label: "Class", value: `${carClass} ${pi}` },
           { label: "Mode", value: activeMode?.label ?? tuneId, accent: activeMode?.color },
           { label: "Weight", value: `${Math.round(weight)} ${weightLabel(units)}` },
@@ -723,7 +725,13 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
       </div>
 
-      <div className="fixed inset-x-0 bottom-[56px] z-20 border-t border-[var(--ts-border)] bg-[var(--ts-bg)]/95 px-4 py-3 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
+      {mode === "quick" && section !== "engine" && (
+        <p className="mt-4 text-center text-[11px] leading-snug text-[var(--ts-dim)]">
+          Quick mode uses PI-based math. Switch to Full for engine, gearing, and RPM tuning.
+        </p>
+      )}
+
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-[var(--ts-border)] bg-[var(--ts-bg)]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:border-0 md:bg-transparent md:p-0">
         <div className="mx-auto flex max-w-[820px] gap-2">
           <Button variant="ghost" className="shrink-0" onClick={goPrev} disabled={sectionIndex <= 0}>
             Back
@@ -738,11 +746,6 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             </Button>
           )}
         </div>
-        {mode === "quick" && section !== "engine" && (
-          <p className="mt-2 text-center text-[10px] text-[var(--ts-dim)]">
-            Quick mode uses PI-based math. Switch to Full for engine, gearing, and RPM tuning.
-          </p>
-        )}
       </div>
 
     </div>

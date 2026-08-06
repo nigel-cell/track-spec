@@ -100,7 +100,7 @@ export function GarageScreen({
   }
 
   return (
-    <div className="mx-auto max-w-[1280px] space-y-6 px-4 py-6 pb-28 sm:px-6">
+    <div className="mx-auto max-w-[1280px] space-y-6 px-4 py-6 pb-8 sm:px-6">
       <header>
         <h1 className="font-[family-name:var(--ts-font-heading)] text-3xl font-bold tracking-tight">Garage</h1>
         <p className="mt-1 max-w-xl text-sm text-[var(--ts-muted)]">
