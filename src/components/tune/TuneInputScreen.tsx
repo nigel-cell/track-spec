@@ -731,17 +731,19 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         </p>
       )}
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto border-t border-[var(--ts-border)] bg-[var(--ts-bg)]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:border-0 md:bg-transparent md:p-0">
-        <div className="mx-auto flex max-w-[820px] gap-2">
-          <Button variant="ghost" className="shrink-0" onClick={goPrev} disabled={sectionIndex <= 0}>
-            Back
-          </Button>
+      <div className="sticky bottom-0 z-20 -mx-4 mt-auto bg-gradient-to-t from-[var(--ts-bg)] via-[var(--ts-bg)]/95 to-transparent px-4 pb-2 pt-5 sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:bg-none md:p-0">
+        <div className="mx-auto flex max-w-[820px] justify-end gap-2 md:justify-stretch">
+          {sectionIndex > 0 && (
+            <Button variant="ghost" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={goPrev}>
+              ← Back
+            </Button>
+          )}
           {sectionIndex < sectionOrder.length - 1 ? (
-            <Button variant="primary" full onClick={goNext}>
-              Next: {sections.find((s) => s.id === sectionOrder[sectionIndex + 1])?.label}
+            <Button variant="primary" className="min-w-[116px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={goNext}>
+              {sections.find((s) => s.id === sectionOrder[sectionIndex + 1])?.label} →
             </Button>
           ) : (
-            <Button variant="cta" full onClick={deploy}>
+            <Button variant="cta" className="min-w-[140px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={deploy}>
               Deploy tune
             </Button>
           )}
