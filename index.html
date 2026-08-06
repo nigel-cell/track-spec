@@ -3,10 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>TuneLab</title>
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Forza Horizon tuning calculator and live telemetry dashboard" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Track Spec" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <title>Track Spec</title>
   </head>
   <body>
+    <div id="boot-loader" style="display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:-webkit-fill-available;background:#000000;color:#666666;font-family:system-ui,sans-serif;font-size:14px;text-align:center;padding:20px;flex-direction:column;gap:16px;">
+      <img src="/icon-192.png" alt="" width="64" height="64" style="border-radius:12px" />
+      Loading Track Spec…
+    </div>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        var loader = document.getElementById('boot-loader');
+        if (loader && root && !root.hasChildNodes()) {
+          loader.innerHTML = '<div style="max-width:320px"><img src="/icon-192.png" width="64" height="64" style="border-radius:12px;margin-bottom:12px"><br><strong style="color:#FF3333">Still loading?</strong><br><br>1. Make sure START.bat is running on your PC<br>2. On iPhone use Safari (not Chrome)<br>3. Use your PC IP, not localhost<br><br><a href="." style="color:#FF3333">Tap to reload</a></div>';
+        }
+      }, 12000);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

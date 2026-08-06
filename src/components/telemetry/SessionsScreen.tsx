@@ -1,0 +1,204 @@
+import { useCallback, useEffect, useState } from "react";
+import { compareLapTraces } from "../../lib/lapCompare";
+import {
+  deleteSession,
+  fetchSession,
+  fetchSessions,
+  getClassLabel,
+  type SessionDetail,
+  type SessionSummary,
+  type StoredLap,
+} from "../../lib/sessions";
+import { Button } from "../ui/Button";
+import { Card, Label } from "../ui/Card";
+import { LapCompareChart } from "./LapCompareChart";
+import { useTelemetryContext } from "../../context/TelemetryContext";
+
+function carLabel(ordinal: number, lookup: (n: number) => string | null): string {
+  if (ordinal <= 0) return "Unknown car";
+  return lookup(ordinal) ?? `Car #${ordinal}`;
+}
+
+function formatWhen(iso: string) {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export function SessionsScreen() {
+  const { serverIp, resolveHost, lookupCarOrdinal } = useTelemetryContext();
+  const host = serverIp.trim() || resolveHost();
+
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [detail, setDetail] = useState<SessionDetail | null>(null);
+  const [pickA, setPickA] = useState<string | null>(null);
+  const [pickB, setPickB] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setSessions(await fetchSessions(host));
+    } catch {
+      setError("Could not reach Track Spec relay — run START.bat on your PC.");
+    } finally {
+      setLoading(false);
+    }
+  }, [host]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  const openSession = async (id: string) => {
+    try {
+      const s = await fetchSession(id, host);
+      setDetail(s);
+      const best = s.laps.reduce<StoredLap | null>(
+        (acc, lap) => (!acc || lap.time < acc.time ? lap : acc),
+        null,
+      );
+      setPickA(best?.id ?? s.laps[0]?.id ?? null);
+      setPickB(s.laps[s.laps.length - 1]?.id ?? null);
+    } catch {
+      setError("Failed to load session");
+    }
+  };
+
+  const lapA = detail?.laps.find((l) => l.id === pickA);
+  const lapB = detail?.laps.find((l) => l.id === pickB);
+  const comparePoints =
+    lapA && lapB ? compareLapTraces(lapA.trace, lapB.trace) : [];
+
+  const handleDelete = async (id: string) => {
+    await deleteSession(id, host);
+    if (detail?.id === id) setDetail(null);
+    await reload();
+  };
+
+  if (detail) {
+    return (
+      <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-6 py-6 pb-28">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="ghost" onClick={() => setDetail(null)}>
+            ← Sessions
+          </Button>
+          <h1 className="font-[family-name:var(--ts-font-heading)] text-xl font-semibold">
+            {carLabel(detail.carOrdinal, lookupCarOrdinal)}
+          </h1>
+          <p className="w-full text-xs text-[var(--ts-muted)]">{formatWhen(detail.startedAt)}</p>
+          <span className="rounded-md bg-[var(--ts-accent-soft)] px-2 py-1 text-xs font-semibold text-[var(--ts-accent)]">
+            {getClassLabel(detail.carClass)} {detail.carPI}
+          </span>
+        </div>
+
+        <Card>
+          <Label>Compare laps</Label>
+          <p className="mb-3 text-xs text-[var(--ts-muted)]">
+            Tap laps to set A (reference) and B. Chart shows where B gained or lost time.
+          </p>
+          <div className="space-y-2">
+            {detail.laps.map((lap) => {
+              const isA = pickA === lap.id;
+              const isB = pickB === lap.id;
+              return (
+                <button
+                  key={lap.id}
+                  type="button"
+                  onClick={() => {
+                    if (!pickA || (pickA && pickB)) {
+                      setPickA(lap.id);
+                      setPickB(null);
+                    } else if (pickA === lap.id) {
+                      setPickA(null);
+                    } else {
+                      setPickB(lap.id);
+                    }
+                  }}
+                  className={[
+                    "flex w-full items-center justify-between rounded-[var(--ts-radius-sm)] border px-3 py-2.5 text-left",
+                    isA || isB ? "border-[var(--ts-accent)] bg-[var(--ts-accent-soft)]" : "border-[var(--ts-border)]",
+                  ].join(" ")}
+                >
+                  <span className="text-sm">
+                    Lap {lap.lapNumber}
+                    {isA && " · A"}
+                    {isB && " · B"}
+                  </span>
+                  <span className="font-[family-name:var(--ts-font-mono)] text-sm">{lap.timeLabel}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        <Card>
+          <Label>Delta chart</Label>
+          <LapCompareChart
+            points={comparePoints}
+            labelA={lapA ? `Lap ${lapA.lapNumber}` : "A"}
+            labelB={lapB ? `Lap ${lapB.lapNumber}` : "B"}
+          />
+        </Card>
+
+        <Button variant="outline" onClick={() => handleDelete(detail.id)}>
+          Delete session
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-6 py-6 pb-28">
+      <h1 className="font-[family-name:var(--ts-font-heading)] text-2xl font-semibold">Sessions</h1>
+      <p className="text-sm text-[var(--ts-muted)]">
+        Every completed lap is saved on your PC while the relay runs.
+      </p>
+
+      {loading && <p className="text-sm text-[var(--ts-muted)]">Loading…</p>}
+      {error && <Card className="text-sm text-[var(--ts-danger)]">{error}</Card>}
+
+      {!loading && !error && sessions.length === 0 && (
+        <Card className="text-sm text-[var(--ts-muted)]">
+          No sessions yet. Drive in Forza with Data Out enabled, or use Test mock on Live — laps save when you finish each lap.
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        {sessions.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => openSession(s.id)}
+            className="w-full rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-4 text-left"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium">{carLabel(s.carOrdinal, lookupCarOrdinal)}</span>
+              <span className="rounded-md bg-[var(--ts-accent-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--ts-accent)]">
+                {getClassLabel(s.carClass)} {s.carPI}
+              </span>
+            </div>
+            <div className="mt-2 flex gap-4 font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
+              <span>{formatWhen(s.startedAt)}</span>
+              <span>{s.lapCount} lap{s.lapCount !== 1 ? "s" : ""}</span>
+              {s.bestLapLabel && <span>Best {s.bestLapLabel}</span>}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <Button variant="outline" onClick={() => reload()}>
+        Refresh
+      </Button>
+    </div>
+  );
+}

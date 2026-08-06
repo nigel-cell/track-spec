@@ -1,0 +1,388 @@
+/* Track Spec — responsive layout */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  height: 100%;
+  background: #000000;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-nav-mobile {
+  display: flex;
+  border-top: 1px solid #333333;
+  background: #111111;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+
+.app-nav-desktop {
+  display: none;
+}
+
+/* ── Shared page shells ── */
+.tune-page {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.telemetry-page,
+.setup-page {
+  padding: 12px 14px 100px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.telemetry-header,
+.setup-page .telemetry-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.telemetry-header img,
+.setup-page .telemetry-header img {
+  width: 100%;
+  max-width: 220px;
+  margin-bottom: 12px;
+}
+
+.telemetry-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.telemetry-ip-card {
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.telemetry-ip-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #000000;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 16px;
+  color: #ffffff;
+  outline: none;
+  font-family: "Share Tech Mono", monospace;
+  letter-spacing: 0.04em;
+}
+
+.telemetry-ip-input::placeholder {
+  color: #545454;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+
+.telemetry-ip-input:focus {
+  border-color: #FF3333;
+  box-shadow: 0 0 0 2px rgba(255, 51, 51, 0.15);
+}
+
+.telemetry-ip-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #666666;
+  line-height: 1.5;
+}
+
+.telemetry-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.telemetry-gauges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.telemetry-card {
+  background: #1a1a1a;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.tune-onboard .tune-onboard-header,
+.tune-onboard > div:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tune-deploy {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 14px 12px;
+  box-sizing: border-box;
+  background: linear-gradient(0deg, #000000 60%, transparent);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tune-deploy-hint {
+  text-align: center;
+  margin-top: 5px;
+  font-size: 10px;
+  color: #545454;
+  pointer-events: auto;
+}
+
+/* ── Tune form layout ── */
+.tune-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tune-specs-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tune-advanced-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tune-advanced-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ── Desktop (900px+) ── */
+@media (min-width: 900px) {
+  .app-shell {
+    flex-direction: row;
+  }
+
+  .app-nav-mobile {
+    display: none;
+  }
+
+  .app-nav-desktop {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    flex-shrink: 0;
+    background: #111111;
+    border-right: 1px solid #333333;
+    padding: 24px 16px;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .app-nav-desktop-logo {
+    width: 100%;
+    max-width: 180px;
+    margin: 0 auto 24px;
+    display: block;
+  }
+
+  .app-nav-desktop-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: #666666;
+    cursor: pointer;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .app-nav-desktop-btn:hover {
+    background: rgba(255, 51, 51, 0.06);
+    color: #ffffff;
+  }
+
+  .app-nav-desktop-btn.active {
+    background: rgba(255, 51, 51, 0.12);
+    border-color: rgba(255, 51, 51, 0.35);
+    color: #FF3333;
+  }
+
+  .app-nav-desktop-btn .icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .app-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Hide page logos — sidebar already shows brand */
+  .tune-header-logo,
+  .telemetry-header img,
+  .tune-onboard img[src="/logo-banner.png"] {
+    display: none !important;
+  }
+
+  /* ── Tune page desktop ── */
+  .tune-page {
+    max-width: 820px !important;
+    padding: 0 32px;
+  }
+
+  .tune-header {
+    padding: 20px 0 12px !important;
+    border-bottom: 1px solid #333333;
+  }
+
+  .tune-header-inner {
+    justify-content: center !important;
+    max-width: 100%;
+  }
+
+  .tune-content {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 0 32px !important;
+  }
+
+  .tune-specs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .tune-advanced-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .tune-advanced-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .tune-mode-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  .tune-deploy {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 8px 0 0 !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+    margin-top: 4px;
+  }
+
+  .tune-onboard {
+    max-width: 640px !important;
+    padding: 32px 40px 40px;
+  }
+
+  .tune-onboard > div:last-child {
+    max-width: 520px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ── Live telemetry desktop ── */
+  .telemetry-page {
+    max-width: 1100px;
+    padding: 24px 32px 40px;
+  }
+
+  .telemetry-header img {
+    max-width: 280px;
+  }
+
+  .telemetry-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .telemetry-span-full {
+    grid-column: 1 / -1;
+  }
+
+  .telemetry-gauges {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .telemetry-gauges .telemetry-card {
+    padding: 20px 12px;
+  }
+
+  .telemetry-gauges .gauge-value {
+    font-size: 36px !important;
+  }
+
+  .telemetry-side-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Setup page desktop ── */
+  .setup-page {
+    max-width: 720px !important;
+    padding: 32px 40px 40px !important;
+  }
+
+  .setup-page h2 {
+    text-align: center;
+  }
+}

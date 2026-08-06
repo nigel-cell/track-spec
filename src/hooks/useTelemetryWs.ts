@@ -1,0 +1,387 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+
+  createMockFrame,
+
+  fromRelay,
+
+  TRACK_SPEC_HTTP_PORT,
+
+  TRACK_SPEC_WS_PORT,
+
+  type RelayFrame,
+
+  type TelemetryFrame,
+
+} from "../lib/telemetry";
+
+
+
+export type WsStatus = "disconnected" | "connecting" | "connected";
+
+
+
+const SERVER_IP_KEY = "ts_server_ip";
+
+
+
+function defaultHost(): string {
+
+  const h = window.location.hostname;
+
+  if (h === "localhost" || h === "127.0.0.1" || h.startsWith("192.168.") || h.startsWith("10.")) {
+
+    return h;
+
+  }
+
+  return "localhost";
+
+}
+
+
+
+function loadServerIp(): string {
+
+  try {
+
+    return localStorage.getItem(SERVER_IP_KEY) || localStorage.getItem("fth_server_ip") || "";
+
+  } catch {
+
+    return "";
+
+  }
+
+}
+
+
+
+export function saveServerIp(ip: string) {
+
+  try {
+
+    localStorage.setItem(SERVER_IP_KEY, ip);
+
+  } catch {
+
+    /* ignore */
+
+  }
+
+}
+
+
+
+export function useTelemetryWs() {
+
+  const [serverIp, setServerIpState] = useState(loadServerIp);
+
+  const [telemetry, setTelemetry] = useState<TelemetryFrame | null>(null);
+
+  const [wsStatus, setWsStatus] = useState<WsStatus>("disconnected");
+
+  const [simulationActive, setSimulationActive] = useState(false);
+
+  const [clientMockActive, setClientMockActive] = useState(false);
+
+  const [lastPacketTime, setLastPacketTime] = useState(0);
+
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+
+  const [tutorialIps, setTutorialIps] = useState<string[]>(["127.0.0.1"]);
+
+
+
+  const wsRef = useRef<WebSocket | null>(null);
+
+
+
+  const setServerIp = useCallback((ip: string) => {
+
+    setServerIpState(ip);
+
+    saveServerIp(ip);
+
+  }, []);
+
+
+
+  const isGameLive =
+
+    !simulationActive &&
+
+    !clientMockActive &&
+
+    lastPacketTime > 0 &&
+
+    Date.now() - lastPacketTime < 2500;
+
+
+
+  const mockActive = simulationActive || clientMockActive;
+
+
+
+  const resolveHost = useCallback(() => {
+
+    const trimmed = serverIp.trim();
+
+    return trimmed || defaultHost();
+
+  }, [serverIp]);
+
+
+
+  useEffect(() => {
+
+    if (!clientMockActive || simulationActive) return;
+
+    let t = 0;
+
+    const id = setInterval(() => {
+
+      t += 0.016;
+
+      setTelemetry(createMockFrame(t));
+
+      setLastPacketTime(Date.now());
+
+    }, 16);
+
+    return () => clearInterval(id);
+
+  }, [clientMockActive, simulationActive]);
+
+
+
+  useEffect(() => {
+
+    if (clientMockActive) return;
+
+
+
+    let ws: WebSocket | null = null;
+
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
+
+    let cancelled = false;
+
+    const host = resolveHost();
+
+    const wsUrl = `ws://${host}:${TRACK_SPEC_WS_PORT}`;
+
+
+
+    function connect() {
+
+      if (cancelled) return;
+
+      setWsStatus("connecting");
+
+      ws = new WebSocket(wsUrl);
+
+      wsRef.current = ws;
+
+
+
+      ws.onopen = () => {
+
+        if (!cancelled) setWsStatus("connected");
+
+      };
+
+
+
+      ws.onmessage = (event) => {
+
+        try {
+
+          const payload = JSON.parse(event.data as string) as {
+
+            type: string;
+
+            data?: RelayFrame & { ips?: string[] };
+
+            active?: boolean;
+
+          };
+
+          if (payload.type === "telemetry" && payload.data) {
+
+            setTelemetry(fromRelay(payload.data));
+
+            setLastPacketTime(Date.now());
+
+          } else if (payload.type === "init" && payload.data?.ips) {
+
+            setTutorialIps(payload.data.ips);
+
+          } else if (payload.type === "simulation_status") {
+
+            setSimulationActive(!!payload.active);
+
+          }
+
+        } catch {
+
+          /* ignore malformed */
+
+        }
+
+      };
+
+
+
+      ws.onclose = () => {
+
+        if (cancelled) return;
+
+        setWsStatus("disconnected");
+
+        setSimulationActive(false);
+
+        reconnectTimeout = setTimeout(connect, 3000);
+
+      };
+
+
+
+      ws.onerror = () => ws?.close();
+
+    }
+
+
+
+    connect();
+
+
+
+    return () => {
+
+      cancelled = true;
+
+      ws?.close();
+
+      wsRef.current = null;
+
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+    };
+
+  }, [clientMockActive, resolveHost]);
+
+
+
+  useEffect(() => {
+
+    if (clientMockActive) {
+
+      setServerOnline(null);
+
+      return;
+
+    }
+
+
+
+    const host = resolveHost();
+
+    let cancelled = false;
+
+
+
+    async function poll() {
+
+      try {
+
+        const res = await fetch(`http://${host}:${TRACK_SPEC_HTTP_PORT}/ping`);
+
+        if (cancelled) return;
+
+        setServerOnline(res.ok);
+
+      } catch {
+
+        if (!cancelled) setServerOnline(false);
+
+      }
+
+    }
+
+
+
+    poll();
+
+    const id = setInterval(poll, 5000);
+
+    return () => {
+
+      cancelled = true;
+
+      clearInterval(id);
+
+    };
+
+  }, [clientMockActive, resolveHost]);
+
+
+
+  const toggleMock = useCallback(() => {
+
+    const ws = wsRef.current;
+
+    if (ws?.readyState === WebSocket.OPEN) {
+
+      ws.send(JSON.stringify({ type: "toggle_simulation", active: !simulationActive }));
+
+      return;
+
+    }
+
+    setClientMockActive((m) => !m);
+
+  }, [simulationActive]);
+
+
+
+  const suggestedIp =
+
+    tutorialIps.find((ip) => ip.startsWith("192.168.")) ||
+
+    (defaultHost().startsWith("192.168.") ? defaultHost() : "192.168.1.52");
+
+
+
+  return {
+
+    serverIp,
+
+    setServerIp,
+
+    telemetry,
+
+    wsStatus,
+
+    mockActive,
+
+    simulationActive,
+
+    clientMockActive,
+
+    isGameLive,
+
+    serverOnline,
+
+    toggleMock,
+
+    suggestedIp,
+
+    tutorialIps,
+
+  };
+
+}
+
+

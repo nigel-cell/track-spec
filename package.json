@@ -1,28 +1,36 @@
 {
-  "name": "tunelab",
+  "name": "track-spec",
   "version": "1.0.0",
   "private": true,
+  "description": "Forza Horizon tuning calculator + live telemetry PWA",
   "scripts": {
-    "dev":     "vite",
-    "build":   "vite build",
+    "dev": "vite",
+    "dev:full": "concurrently \"vite --host\" \"node server.js\"",
+    "build": "vite build",
     "preview": "vite preview",
-    "sync":    "npm run build && npx cap sync android",
-    "open":    "npx cap open android",
-    "deploy":  "npm run build && npx cap sync android && npx cap open android"
+    "server": "node server.js",
+    "start": "npm run build && node server.js",
+    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images",
+    "import:garage:images": "node scripts/download-garage-images.cjs",
+    "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs",
+    "import:garage:specs": "node scripts/patch-garage-specs.cjs",
+    "import:garage:brands": "node scripts/download-brand-logos.cjs"
   },
   "dependencies": {
-    "react":     "^18.3.1",
-    "react-dom": "^18.3.1"
+    "express": "^4.19.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.17.0"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "vite":                 "^5.4.0",
-    "@capacitor/core":      "^6.2.0",
-    "@capacitor/android":   "^6.2.0",
-    "@capacitor/cli":       "^6.2.0",
-    "@capacitor/haptics":   "^6.2.0",
-    "@capacitor/network":   "^6.2.0",
-    "@capacitor/status-bar":"^6.2.0",
-    "@capacitor/app":       "^6.2.0"
+    "concurrently": "^8.2.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.5"
   }
 }

@@ -1,94 +1,193 @@
-# TuneLab — FH6 Tuning Calculator
+# Track Spec
 
-**Free, open-source tuning calculator for Forza Horizon 6 with optional AI-assisted insights.** No ads. No subscriptions. No paywalls. Just plug in your own API key and tune.
 
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://play.google.com/store)
-[![Version](https://img.shields.io/badge/version-1.7.6-orange.svg)](https://github.com/super-android/tunelab/releases)
 
----
+A mobile-first **PWA** for Forza Horizon tuning and live telemetry. Forked from [TuneLab](https://github.com/super-android/tunelab).
 
-## What it does
 
-TuneLab calculates physics-based setups for any car in Forza Horizon 6 using proper suspension math—natural frequency calculations, critical damping ratios, PI-scaled spring rates, and FH6-specific physics corrections.
-
-If you want a deeper breakdown, you can connect a free Gemini API key to get tailored, value-by-value expert notes, section tips, and a quick assessment of how the car will handle and what to tweak first.
-
-**Works completely offline.** The AI features are entirely optional.
-
----
-
-## Quick Mode vs. Full Mode
-
-| Feature | Quick Mode | Full Mode |
-|---|---|---|
-| **Input Effort** | Low — just the car + tune type | Full specs — RPM, gearing, tires |
-| **Gearing Math** | Baseline geometric | Precise RPM-based ratios |
-| **Best For** | Casual driving / quick baselines | Rivals, meta builds, time attack |
-| **Time to Tune** | ~10 seconds | ~2 minutes |
-
----
 
 ## Features
 
-* **8 Tune Modes** — Race, Touge, Wangan, Drift, Drag, Rally, Rain, and General.
-* **PI-Scaled Physics** — Springs, damping, and caster scale accurately all the way from D-class to X-class.
-* **AI Setup Enhancement** — Hands you per-value notes and a handling overview via Gemini 2.5 Flash (default, BYOK).
-* **Tuning Wizard** — Quick diagnostic tool to solve understeer, oversteer, braking issues, or twitchiness.
-* **Feel Adjusters** — Real-time sliders to easily dial in stable vs. tail-happy or planted vs. aggressive traits.
-* **Save, Load & Share** — Store up to 20 tunes locally and share them natively via the Android share sheet.
-* **Manual Prompt Fallback** — Hit your API quota limit? Just copy the raw text prompt, throw it into the Gemini app, and paste the response right back in.
-* **Built for FH6** — Damping multipliers, tire compound auto-defaults, and ride heights are pre-calibrated for the FH6 physics engine.
 
----
 
-## Physics Engine
+- **Tune tab** — Full FH6 tuning calculator (offline, works on iPhone)
 
-Spring rates are derived using the natural frequency method: 
+- **Live tab** — Real-time telemetry: speed, RPM, gears, tire temps/slip, G-forces, understeer/oversteer
 
-$$K = M \times (2\pi f)^2$$
+- **Garage tab** — FH6 car browser: autoshow cost, rarity, PI, mastery perks, collection tracker, hero photos
 
-The base frequency scales with the car's PI class using the polynomial:
+- **Setup tab** — Step-by-step connection guide for PC and Xbox
 
-$$6.79\times 10^{-7} \times (\text{PI} - 100)^2 + 2.45$$
+- **PWA** — Install on iPhone via Safari → Share → Add to Home Screen
 
-*(Validated against ForzaTune Pro's decompiled constants).*
 
-Damping relies on the critical damping ratio: 
 
-$$C = 2\sqrt{KM}$$
+## Quick start
 
-We then apply a 1.15× physics multiplier to both rebound and bump to keep the car planted.
 
-All physics constants live in a single `PHYSICS` block at the top of `src/App.jsx`, making it easy to tweak as community testing uncovers more telemetry data.
 
-### UDP Telemetry (In Progress)
-We are currently working on a `/telemetry` directory containing a Python listener for FH6's Data Out (UDP) feature. This will let us validate and fine-tune our physics constants using real-time in-game data. If you want to help build this out, jump into the [Discord](https://discord.gg/N4HfuWEXaN) or open an issue.
+### Tuning only (no PC server needed)
 
----
 
-## AI Setup (Optional)
-
-TuneLab uses a **BYOK (Bring Your Own Key)** model. Your key is stored locally on your device and never touches an external server besides the provider's direct API endpoint.
-
-1. Grab a free key at [aistudio.google.com](https://aistudio.google.com/app/apikey).
-2. **Crucial:** Make sure there isn't a strict $0.00 spending cap on your Google AI account, as this silently blocks requests. Set a small safe limit ($1–2) or clear it. At roughly $0.0001 per tune, the free tier usage won't cost you anything noticeable.
-3. Open TuneLab → Tap the ✦ button → AI Provider → Paste your key → Test & Save.
-
-> **🔐 SECURITY NOTE:** Keep your API key to yourself. Never screenshot it or include it in screen recordings. Because the AI Settings screen displays the key in plaintext, anyone watching can grab your quota. 
-
-* **Free tier allowance:** 1,500 requests/day via Gemini 2.5 Flash.
-
----
-
-## Build & Run
 
 ```bash
-# Install dependencies
+
 npm install
 
-# Run the local dev server
 npm run dev
 
-# Build the project and sync with Android
-npm run build && npx cap sync android
+```
+
+
+
+Open `http://localhost:5173`. Tap **Test mock** on the Live tab to preview telemetry.
+
+
+
+### Refresh FH6 garage data (forzagarage.com)
+
+
+
+```bash
+
+npm run import:garage
+
+```
+
+
+
+Writes `public/forzaGarage.json` and downloads hero images to `public/garage/heros/` (~50 MB). Rebuild/restart the server after importing.
+
+
+
+To re-download images only (without re-scraping):
+
+
+
+```bash
+
+npm run import:garage:images
+
+```
+
+
+
+### Tuning + live telemetry
+
+
+
+```bash
+
+npm install
+
+npm run start
+
+```
+
+
+
+Or double-click **START.bat** on Windows.
+
+
+
+This starts Track Spec's own relay:
+
+- **PWA** on port **3000** (iPhone / desktop browser)
+
+- **UDP listener** on port **9999** (Forza Data Out)
+
+- **WebSocket** broadcast on port **3000** (Live tab)
+
+
+
+Open `http://YOUR-PC-IP:3000` on iPhone, then Add to Home Screen.
+
+
+
+### Development
+
+
+
+```bash
+
+npm run dev:full   # Vite :5173 + relay :3000
+
+```
+
+
+
+During dev, point the Live tab at your PC IP — the relay still runs on **3000**.
+
+
+
+## Forza game settings
+
+
+
+Options → HUD and Gameplay → bottom of page:
+
+
+
+| Setting | PC (same machine) | Xbox |
+
+|---|---|---|
+
+| Data Out | ON | ON |
+
+| Data Out IP | `127.0.0.1` | Your PC's local IP |
+
+| Data Out Port | `9999` | `9999` |
+
+
+
+On iPhone, open the **Live** tab and enter your PC's IP (e.g. `192.168.1.15`).
+
+
+
+## Roadmap (telemetry)
+
+
+
+Built in-house, no third-party dependencies:
+
+
+
+- [x] Live dashboard (speed, RPM, tires, G-force, inputs)
+
+- [x] Tire slip + understeer/oversteer detection
+
+- [x] Lap timer + session-best delta (elapsed-time)
+- [x] Live track map
+- [x] Distance-aligned live delta (vs session best at same track distance)
+- [x] Session recording + lap comparison
+- [x] Live understeer/oversteer → Fine Tune
+
+
+
+## Roadmap (tuning)
+
+
+
+- [x] `calcTune()` physics engine (ported from TuneLab)
+- [x] Live results from config + feel sliders (balance / aggression)
+- [x] Car database search (`cars.json`, 644 cars)
+- [x] Full Fine Tune phase fixes (`PHASE_FIXES` from legacy TuneTab)
+- [x] Share / Save tune presets
+- [x] Quick Tune + Manual setup from Garage & Live
+- [x] Engine swaps, aspiration, input device (Manual tune)
+- [x] Build profiles per car (local)
+- [x] Tune library export/import + compare
+- [x] Metric / Imperial tuning units
+- [x] AI enhance — in-app API (Gemini, Grok, OpenAI, Claude) + copy prompt fallback
+- [x] Car name lookup by telemetry ordinal
+- [x] FH6 Garage tab — 622 cars, costs, mastery, photos (imported from forzagarage.com)
+
+
+
+## Credits
+
+
+
+- Tuning engine: [TuneLab](https://github.com/super-android/tunelab) (MIT)
+
+
