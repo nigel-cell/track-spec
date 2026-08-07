@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "importedAt": "2026-08-07T00:17:31.850Z",
+  "importedAt": "2026-08-07T11:20:37.329Z",
   "source": "https://forza.fandom.com/wiki/Category:Cars_(FH6)",
   "count": 625,
-  "withEngineSwaps": 415,
+  "withEngineSwaps": 491,
   "cars": [
     {
       "title": "Abarth 124 Spider",
@@ -318,7 +318,14 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 6,
-      "weightLbs": 2756
+      "weightLbs": 2756,
+      "engineSwaps": [
+        "Racing V12",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ariel Atom 500 V8",
@@ -397,7 +404,15 @@
       "aspiration": "tt",
       "engine": "V12",
       "gears": 8,
-      "weightLbs": 3966
+      "weightLbs": 3966,
+      "engineSwaps": [
+        "7.0L V12",
+        "3.0L V6-TT",
+        "6.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Aston Martin DBX",
@@ -418,17 +433,27 @@
     },
     {
       "title": "Aston Martin Valhalla Concept Car",
-      "aspiration": "tt",
+      "aspiration": "st",
       "engine": "V6",
       "gears": 8,
-      "weightLbs": 3097
+      "weightLbs": 3097,
+      "engineSwaps": [
+        "7.0L V12",
+        "6.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Aston Martin Valkyrie",
       "aspiration": "nah",
       "engine": "V12",
       "gears": 7,
-      "weightLbs": 2976
+      "weightLbs": 2976,
+      "engineSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Aston Martin Valkyrie AMR Pro",
@@ -442,7 +467,16 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 8,
-      "weightLbs": 3497
+      "weightLbs": 3497,
+      "engineSwaps": [
+        "5.2L V12 - TT",
+        "7.0L V12",
+        "3.0L V6-TT",
+        "6.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Aston Martin Vulcan",
@@ -465,7 +499,13 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 6,
-      "weightLbs": 2998
+      "weightLbs": 2998,
+      "engineSwaps": [
+        "Racing V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Audi 2 Audi Sport quattro S1",
@@ -485,7 +525,7 @@
       ]
     },
     {
-      "title": "Audi R8 Coup\u00e9 V10 GT RWD",
+      "title": "Audi R8 Coupé V10 GT RWD",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -500,7 +540,7 @@
       ]
     },
     {
-      "title": "Audi R8 Coup\u00e9 V10 plus 5.2 FSI quattro",
+      "title": "Audi R8 Coupé V10 plus 5.2 FSI quattro",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -556,7 +596,15 @@
       "aspiration": "t",
       "engine": "I5",
       "gears": 7,
-      "weightLbs": 3593
+      "weightLbs": 3593,
+      "engineSwaps": [
+        "4.2L V8",
+        "2.9L V6-TT",
+        "4.0 L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Audi RS 3 Sportback",
@@ -636,7 +684,7 @@
       ]
     },
     {
-      "title": "Audi RS 5 Coup\u00e9 (2011)",
+      "title": "Audi RS 5 Coupé (2011)",
       "aspiration": "na",
       "engine": "V8",
       "gears": 7,
@@ -793,7 +841,7 @@
       ]
     },
     {
-      "title": "Audi TT RS Coup\u00e9 (2010)",
+      "title": "Audi TT RS Coupé (2010)",
       "aspiration": "t",
       "engine": "I5",
       "gears": 6,
@@ -1016,7 +1064,7 @@
       "weightLbs": 3748
     },
     {
-      "title": "BMW M2 Competition Coup\u00e9",
+      "title": "BMW M2 Competition Coupé",
       "aspiration": "tt",
       "engine": "I6",
       "gears": 7,
@@ -1159,7 +1207,7 @@
       ]
     },
     {
-      "title": "BMW M4 Competition Coup\u00e9",
+      "title": "BMW M4 Competition Coupé",
       "aspiration": "tt",
       "engine": "I6",
       "gears": 8,
@@ -1174,7 +1222,7 @@
       ]
     },
     {
-      "title": "BMW M4 Competition Coup\u00e9 'Welcome Pack'",
+      "title": "BMW M4 Competition Coupé 'Welcome Pack'",
       "aspiration": "tt",
       "engine": "I6",
       "gears": 8,
@@ -1194,7 +1242,7 @@
       ]
     },
     {
-      "title": "BMW M4 Coup\u00e9",
+      "title": "BMW M4 Coupé",
       "aspiration": "tt",
       "engine": "I6",
       "gears": 7,
@@ -1220,7 +1268,16 @@
       "aspiration": "tt",
       "engine": "I6",
       "gears": 6,
-      "weightLbs": 3329
+      "weightLbs": 3329,
+      "engineSwaps": [
+        "4.0L V8",
+        "5.0L V10",
+        "3.0L I6-TT",
+        "4.4L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "BMW M5 (1988)",
@@ -1314,7 +1371,7 @@
       "weightLbs": 4023
     },
     {
-      "title": "BMW M8 Competition Coup\u00e9",
+      "title": "BMW M8 Competition Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 8,
@@ -1370,7 +1427,7 @@
       ]
     },
     {
-      "title": "BMW Z4 M Coup\u00e9",
+      "title": "BMW Z4 M Coupé",
       "aspiration": "na",
       "engine": "I6",
       "gears": 6,
@@ -1492,7 +1549,17 @@
       "aspiration": "t",
       "engine": "I3",
       "gears": 1,
-      "weightLbs": 1655
+      "weightLbs": 1655,
+      "engineSwaps": [
+        "1.2L I3 - Motorbike Engine",
+        "1.4L I4 - Motorbike Engine",
+        "1.1L V4 - Motorbike Engine",
+        "1.0L I4 - Motorbike Engine",
+        "1.6L I4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Casey Currie Motorsports 4402 Ultra 4 'Trophy Jeep'",
@@ -1622,14 +1689,46 @@
       "aspiration": "s",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 3883
+      "weightLbs": 3883,
+      "engineSwaps": [
+        "7.4L V8",
+        "6.2L V8",
+        "8.4L V10",
+        "5.5L V8",
+        "6.2L V8-PDSC",
+        "Racing 7.2L V8",
+        "8.9L V8 DSC"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Forza Horizon 6 - Widebody Kit"
+      ]
     },
     {
       "title": "Chevrolet Camaro ZL1 1LE",
       "aspiration": "sc",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 3837
+      "weightLbs": 3837,
+      "engineSwaps": [
+        "7.4L V8",
+        "6.2L V8",
+        "8.4L V10",
+        "5.5L V8",
+        "6.2L V8-PDSC",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "StreetFighter LA Widebody Kit"
+      ],
+      "presets": [
+        "Chevy Camaro '18"
+      ]
     },
     {
       "title": "Chevrolet Chevelle Super Sport 454",
@@ -1853,7 +1952,17 @@
       "aspiration": "sc",
       "engine": "V8",
       "gears": 8,
-      "weightLbs": 3560
+      "weightLbs": 3560,
+      "engineSwaps": [
+        "6.2L V8 - DSC",
+        "8.4L V10",
+        "5.5L V8",
+        "Racing V12",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Chevrolet El Camino Super Sport 454",
@@ -2038,14 +2147,30 @@
       "aspiration": "sc",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 3500
+      "weightLbs": 3500,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "DeBerti Ford Super Duty F-250 Lariat 'Transformer'",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 7740
+      "weightLbs": 7740,
+      "engineSwaps": [
+        "8.4L V10",
+        "6.5L V12",
+        "7.7L V12",
+        "Racing 7.2L V8",
+        "7.4L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ],
+      "presets": [
+        "DeBerti F-250"
+      ]
     },
     {
       "title": "DeBerti Jeep Wrangler Unlimited",
@@ -2066,7 +2191,14 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 3215
+      "weightLbs": 3215,
+      "engineSwaps": [
+        "Racing 3.0L I6T",
+        "8.9L V8 DSC"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "DeLorean DMC-12",
@@ -2512,7 +2644,13 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 5,
-      "weightLbs": 2090
+      "weightLbs": 2090,
+      "engineSwaps": [
+        "Racing V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ferrari 512 TR",
@@ -2561,7 +2699,14 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 7,
-      "weightLbs": 3594
+      "weightLbs": 3594,
+      "engineSwaps": [
+        "Racing V12",
+        "6.3L V12 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ferrari Dino 246 GT",
@@ -2756,7 +2901,13 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 3362
+      "weightLbs": 3362,
+      "engineSwaps": [
+        "6.3L V12 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ferrari J50 Preorder Car",
@@ -2797,7 +2948,15 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 7,
-      "weightLbs": 3503
+      "weightLbs": 3503,
+      "engineSwaps": [
+        "Racing V12",
+        "3.0L V6-TT",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ferrari Portofino",
@@ -2878,7 +3037,13 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 4,
-      "weightLbs": 2682
+      "weightLbs": 2682,
+      "engineSwaps": [
+        "5.4L V8 - DSC"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ford 2069 Ford Performance Bronco R",
@@ -2903,7 +3068,16 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 3,
-      "weightLbs": 4500
+      "weightLbs": 4500,
+      "engineSwaps": [
+        "6.7L V8T Diesel",
+        "7.7L V12",
+        "Racing 7.2L V8",
+        "7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Ford 4 Ford Focus RS",
@@ -3191,7 +3365,13 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 2800
+      "weightLbs": 2800,
+      "engineSwaps": [
+        "1.6L I4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Ford Mustang Boss 302 (1969)",
@@ -3306,7 +3486,17 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 10,
-      "weightLbs": 3827
+      "weightLbs": 3827,
+      "engineSwaps": [
+        "6.7L V8T Diesel",
+        "5.2L V8",
+        "8.4L V10",
+        "7.7L V12",
+        "7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ford Mustang Shelby GT350R",
@@ -3390,7 +3580,15 @@
       "aspiration": "na",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 2588
+      "weightLbs": 2588,
+      "engineSwaps": [
+        "2.0L I4 - Turbo",
+        "1.6L I4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Ford Ranger T6 Rally Raid",
@@ -3533,7 +3731,10 @@
       "aspiration": "s",
       "engine": "V8",
       "gears": 4,
-      "weightLbs": 3100
+      "weightLbs": 3100,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 151 Toyota GR Supra",
@@ -3547,7 +3748,10 @@
       "aspiration": "t",
       "engine": "I6",
       "gears": 5,
-      "weightLbs": 2849
+      "weightLbs": 2849,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 411 Toyota Corolla Hatchback",
@@ -3567,14 +3771,20 @@
       "aspiration": "tt",
       "engine": "V10",
       "gears": 4,
-      "weightLbs": 2900
+      "weightLbs": 2900,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 530 HSV Maloo Gen-F",
       "aspiration": "s",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 2899
+      "weightLbs": 2899,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 64 Forsberg Racing Nissan Z",
@@ -3588,7 +3798,10 @@
       "aspiration": "sc",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 3000
+      "weightLbs": 3000,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 777 Nissan 240SX",
@@ -3612,7 +3825,13 @@
       "aspiration": "s",
       "engine": "V8",
       "gears": 4,
-      "weightLbs": 2800
+      "weightLbs": 2800,
+      "engineSwaps": [
+        "7.7L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Formula Drift 99 Mazda RX-8",
@@ -3634,7 +3853,10 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 5,
-      "weightLbs": 2800
+      "weightLbs": 2800,
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "GMC HUMMER EV Pickup",
@@ -3722,7 +3944,15 @@
       "aspiration": "tt",
       "engine": "V6",
       "gears": 10,
-      "weightLbs": 6697
+      "weightLbs": 6697,
+      "engineSwaps": [
+        "Racing 7.2L V8",
+        "Racing V6TT",
+        "7.4L V8TT"
+      ],
+      "presets": [
+        "Velociraptor '19"
+      ]
     },
     {
       "title": "Hennessey Venom F5",
@@ -4026,7 +4256,17 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 3117
+      "weightLbs": 3117,
+      "engineSwaps": [
+        "1.6L I3-T",
+        "1.6L I4 - Turbo Rally",
+        "2.0L I4-T",
+        "2.0L F4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Honda Civic Type R (2023)",
@@ -4164,7 +4404,17 @@
       "aspiration": "na",
       "engine": "V6",
       "gears": 6,
-      "weightLbs": 4700
+      "weightLbs": 4700,
+      "engineSwaps": [
+        "6.2L V8",
+        "4.8L V10",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8",
+        "7.4L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Honda S2000",
@@ -4311,14 +4561,36 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 3106
+      "weightLbs": 3106,
+      "engineSwaps": [
+        "1.6L I3-T",
+        "1.6L I4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "ADRO Widebody Kit"
+      ],
+      "presets": [
+        "2019 Hyundai Veloster N"
+      ]
     },
     {
       "title": "Jaguar C-X75",
       "aspiration": "tch",
       "engine": "I4",
       "gears": 7,
-      "weightLbs": 3750
+      "weightLbs": 3750,
+      "engineSwaps": [
+        "6.0L V12",
+        "5.0 V8 DSC",
+        "3.5L V6-TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Jaguar D-Type",
@@ -4357,7 +4629,16 @@
       "aspiration": "na",
       "engine": "I6",
       "gears": 4,
-      "weightLbs": 2292
+      "weightLbs": 2292,
+      "engineSwaps": [
+        "3.2L I6",
+        "6.2L V8",
+        "5.2L V10",
+        "Racing 3.0L I6T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Jaguar Sport XJR-15",
@@ -4595,7 +4876,15 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 2352
+      "weightLbs": 2352,
+      "engineSwaps": [
+        "1.6L I4- Turbo Rally",
+        "3.0L V8 - Racing",
+        "Racing V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Lamborghini Aventador LP 780-4 Ultimae",
@@ -4638,7 +4927,15 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 7,
-      "weightLbs": 3607
+      "weightLbs": 3607,
+      "engineSwaps": [
+        "5.2L V10",
+        "Racing V12",
+        "6.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Lamborghini Centenario LP 770-4",
@@ -4733,7 +5030,7 @@
       ]
     },
     {
-      "title": "Lamborghini Hurac\u00e1n EVO",
+      "title": "Lamborghini Huracán EVO",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -4748,7 +5045,7 @@
       ]
     },
     {
-      "title": "Lamborghini Hurac\u00e1n EVO Spyder",
+      "title": "Lamborghini Huracán EVO Spyder",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -4763,7 +5060,7 @@
       ]
     },
     {
-      "title": "Lamborghini Hurac\u00e1n LP 610-4",
+      "title": "Lamborghini Huracán LP 610-4",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -4780,25 +5077,25 @@
         "Liberty Walk - Widebody Kit"
       ],
       "presets": [
-        "Lamborghini Hurac\u00e1n"
+        "Lamborghini Huracán"
       ]
     },
     {
-      "title": "Lamborghini Hurac\u00e1n Sterrato",
+      "title": "Lamborghini Huracán Sterrato",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
       "weightLbs": 3593
     },
     {
-      "title": "Lamborghini Hurac\u00e1n STO",
+      "title": "Lamborghini Huracán STO",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
       "weightLbs": 3239
     },
     {
-      "title": "Lamborghini Hurac\u00e1n Tecnica",
+      "title": "Lamborghini Huracán Tecnica",
       "aspiration": "na",
       "engine": "V10",
       "gears": 7,
@@ -4823,7 +5120,7 @@
       ]
     },
     {
-      "title": "Lamborghini Murci\u00e9lago LP 670-4 SV",
+      "title": "Lamborghini Murciélago LP 670-4 SV",
       "aspiration": "na",
       "engine": "V12",
       "gears": 6,
@@ -4840,7 +5137,7 @@
         "Liberty Walk"
       ],
       "presets": [
-        "Murci\u00e9lago SV"
+        "Murciélago SV"
       ]
     },
     {
@@ -4858,7 +5155,7 @@
       ]
     },
     {
-      "title": "Lamborghini Si\u00e1n Roadster",
+      "title": "Lamborghini Sián Roadster",
       "aspiration": "nah",
       "engine": "V12",
       "gears": 7,
@@ -4973,7 +5270,15 @@
       "aspiration": "th",
       "engine": "I6",
       "gears": 8,
-      "weightLbs": 5260
+      "weightLbs": 5260,
+      "engineSwaps": [
+        "5.0 V8 DSC",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Land Rover Range Rover Sport SVR",
@@ -5076,7 +5381,16 @@
       "aspiration": "t2",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 2425
+      "weightLbs": 2425,
+      "engineSwaps": [
+        "1.6L I3-T",
+        "6.2L V8",
+        "6.2L V8",
+        "5.2L V10"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Lotus Elise Series 1 Sport 190",
@@ -5193,7 +5507,14 @@
       "aspiration": "na",
       "engine": "V12",
       "gears": 6,
-      "weightLbs": 2646
+      "weightLbs": 2646,
+      "engineSwaps": [
+        "Racing V12",
+        "6.3L V12 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Maserati MC20",
@@ -5283,11 +5604,18 @@
       ]
     },
     {
-      "title": "Mazda Mazdaspeed 3 (Traffic)",
-      "aspiration": "st",
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "title": "Mazda Mazdaspeed 3 Traffic",
+      "aspiration": "t",
+      "engine": "I4",
+      "gears": 6,
+      "weightLbs": 3221,
+      "engineSwaps": [
+        "1.6L I4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Mazda Mazdaspeed MX-5",
@@ -5540,7 +5868,7 @@
       ]
     },
     {
-      "title": "McLaren 12C Coup\u00e9",
+      "title": "McLaren 12C Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
@@ -5556,7 +5884,7 @@
       ]
     },
     {
-      "title": "McLaren 570S Coup\u00e9",
+      "title": "McLaren 570S Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
@@ -5571,11 +5899,19 @@
       ]
     },
     {
-      "title": "McLaren 600LT Coup\u00e9",
+      "title": "McLaren 600LT Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 2989
+      "weightLbs": 2989,
+      "engineSwaps": [
+        "5.2L V10",
+        "6.1L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "McLaren 620R",
@@ -5589,10 +5925,24 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 3236
+      "weightLbs": 3236,
+      "engineSwaps": [
+        "5.2L V10",
+        "6.1L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Liberty Walk - Widebody Kit"
+      ],
+      "presets": [
+        "McLaren 650S Spider"
+      ]
     },
     {
-      "title": "McLaren 765LT Coup\u00e9",
+      "title": "McLaren 765LT Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
@@ -5657,10 +6007,17 @@
       "aspiration": "tth",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 3521
+      "weightLbs": 3521,
+      "engineSwaps": [
+        "6.1L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
-      "title": "Mercedes-AMG C 63 S Coup\u00e9",
+      "title": "Mercedes-AMG C 63 S Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
@@ -5675,14 +6032,30 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 9,
-      "weightLbs": 4515
+      "weightLbs": 4515,
+      "engineSwaps": [
+        "5.2L V10",
+        "6.9L V12",
+        "6.5L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
-      "title": "Mercedes-AMG GT 4-Door Coup\u00e9",
+      "title": "Mercedes-AMG GT 4-Door Coupé",
       "aspiration": "tt",
       "engine": "V8",
       "gears": 9,
-      "weightLbs": 4508
+      "weightLbs": 4508,
+      "engineSwaps": [
+        "6.5L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Mercedes-AMG GT Black Series",
@@ -5796,7 +6169,7 @@
       "weightLbs": 2778
     },
     {
-      "title": "Mercedes-Benz 300 SL Coup\u00e9",
+      "title": "Mercedes-Benz 300 SL Coupé",
       "aspiration": "na",
       "engine": "I6",
       "gears": 5,
@@ -5871,7 +6244,7 @@
       ]
     },
     {
-      "title": "Mercedes-Benz C 63 AMG Coup\u00e9 Black Series",
+      "title": "Mercedes-Benz C 63 AMG Coupé Black Series",
       "aspiration": "na",
       "engine": "V8",
       "gears": 7,
@@ -5895,7 +6268,15 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 9050
+      "weightLbs": 9050,
+      "engineSwaps": [
+        "5.5L V8TT",
+        "Racing 7.2L V8",
+        "7.4L V8TT"
+      ],
+      "presets": [
+        "Mercedes-Benz G 63 6x6"
+      ]
     },
     {
       "title": "Mercedes-Benz G 65 AMG",
@@ -5946,14 +6327,39 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 8,
-      "weightLbs": 15432
+      "weightLbs": 15432,
+      "engineSwaps": [
+        "6.7L V8T Diesel",
+        "12.8L I6T Diesel",
+        "2400BHP 12.8L I6T Diesel"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Mercedes-Benz X-Class",
       "aspiration": "tt",
       "engine": "I4",
       "gears": 7,
-      "weightLbs": 4764
+      "weightLbs": 4764,
+      "engineSwaps": [
+        "6.2L V8",
+        "5.2L V10",
+        "6.5L V12",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Pickup Design - Widebody Kit"
+      ],
+      "presets": [
+        "2018 Mercedes X Class (Pickup Design Widebody Kit)",
+        "Mercedes-Benz X-Class (Offroad Kit)"
+      ]
     },
     {
       "title": "Meyers Manx",
@@ -6060,10 +6466,18 @@
     },
     {
       "title": "MINI X-Raid John Cooper Works Buggy",
-      "aspiration": "tt",
+      "aspiration": "st",
       "engine": "I6",
       "gears": 6,
-      "weightLbs": 4328
+      "weightLbs": 4328,
+      "engineSwaps": [
+        "1.6L I4 - Turbo Rally",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Mitsubishi 1 Sierra Sierra Enterprises Lancer Evolution Time Attack",
@@ -6126,11 +6540,18 @@
       ]
     },
     {
-      "title": "Mitsubishi Galant VR-4 (Traffic)",
-      "aspiration": "st",
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "title": "Mitsubishi Galant VR-4 Traffic",
+      "aspiration": "t",
+      "engine": "I4",
+      "gears": 5,
+      "weightLbs": 2976,
+      "engineSwaps": [
+        "1.6L I4 - Turbo Rally",
+        "6.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Mitsubishi GTO",
@@ -6294,7 +6715,17 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 2315
+      "weightLbs": 2315,
+      "engineSwaps": [
+        "3.5L V8TT",
+        "6.2L V8",
+        "4.0L V8-TT",
+        "Racing V12",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan 12 Skyline GT-R (BNR32 Gr.A) JTC",
@@ -6317,7 +6748,17 @@
       "aspiration": "tt",
       "engine": "I6",
       "gears": 6,
-      "weightLbs": 2646
+      "weightLbs": 2646,
+      "engineSwaps": [
+        "3.5L V8TT",
+        "4.8L V10",
+        "4.0L V8-TT",
+        "Racing V12",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan 240SX",
@@ -6385,7 +6826,16 @@
       "aspiration": "na",
       "engine": "V6",
       "gears": 6,
-      "weightLbs": 3389
+      "weightLbs": 3389,
+      "engineSwaps": [
+        "2.0L I4-T",
+        "2.6L I6-TT",
+        "3.8L V6-TT",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan Be-1",
@@ -6543,7 +6993,19 @@
       "aspiration": "tt",
       "engine": "I6",
       "gears": 5,
-      "weightLbs": 3483
+      "weightLbs": 3483,
+      "engineSwaps": [
+        "2.6L I6-TT",
+        "3.2L I6",
+        "3.5L V8TT",
+        "4.8L V10",
+        "3.8L V6-TT",
+        "4.0L V8-TT",
+        "Racing 3.0L I6T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan PAO",
@@ -6579,7 +7041,18 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 2734
+      "weightLbs": 2734,
+      "engineSwaps": [
+        "2.0L I4 - VVT",
+        "2.0L I4-T",
+        "2.6L I6-TT",
+        "6.2L V8",
+        "3.8L V6-TT",
+        "2.6L 4 Rotor - Racing"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan R390 (GT1)",
@@ -6615,7 +7088,20 @@
       "aspiration": "t",
       "engine": "I6",
       "gears": 5,
-      "weightLbs": 3671
+      "weightLbs": 3671,
+      "engineSwaps": [
+        "2.6L I6-TT",
+        "1.6L I4 - Turbo Rally",
+        "6.2L V8",
+        "3.5L V8TT",
+        "4.8L V10",
+        "3.8L V6-TT",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Nissan Silvia K's (1989)",
@@ -6666,7 +7152,23 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 2789
+      "weightLbs": 2789,
+      "engineSwaps": [
+        "2.0L I4-T",
+        "2.5L I6-T",
+        "2.6L I6-TT",
+        "3.2L I6",
+        "2.6L 4 Rotor - Racing"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Rocket Bunny - Widebody Kit"
+      ],
+      "presets": [
+        "1998 Nissan Silvia K's Aero (Rocket Bunny)"
+      ]
     },
     {
       "title": "Nissan Silvia Spec-R (2002)",
@@ -6851,7 +7353,15 @@
       "aspiration": "tt",
       "engine": "V12",
       "gears": 7,
-      "weightLbs": 2685
+      "weightLbs": 2685,
+      "engineSwaps": [
+        "6.0L V12 Racing",
+        "Racing V12",
+        "6.0L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Pagani Huayra R",
@@ -6900,7 +7410,16 @@
       "aspiration": "na",
       "engine": "I1",
       "gears": 3,
-      "weightLbs": 310
+      "weightLbs": 310,
+      "engineSwaps": [
+        "1.2L I3 - Motorbike Engine",
+        "I4 Motorbike Engine",
+        "1.1L V4 - Motorbike Engine",
+        "1.0L I4 - Motorbike Engine"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Peel P50 Trolli Edition",
@@ -6936,7 +7455,16 @@
       "aspiration": "na",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 1742
+      "weightLbs": 1742,
+      "engineSwaps": [
+        "1.8L I4T",
+        "1.6L I4 - Turbo Rally",
+        "2.0L F4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Peugeot 205 Turbo 16",
@@ -6972,24 +7500,24 @@
     },
     {
       "title": "Playground Box Truck",
-      "aspiration": null,
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "aspiration": "st",
+      "engine": "I6",
+      "gears": 8,
+      "weightLbs": 11023
     },
     {
       "title": "Playground Bus",
-      "aspiration": null,
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "aspiration": "st",
+      "engine": "I6",
+      "gears": 8,
+      "weightLbs": 20944
     },
     {
       "title": "Playground Flatbed Truck",
-      "aspiration": null,
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "aspiration": "st",
+      "engine": "I6",
+      "gears": 8,
+      "weightLbs": 11023
     },
     {
       "title": "Plymouth Barracuda Formula S",
@@ -7109,7 +7637,16 @@
       "aspiration": "tt",
       "engine": "F6",
       "gears": 6,
-      "weightLbs": 3322
+      "weightLbs": 3322,
+      "engineSwaps": [
+        "3.0L F6-T",
+        "4.0L F6",
+        "3.8 F6TT",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche 3 917 LH",
@@ -7143,7 +7680,14 @@
       "aspiration": "t",
       "engine": "F4",
       "gears": 7,
-      "weightLbs": 3135
+      "weightLbs": 3135,
+      "engineSwaps": [
+        "4.0L F6",
+        "3.8 F6TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche 911 Carrera RS",
@@ -7172,7 +7716,15 @@
       "aspiration": "tt",
       "engine": "F6",
       "gears": 8,
-      "weightLbs": 3340
+      "weightLbs": 3340,
+      "engineSwaps": [
+        "4.0L F6",
+        "3.8 F6TT",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche 911 GT1 Strassenversion",
@@ -7214,7 +7766,21 @@
       "aspiration": "tt",
       "engine": "F6",
       "gears": 7,
-      "weightLbs": 3197
+      "weightLbs": 3197,
+      "engineSwaps": [
+        "4.0L F6",
+        "Racing V12",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Duke Dynamics - Widebody Kit"
+      ],
+      "presets": [
+        "2018 Porsche 911 GT2 RS Duke Dynamics"
+      ]
     },
     {
       "title": "Porsche 911 GT3 (2004)",
@@ -7235,7 +7801,16 @@
       "aspiration": "na",
       "engine": "F6",
       "gears": 7,
-      "weightLbs": 3153
+      "weightLbs": 3153,
+      "engineSwaps": [
+        "3.2L F6TT",
+        "3.8 F6TT",
+        "Racing V12",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche 911 GT3 RS (2023)",
@@ -7395,7 +7970,17 @@
       "aspiration": "tt",
       "engine": "V8",
       "gears": 8,
-      "weightLbs": 4796
+      "weightLbs": 4796,
+      "engineSwaps": [
+        "6.2L V8",
+        "4.0L F6",
+        "5.2L V10",
+        "3.8 F6TT",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche Cayman GT3 WTAC",
@@ -7409,7 +7994,19 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 4899
+      "weightLbs": 4899,
+      "engineSwaps": [
+        "3.0L F6-T",
+        "6.7L V8T Diesel",
+        "4.0L F6",
+        "3.8 F6TT",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8",
+        "7.4L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Porsche Mission R",
@@ -7500,7 +8097,15 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 7,
-      "weightLbs": 3153
+      "weightLbs": 3153,
+      "engineSwaps": [
+        "2.0L I4 - VVT",
+        "4.0L F6"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Renault Megane RS 250",
@@ -7518,7 +8123,7 @@
       ]
     },
     {
-      "title": "Renault M\u00e9gane R26.R",
+      "title": "Renault Mégane R26.R",
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
@@ -7551,7 +8156,14 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 3,
-      "weightLbs": 3750
+      "weightLbs": 3750,
+      "engineSwaps": [
+        "7.7L V12",
+        "7.4L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "RJ Anderson 37 Polaris RZR Pro 4 Truck",
@@ -7774,11 +8386,19 @@
       ]
     },
     {
-      "title": "Subaru LEGACY B4 2.0 GT (Traffic)",
+      "title": "Subaru LEGACY B4 2.0 GT Traffic",
       "aspiration": "st",
-      "engine": null,
-      "gears": null,
-      "weightLbs": null
+      "engine": "F4",
+      "gears": 5,
+      "weightLbs": 3153,
+      "engineSwaps": [
+        "2.0L F4 - Turbo Rally",
+        "6.2L V8",
+        "4.0L F6"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Subaru LEGACY RS",
@@ -7913,14 +8533,30 @@
       "aspiration": "t",
       "engine": "F4",
       "gears": 6,
-      "weightLbs": 2820
+      "weightLbs": 2820,
+      "engineSwaps": [
+        "2.0L F4 - Turbo Rally",
+        "6.2L V8",
+        "4.0L F6"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Toyota 1 T100 Baja Truck",
       "aspiration": "na",
       "engine": "V6",
       "gears": 5,
-      "weightLbs": 4000
+      "weightLbs": 4000,
+      "engineSwaps": [
+        "6.2L V8",
+        "4.8L V10",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Toyota 2000GT",
@@ -8150,7 +8786,24 @@
       "aspiration": "t",
       "engine": "I6",
       "gears": 8,
-      "weightLbs": 3397
+      "weightLbs": 3397,
+      "engineSwaps": [
+        "3.0L I6 - TT",
+        "6.2L V8",
+        "6.1L V12",
+        "4.0L V8-TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "HKS - Widebody Kit"
+      ],
+      "presets": [
+        "Toyota Supra '20 (Toyota Bodykit)",
+        "Toyota Supra '20 HKS - Drift",
+        "Toyota Supra '20 HKS - Grip"
+      ]
     },
     {
       "title": "Toyota GR Yaris",
@@ -8422,7 +9075,17 @@
       "aspiration": "na",
       "engine": "V6",
       "gears": 6,
-      "weightLbs": 4425
+      "weightLbs": 4425,
+      "engineSwaps": [
+        "Racing V6",
+        "6.2L V8",
+        "4.8L V10",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "TVR Cerbera Speed 12",
@@ -8446,7 +9109,17 @@
       "aspiration": "na",
       "engine": "V8",
       "gears": 6,
-      "weightLbs": 2645
+      "weightLbs": 2645,
+      "engineSwaps": [
+        "6.7L V8T Diesel",
+        "6.2L V8",
+        "5.2L V10",
+        "7.7L V12",
+        "Racing 3.0L I6T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "TVR Sagaris",
@@ -8469,7 +9142,14 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 2668
+      "weightLbs": 2668,
+      "engineSwaps": [
+        "1.6L I4 - Turbo Rally",
+        "2.0L F4 - Turbo Rally"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Volkswagen Class 5/1600 Baja Bug",
@@ -8507,7 +9187,17 @@
       "aspiration": "na",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 1909
+      "weightLbs": 1909,
+      "engineSwaps": [
+        "2.8L V6",
+        "2.0L I4 - VVT",
+        "2.0L I4-T",
+        "2.5L I5-T"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Volkswagen Golf Gti 16v Mk2",
@@ -8579,7 +9269,15 @@
       "aspiration": "t",
       "engine": "I4",
       "gears": 6,
-      "weightLbs": 3300
+      "weightLbs": 3300,
+      "engineSwaps": [
+        "2.0L I4-T",
+        "2.5L I5 Turbo",
+        "2.5L I5-T"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
     },
     {
       "title": "Volkswagen Golf R (2022)",
@@ -8593,7 +9291,18 @@
       "aspiration": "na",
       "engine": "I4",
       "gears": 5,
-      "weightLbs": 2174
+      "weightLbs": 2174,
+      "engineSwaps": [
+        "1.8L I4",
+        "2.8L V6",
+        "2.0L I4 - VVT",
+        "2.0L I4-T",
+        "2.5L I5-T"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
     },
     {
       "title": "Volkswagen Rallye Golf",
@@ -8686,7 +9395,13 @@
       "aspiration": "tsc",
       "engine": "V8",
       "gears": 7,
-      "weightLbs": 3410
+      "weightLbs": 3410,
+      "engineSwaps": [
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
     }
   ]
 }
