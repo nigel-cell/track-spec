@@ -19,7 +19,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             onClick={() => onChange(opt)}
             className={[
-              "min-h-11 flex-1 px-2 font-[family-name:var(--ts-font-heading)] text-sm font-semibold tracking-[var(--ts-heading-tracking)] transition-colors",
+              "min-h-11 flex-1 px-1.5 font-[family-name:var(--ts-font-heading)] text-xs font-semibold tracking-[var(--ts-heading-tracking)] transition-colors sm:px-2 sm:text-sm",
               active
                 ? "bg-[var(--ts-accent)] text-white"
                 : "bg-transparent text-[var(--ts-muted)]",

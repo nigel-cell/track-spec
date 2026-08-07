@@ -48,10 +48,10 @@ export function CarPicker({ make, model, driveType, cars, carCount, units, onSel
         style={{ borderLeftWidth: 3, borderLeftColor: open ? "var(--ts-accent)" : "var(--ts-border)" }}
       >
         <span className="text-[var(--ts-muted)]">⊕</span>
-        <span className="flex-1 truncate font-[family-name:var(--ts-font-heading)] text-base font-semibold">
+        <span className="flex-1 truncate font-[family-name:var(--ts-font-heading)] text-sm font-semibold sm:text-base">
           {make} {model}
         </span>
-        <span className="font-[family-name:var(--ts-font-mono)] text-[10px] uppercase text-[var(--ts-accent)]">
+        <span className="hidden shrink-0 font-[family-name:var(--ts-font-mono)] text-[10px] uppercase text-[var(--ts-accent)] sm:inline">
           {driveType}
         </span>
       </button>

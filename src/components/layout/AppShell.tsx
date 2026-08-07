@@ -152,11 +152,11 @@ export function AppShell({
                 key={t.id}
                 type="button"
                 onClick={() => onTabChange(t.id)}
-                className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1"
+                className="flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5"
                 style={{ color: active ? "var(--ts-accent)" : "var(--ts-muted)" }}
               >
-                <span className="text-xl leading-none">{t.icon}</span>
-                <span className="font-[family-name:var(--ts-font-heading)] text-[11px] font-semibold uppercase tracking-[0.12em]">
+                <span className="text-lg leading-none">{t.icon}</span>
+                <span className="max-w-full truncate font-[family-name:var(--ts-font-heading)] text-[10px] font-semibold uppercase tracking-[0.08em]">
                   {t.label}
                 </span>
               </button>

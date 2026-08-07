@@ -523,22 +523,22 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   return (
 
-    <div className="mx-auto flex min-h-full max-w-[820px] flex-col px-4 py-4 pb-2 sm:px-6">
+    <div className="mx-auto flex min-h-full max-w-[820px] flex-col px-4 py-3 sm:px-6 sm:py-4">
 
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--ts-font-heading)] text-xl font-bold tracking-tight">Manual setup</h1>
-          <p className="mt-0.5 text-xs text-[var(--ts-muted)]">
+      <header className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="min-w-0">
+          <h1 className="font-[family-name:var(--ts-font-heading)] text-lg font-bold tracking-tight sm:text-xl">Manual setup</h1>
+          <p className="mt-0.5 text-[11px] text-[var(--ts-muted)] sm:text-xs">
             {carsLoading ? "Loading car database…" : `${carCount || 644} cars in database`}
           </p>
         </div>
         <div className="flex w-full items-center gap-2 sm:w-auto">
           {onMyTunes && (
-            <Button variant="outline" className="flex-1 px-3 text-xs sm:flex-none" onClick={onMyTunes}>
+            <Button variant="outline" className="h-9 flex-1 px-2 text-[11px] sm:flex-none sm:px-3 sm:text-xs" onClick={onMyTunes}>
               My tunes
             </Button>
           )}
-          <div className="flex-1 sm:w-[150px] sm:flex-none">
+          <div className="min-w-0 flex-1 sm:w-[150px] sm:flex-none">
             <SegmentedControl options={["quick", "full"] as const} value={mode} onChange={setMode} />
           </div>
         </div>
@@ -557,7 +557,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         <TuneSectionNav sections={sections} active={section} onChange={(id) => setSection(id as InputSection)} />
       </div>
 
-      <div className="mt-4 space-y-[var(--ts-section-gap)]">
+      <div className="mt-3 space-y-[var(--ts-section-gap)] sm:mt-4">
 
       {section === "car" && (
         <>
@@ -861,24 +861,27 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       </div>
 
       {mode === "quick" && section !== "engine" && (
-        <p className="mt-4 text-center text-[11px] leading-snug text-[var(--ts-dim)]">
+        <p className="mt-3 text-center text-[10px] leading-snug text-[var(--ts-dim)] sm:mt-4 sm:text-[11px]">
           Quick mode uses PI-based math. Switch to Full for engine, gearing, and RPM tuning.
         </p>
       )}
 
-      <div className="sticky bottom-0 z-20 -mx-4 mt-auto bg-gradient-to-t from-[var(--ts-bg)] via-[var(--ts-bg)]/95 to-transparent px-4 pb-2 pt-5 sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:bg-none md:p-0">
+      {/* Spacer so fixed mobile action bar never covers content */}
+      <div className="h-16 shrink-0 md:hidden" aria-hidden />
+
+      <div className="fixed inset-x-0 bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))] z-30 border-t border-[var(--ts-border)] bg-[var(--ts-bg)]/98 px-4 py-2 backdrop-blur-md md:static md:bottom-auto md:z-20 md:-mx-6 md:mt-6 md:border-0 md:bg-gradient-to-t md:from-[var(--ts-bg)] md:via-[var(--ts-bg)]/95 md:to-transparent md:px-6 md:pb-2 md:pt-5">
         <div className="mx-auto flex max-w-[820px] justify-end gap-2 md:justify-stretch">
           {sectionIndex > 0 && (
-            <Button variant="ghost" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={goPrev}>
+            <Button variant="ghost" className="h-9 shrink-0 px-3 text-xs md:text-sm" onClick={goPrev}>
               ← Back
             </Button>
           )}
           {sectionIndex < sectionOrder.length - 1 ? (
-            <Button variant="primary" className="min-w-[116px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={goNext}>
+            <Button variant="primary" className="h-9 min-w-[108px] px-3 text-xs sm:min-w-[116px] sm:px-4 md:flex-1 md:text-sm" onClick={goNext}>
               {sections.find((s) => s.id === sectionOrder[sectionIndex + 1])?.label} →
             </Button>
           ) : (
-            <Button variant="cta" className="min-w-[140px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={deploy}>
+            <Button variant="cta" className="h-9 min-w-[128px] px-3 text-xs sm:min-w-[140px] sm:px-4 md:flex-1 md:text-sm" onClick={deploy}>
               Deploy tune
             </Button>
           )}
