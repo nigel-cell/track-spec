@@ -1,5 +1,5 @@
 interface TuneSectionNavProps {
-  sections: { id: string; label: string; disabled?: boolean }[];
+  sections: { id: string; label: string; disabled?: boolean; hint?: string }[];
   active: string;
   onChange: (id: string) => void;
 }
@@ -14,11 +14,11 @@ export function TuneSectionNav({ sections, active, onChange }: TuneSectionNavPro
             <button
               key={s.id}
               type="button"
-              disabled={s.disabled}
               onClick={() => onChange(s.id)}
+              title={s.hint}
               className={[
                 "flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors sm:min-h-10 sm:gap-2 sm:px-3.5 sm:text-xs",
-                s.disabled ? "cursor-not-allowed opacity-40" : "",
+                s.disabled ? "opacity-50" : "",
                 isActive
                   ? "border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
                   : "border-[var(--ts-border)] text-[var(--ts-muted)] hover:text-[var(--ts-text)]",
@@ -26,6 +26,7 @@ export function TuneSectionNav({ sections, active, onChange }: TuneSectionNavPro
             >
               <span className="font-[family-name:var(--ts-font-mono)] text-[9px] opacity-70 sm:text-[10px]">{i + 1}</span>
               {s.label}
+              {s.disabled && s.hint ? <span className="text-[9px] opacity-60">🔒</span> : null}
             </button>
           );
         })}

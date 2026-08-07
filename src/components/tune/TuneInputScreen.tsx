@@ -268,11 +268,16 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const activeMode = TUNE_MODES.find((m) => m.id === tuneId);
 
-  const sections: { id: InputSection; label: string; disabled?: boolean }[] = [
+  const sections: { id: InputSection; label: string; disabled?: boolean; hint?: string }[] = [
     { id: "car", label: "Car" },
     { id: "tune", label: "Mode" },
     { id: "specs", label: "Specs" },
-    { id: "engine", label: "Engine", disabled: mode !== "full" },
+    {
+      id: "engine",
+      label: "Engine",
+      disabled: mode !== "full",
+      hint: mode !== "full" ? "Tap to switch to Full — engine swaps, gearing & RPM" : undefined,
+    },
   ];
 
   const sectionOrder = sections.filter((s) => !s.disabled).map((s) => s.id);
@@ -553,8 +558,28 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         ]}
       />
 
-      <div className="mt-4">
-        <TuneSectionNav sections={sections} active={section} onChange={(id) => setSection(id as InputSection)} />
+      <div className="mt-3 sm:mt-4">
+        <TuneSectionNav
+          sections={sections}
+          active={section}
+          onChange={(id) => {
+            if (id === "engine" && mode !== "full") {
+              setMode("full");
+              setSection("engine");
+              return;
+            }
+            setSection(id as InputSection);
+          }}
+        />
+        {mode === "quick" && (
+          <p className="mt-2 text-center text-[10px] leading-snug text-[var(--ts-dim)]">
+            Quick mode skips engine tuning. Tap <strong className="text-[var(--ts-muted)]">Engine 🔒</strong> or switch to{" "}
+            <button type="button" className="font-semibold text-[var(--ts-accent)] underline" onClick={() => setMode("full")}>
+              Full
+            </button>{" "}
+            for swaps, gearing &amp; RPM.
+          </p>
+        )}
       </div>
 
       <div className="mt-3 space-y-[var(--ts-section-gap)] sm:mt-4">
@@ -859,12 +884,6 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       )}
 
       </div>
-
-      {mode === "quick" && section !== "engine" && (
-        <p className="mt-3 text-center text-[10px] leading-snug text-[var(--ts-dim)] sm:mt-4 sm:text-[11px]">
-          Quick mode uses PI-based math. Switch to Full for engine, gearing, and RPM tuning.
-        </p>
-      )}
 
       {/* Spacer so fixed mobile action bar never covers content */}
       <div className="h-16 shrink-0 md:hidden" aria-hidden />
