@@ -12,6 +12,7 @@ import { Card, DataValue, Label } from "../ui/Card";
 import { Button } from "../ui/Button";
 
 import { useTelemetryContext } from "../../context/TelemetryContext";
+import { useLiveHudLayout } from "../../hooks/useLiveHudLayout";
 
 import {
 
@@ -65,6 +66,67 @@ function slipColor(slip: number) {
 
 
 
+function gaugeValueClass(value: string) {
+  if (value.length >= 5) return "text-base";
+  if (value.length >= 4) return "text-lg";
+  return "text-xl";
+}
+
+function MobileTelemetryHero({
+  speed,
+  rpm,
+  gear,
+  steerPct,
+}: {
+  speed: number;
+  rpm: number;
+  gear: string;
+  steerPct: number;
+}) {
+  const rpmText = rpm.toLocaleString();
+
+  return (
+    <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-3">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-[9px] uppercase tracking-[0.16em] text-[var(--ts-muted)]">Speed</div>
+          <div className="mt-0.5 flex items-baseline gap-1.5">
+            <span
+              className="font-[family-name:var(--ts-font-mono)] text-[clamp(1.75rem,9vw,2.5rem)] font-semibold tabular-nums leading-none text-[var(--ts-text)]"
+              style={{ letterSpacing: "var(--ts-data-tracking)" }}
+            >
+              {speed}
+            </span>
+            <span className="pb-0.5 text-[11px] text-[var(--ts-muted)]">km/h</span>
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-4 text-center">
+          <div className="min-w-[3.25rem]">
+            <div className="text-[9px] uppercase tracking-[0.16em] text-[var(--ts-muted)]">RPM</div>
+            <div
+              className={[
+                "mt-0.5 font-[family-name:var(--ts-font-mono)] font-semibold tabular-nums leading-none text-[var(--ts-text)]",
+                gaugeValueClass(rpmText),
+              ].join(" ")}
+            >
+              {rpmText}
+            </div>
+          </div>
+          <div className="min-w-[2rem]">
+            <div className="text-[9px] uppercase tracking-[0.16em] text-[var(--ts-muted)]">Gear</div>
+            <div className="mt-0.5 font-[family-name:var(--ts-font-mono)] text-2xl font-semibold tabular-nums leading-none text-[var(--ts-text)]">
+              {gear}
+            </div>
+          </div>
+        </div>
+      </div>
+      {steerPct !== 0 && (
+        <div className="mt-1.5 text-[9px] text-[var(--ts-dim)]">Steer {steerPct}%</div>
+      )}
+    </div>
+  );
+}
+
 function GaugeCard({
   label,
   value,
@@ -80,7 +142,12 @@ function GaugeCard({
     return (
       <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] px-2 py-2 text-center">
         <div className="text-[9px] uppercase tracking-wider text-[var(--ts-muted)]">{label}</div>
-        <div className="font-[family-name:var(--ts-font-mono)] text-xl font-semibold tabular-nums leading-none text-[var(--ts-text)]">
+        <div
+          className={[
+            "font-[family-name:var(--ts-font-mono)] font-semibold tabular-nums leading-none text-[var(--ts-text)]",
+            gaugeValueClass(value),
+          ].join(" ")}
+        >
           {value}
         </div>
         {unit && <div className="mt-0.5 text-[9px] text-[var(--ts-dim)]">{unit}</div>}
@@ -414,6 +481,7 @@ export function TelemetryScreen({
     liveBalance,
     dismissLiveBalance,
   } = useTelemetryContext();
+  const useHudLayout = useLiveHudLayout();
 
   useEffect(() => {
     if (!telemetry?.carOrdinal) {
@@ -542,8 +610,9 @@ export function TelemetryScreen({
         />
       )}
 
-      {/* Desktop: single-screen driving HUD (tablets & PC — not phone landscape) */}
-      <div className="relative hidden h-full min-h-0 lg:flex lg:flex-col">
+      {/* Desktop / tablet landscape: full driving HUD (not phone landscape) */}
+      {useHudLayout && (
+      <div className="relative flex h-full min-h-0 flex-col">
         {fineTuneBanner && <div className="absolute left-3 right-3 top-2 z-20">{fineTuneBanner}</div>}
         {!showConnectionPanel && isGameLive && (
           <button
@@ -583,9 +652,11 @@ export function TelemetryScreen({
           loadedConfig={loadedConfig}
         />
       </div>
+      )}
 
-      {/* Phone & mobile: compact scrollable dashboard (portrait + landscape) */}
-      <div className="mx-auto max-w-[1100px] space-y-2.5 px-3 py-2.5 pb-24 sm:px-5 lg:hidden">
+      {/* Phone portrait + phone landscape: compact scrollable dashboard */}
+      {!useHudLayout && (
+      <div className="mx-auto max-w-[1100px] space-y-2.5 px-3 py-2.5 pb-24 sm:px-5 max-md:landscape:space-y-2 max-md:landscape:pb-20">
         {fineTuneBanner}
 
         {showCarDetect && telemetry?.carOrdinal > 0 && onQuickTune && (
@@ -669,11 +740,7 @@ export function TelemetryScreen({
           </button>
         )}
 
-        <div className="grid grid-cols-3 gap-1.5">
-          <GaugeCard compact label="Speed" value={String(speed)} unit="km/h" />
-          <GaugeCard compact label="RPM" value={String(rpm)} unit="rpm" />
-          <GaugeCard compact label="Gear" value={gear} unit={steerPct !== 0 ? `↔ ${steerPct}%` : undefined} />
-        </div>
+        <MobileTelemetryHero speed={speed} rpm={rpm} gear={gear} steerPct={steerPct} />
 
         <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2">
           <LapTimer telemetry={telemetry} variant="mobile" />
@@ -704,8 +771,8 @@ export function TelemetryScreen({
 
         <LiveTrackMap telemetry={telemetry} variant="compact" />
 
-        <div className="grid grid-cols-2 gap-2 max-[479px]:grid-cols-1 min-[480px]:max-lg:grid-cols-3">
-          <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2 min-[480px]:max-lg:col-span-1">
+        <div className="grid gap-2 max-md:landscape:grid-cols-3 max-[479px]:grid-cols-1 min-[480px]:grid-cols-2">
+          <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2 max-md:landscape:col-span-1">
             <div className="mb-1.5 text-[9px] uppercase tracking-wider text-[var(--ts-muted)]">G-Force</div>
             <GForceCanvas telemetry={telemetry} size={120} />
             <p className="mt-1 text-center font-[family-name:var(--ts-font-mono)] text-[9px] text-[var(--ts-dim)]">
@@ -717,7 +784,7 @@ export function TelemetryScreen({
             <PedalBar compact label="Throttle" value={telemetry?.accelInput} color="var(--ts-accent)" />
             <PedalBar compact label="Brake" value={telemetry?.brakeInput} color="var(--ts-danger)" />
           </div>
-          <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2.5 max-[479px]:col-span-1 min-[480px]:max-lg:col-span-3">
+          <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2.5 max-md:landscape:col-span-3 min-[480px]:col-span-2">
             <div className="mb-2 text-[9px] uppercase tracking-wider text-[var(--ts-muted)]">Tires °C · slip</div>
             <div className="grid grid-cols-4 gap-1.5">
               <TireCell compact label="FL" temp={telemetry?.tireTempFL ?? 20} slip={telemetry?.tireSlipFL ?? 0} />
@@ -728,6 +795,7 @@ export function TelemetryScreen({
           </div>
         </div>
       </div>
+      )}
     </>
   );
 }
