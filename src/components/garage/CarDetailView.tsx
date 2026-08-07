@@ -49,7 +49,7 @@ export function CarDetailView({
   if (car.mastery?.cells?.length) tabs.push({ id: "mastery", label: "Mastery" });
 
   return (
-    <div className="pb-28">
+    <div className="pb-8">
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-[var(--ts-border)] bg-gradient-to-b from-[var(--ts-surface)] to-[var(--ts-bg)]">
         <div

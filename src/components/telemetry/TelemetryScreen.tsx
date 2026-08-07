@@ -559,7 +559,7 @@ export function TelemetryScreen({
       </div>
 
       {/* Mobile: scrollable layout */}
-      <div className="mx-auto max-w-[1100px] space-y-[var(--ts-section-gap)] px-6 py-6 pb-28 md:hidden">
+      <div className="mx-auto max-w-[1100px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6 md:hidden">
         {fineTuneBanner}
 
         {showCarDetect && telemetry?.carOrdinal > 0 && onQuickTune && (

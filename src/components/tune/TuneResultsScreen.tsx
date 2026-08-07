@@ -291,7 +291,7 @@ export function TuneResultsScreen({
 
 
 
-      <div className="mx-auto max-w-[820px] px-4 py-4 pb-28">
+      <div className="mx-auto max-w-[820px] px-4 py-4 pb-8">
 
         <header className="sticky top-0 z-10 -mx-4 border-b border-[var(--ts-border)] bg-[var(--ts-bg)]/95 px-4 py-3 backdrop-blur-md">
           <div className="flex flex-wrap items-center justify-between gap-2">

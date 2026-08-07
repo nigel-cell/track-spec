@@ -35,7 +35,7 @@ export function AppShell({
   const immersive = lockMainScroll;
 
   return (
-    <div className={immersive ? "flex h-dvh overflow-hidden bg-[var(--ts-bg)]" : "flex min-h-dvh bg-[var(--ts-bg)]"}>
+    <div className="flex h-dvh overflow-hidden bg-[var(--ts-bg)]">
       <aside
         className={[
           "hidden shrink-0 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-surface)] md:flex",
@@ -104,7 +104,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top flex items-center justify-between gap-2 border-b border-[var(--ts-border)] px-4 py-3 md:hidden">
+        <header className="safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3 md:hidden">
           <img src="/logo-banner.png" alt="Track Spec" className="h-8 shrink-0" />
           <div className="flex items-center gap-2">
             {onRefresh && (
@@ -144,7 +144,7 @@ export function AppShell({
           {children}
         </main>
 
-        <nav className="safe-bottom flex border-t border-[var(--ts-border)] bg-[var(--ts-surface)] md:hidden">
+        <nav className="safe-bottom relative z-40 flex shrink-0 border-t border-[var(--ts-border)] bg-[var(--ts-surface)] md:hidden">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (

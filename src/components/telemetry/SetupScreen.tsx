@@ -62,7 +62,7 @@ export function SetupScreen({ pcIp }: SetupScreenProps) {
 
   return (
 
-    <div className="mx-auto max-w-[820px] space-y-[var(--ts-section-gap)] px-6 py-6 pb-28">
+    <div className="mx-auto max-w-[820px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6">
 
       <h1
 
