@@ -35,7 +35,7 @@ A mobile-first **PWA** for Forza Horizon tuning and live telemetry. Forked from 
 
 
 
-### Phone (Cloudflare)
+### Phone / website (Cloudflare)
 
 
 
@@ -47,7 +47,42 @@ npm run deploy:cf
 
 
 
-Needs Wrangler login / API token. Install the `*.workers.dev` (or Pages) URL to Home Screen.
+Needs Wrangler login / API token. Site at `/`, app at `/app`.
+
+
+
+**Custom domain (Cloudflare Dashboard):**
+
+1. Workers & Pages → **track-spec** → **Custom domains** → **Set up a domain**
+2. Enter e.g. `trackspec.yourdomain.com` (domain must be on Cloudflare DNS)
+3. Cloudflare adds the CNAME / route automatically
+4. Update any bookmarks; Download still comes from GitHub Releases
+
+
+
+### Windows download (friends)
+
+
+
+Latest portable build (always current):
+
+https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe
+
+
+
+Publish a new build:
+
+```bash
+
+git tag v1.1.1
+
+git push origin v1.1.1
+
+```
+
+
+
+Or **Actions → Release Windows exe → Run workflow**.
 
 
 

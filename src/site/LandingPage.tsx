@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 
+import { RELEASES_PAGE_URL, WINDOWS_DOWNLOAD_URL } from "../lib/download";
+
 const HERO = "./site/hero.webp";
-const DOWNLOAD = "https://github.com/nigel-cell/track-spec/releases/latest";
+const DOWNLOAD = WINDOWS_DOWNLOAD_URL;
+const RELEASES = RELEASES_PAGE_URL;
 
 /** Public marketing site — brand-first, then clear paths into the product. */
 export function LandingPage() {
@@ -136,8 +139,11 @@ export function LandingPage() {
             <a href="./app" className="hover:text-[#e63228]">
               App
             </a>
-            <a href={DOWNLOAD} target="_blank" rel="noreferrer" className="hover:text-[#e63228]">
+            <a href={DOWNLOAD} className="hover:text-[#e63228]">
               Download
+            </a>
+            <a href={RELEASES} target="_blank" rel="noreferrer" className="hover:text-[#e63228]">
+              Releases
             </a>
             <a
               href="https://github.com/nigel-cell/track-spec"
