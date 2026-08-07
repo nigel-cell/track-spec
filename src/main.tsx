@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import { SiteRoot } from "./site/SiteRoot";
 import "./index.css";
 
 const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <StrictMode>
-      <App />
+      <SiteRoot />
     </StrictMode>
   );
   document.getElementById("boot-loader")?.remove();

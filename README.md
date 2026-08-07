@@ -28,9 +28,10 @@ A mobile-first **PWA** for Forza Horizon tuning and live telemetry. Forked from 
 
 | What you want | How |
 |---------------|-----|
-| **Phone Tune + Garage** | Cloudflare URL (light pack — thumbs, no 50MB heros) |
+| **Website / landing** | `/` on your Cloudflare URL |
+| **Phone Tune + Garage** | `/app` (light pack — thumbs) → Add to Home Screen |
 | **Live telemetry while racing** | Desktop **TrackSpec-Live.exe** or `START.bat` on the gaming PC |
-| **Dev UI only** | `npm run dev` → `http://localhost:5173` |
+| **Dev** | `npm run dev` → landing at `/`, app at `/app` |
 
 
 

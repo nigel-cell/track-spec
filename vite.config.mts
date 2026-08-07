@@ -29,7 +29,7 @@ export default defineConfig({
         background_color: "#000000",
         display: "standalone",
         orientation: "portrait",
-        start_url: "./",
+        start_url: "./app",
         icons: [
           { src: "apple-touch-icon.png", sizes: "180x180", type: "image/png" },
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },

@@ -32,7 +32,7 @@ function createWindow() {
     icon: path.join(ROOT, "public", "icon-512.png"),
   });
 
-  mainWindow.loadURL("http://127.0.0.1:3000/");
+  mainWindow.loadURL("http://127.0.0.1:3000/app");
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
