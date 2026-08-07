@@ -632,7 +632,9 @@ export function TelemetryScreen({
         {connectionNeeded || showConnection ? (
           <Card className="!p-3">
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <Label className="!mb-0">PC server IP</Label>
+              <span className="font-[family-name:var(--ts-font-mono)] text-[10px] uppercase tracking-wider text-[var(--ts-muted)]">
+                PC server IP
+              </span>
               {isGameLive && (
                 <button type="button" onClick={() => setShowConnection(false)} className="text-[10px] text-[var(--ts-muted)]">
                   Hide
