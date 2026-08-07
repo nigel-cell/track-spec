@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLiveHudLayout } from "../../hooks/useLiveHudLayout";
 
 const TABS = [
   { id: "tune", label: "Tune", icon: "⚙" },
@@ -32,13 +33,16 @@ export function AppShell({
   children,
   lockMainScroll,
 }: AppShellProps) {
-  const immersive = lockMainScroll;
+  const hudLayout = useLiveHudLayout();
+  const immersive = lockMainScroll && hudLayout;
+  const showSidebar = !lockMainScroll || hudLayout;
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[var(--ts-bg)]">
       <aside
         className={[
-          "hidden shrink-0 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-surface)] md:flex",
+          showSidebar ? "hidden md:flex" : "hidden",
+          "shrink-0 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-surface)]",
           immersive ? "w-[68px] items-center px-2 py-3" : "w-[220px] p-4",
         ].join(" ")}
       >
@@ -104,7 +108,12 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3 md:hidden">
+        <header
+          className={[
+            "safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3",
+            showSidebar ? "md:hidden" : "",
+          ].join(" ")}
+        >
           <img src="/logo-banner.png" alt="Track Spec" className="h-8 shrink-0" />
           <div className="flex items-center gap-2">
             {onRefresh && (
@@ -139,13 +148,18 @@ export function AppShell({
           data-app-scroll
           className={[
             "min-h-0 flex-1",
-            lockMainScroll ? "overflow-hidden" : "overflow-auto",
+            lockMainScroll && hudLayout ? "overflow-hidden" : "overflow-auto",
           ].join(" ")}
         >
           {children}
         </main>
 
-        <nav className="safe-bottom relative z-40 flex shrink-0 border-t border-[var(--ts-border)] bg-[var(--ts-surface)] md:hidden">
+        <nav
+          className={[
+            "safe-bottom relative z-40 flex shrink-0 border-t border-[var(--ts-border)] bg-[var(--ts-surface)]",
+            showSidebar ? "md:hidden" : "",
+          ].join(" ")}
+        >
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
@@ -153,11 +167,11 @@ export function AppShell({
                 key={t.id}
                 type="button"
                 onClick={() => onTabChange(t.id)}
-                className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1"
+                className="flex min-h-[52px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5"
                 style={{ color: active ? "var(--ts-accent)" : "var(--ts-muted)" }}
               >
-                <span className="text-xl leading-none">{t.icon}</span>
-                <span className="font-[family-name:var(--ts-font-heading)] text-[11px] font-semibold uppercase tracking-[0.12em]">
+                <span className="text-lg leading-none">{t.icon}</span>
+                <span className="max-w-full truncate font-[family-name:var(--ts-font-heading)] text-[10px] font-semibold uppercase tracking-[0.08em]">
                   {t.label}
                 </span>
               </button>

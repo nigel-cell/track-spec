@@ -4,7 +4,7 @@ import type { TelemetryFrame } from "../../lib/telemetry";
 
 interface LapTimerProps {
   telemetry: TelemetryFrame | null;
-  variant?: "default" | "hud";
+  variant?: "default" | "hud" | "mobile";
 }
 
 export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
@@ -17,6 +17,30 @@ export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
 
   const deltaColor =
     delta == null ? "var(--ts-muted)" : delta >= 0 ? "var(--ts-warning)" : "var(--ts-success)";
+
+  if (variant === "mobile") {
+    const cells = [
+      { label: active ? `Lap ${lapNum ?? "—"}` : "Current", value: formatLapTime(current), accent: false },
+      { label: "Delta", value: formatDelta(delta), accent: true, color: deltaColor },
+      { label: "Last", value: formatLapTime(last), accent: false },
+      { label: "Best", value: formatLapTime(best), accent: true, color: "var(--ts-accent)" },
+    ];
+    return (
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        {cells.map((c) => (
+          <div key={c.label} className="min-w-0 text-center">
+            <div className="truncate text-[9px] uppercase tracking-wider text-[var(--ts-muted)]">{c.label}</div>
+            <div
+              className="truncate font-[family-name:var(--ts-font-mono)] text-base font-semibold tabular-nums leading-tight"
+              style={{ color: c.accent && c.color ? c.color : "var(--ts-text)" }}
+            >
+              {c.value}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (variant === "hud") {
     return (

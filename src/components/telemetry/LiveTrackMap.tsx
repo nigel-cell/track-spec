@@ -179,7 +179,7 @@ function drawTrack(
 
 interface LiveTrackMapProps {
   telemetry: TelemetryFrame | null;
-  variant?: "default" | "fill";
+  variant?: "default" | "fill" | "compact";
 }
 
 export function LiveTrackMap({ telemetry, variant = "default" }: LiveTrackMapProps) {
@@ -219,6 +219,27 @@ export function LiveTrackMap({ telemetry, variant = "default" }: LiveTrackMapPro
         <div className="relative min-h-0 flex-1">
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full rounded-[var(--ts-radius-sm)] bg-[var(--ts-bg)]" />
         </div>
+      </div>
+    );
+  }
+
+  if (variant === "compact") {
+    return (
+      <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-2">
+        <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5">
+          <span className="font-[family-name:var(--ts-font-mono)] text-[9px] uppercase tracking-wider text-[var(--ts-muted)]">
+            Track map
+          </span>
+          {track.points.length > 0 && (
+            <span className="font-[family-name:var(--ts-font-mono)] text-[9px] text-[var(--ts-dim)]">
+              {track.points.length} pts
+            </span>
+          )}
+        </div>
+        <canvas
+          ref={canvasRef}
+          className="h-28 w-full rounded-[var(--ts-radius-sm)] bg-[var(--ts-bg)]"
+        />
       </div>
     );
   }

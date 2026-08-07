@@ -8,6 +8,8 @@ interface TuneActionButtonsProps {
   onManualTune?: () => void;
   /** Compact buttons for Live HUD; default for garage detail */
   size?: "sm" | "md";
+  /** Stretch buttons to fill their row (mobile Live card) */
+  fullWidth?: boolean;
   /** One-line hint under the buttons (garage + mobile Live) */
   showHint?: boolean;
   hintClassName?: string;
@@ -27,6 +29,7 @@ export function TuneActionButtons({
   onQuickTune,
   onManualTune,
   size = "md",
+  fullWidth = false,
   showHint = false,
   hintClassName = "",
   className = "",
@@ -35,17 +38,18 @@ export function TuneActionButtons({
 
   const btnClass = size === "sm" ? "h-8 px-3 text-xs" : "h-9 px-3 text-xs";
   const quickClass = size === "sm" ? btnClass : "h-9 px-4 text-xs";
+  const widthClass = fullWidth ? "w-full" : "";
 
   return (
     <div className={className}>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={fullWidth ? "contents" : "flex flex-wrap items-center gap-2"}>
         {onQuickTune && (
-          <Button className={quickClass} onClick={onQuickTune} title={QUICK_TUNE_TITLE}>
+          <Button className={`${quickClass} ${widthClass}`.trim()} onClick={onQuickTune} title={QUICK_TUNE_TITLE}>
             Quick Tune
           </Button>
         )}
         {onManualTune && (
-          <Button variant="outline" className={btnClass} onClick={onManualTune} title={MANUAL_TUNE_TITLE}>
+          <Button variant="outline" className={`${btnClass} ${widthClass}`.trim()} onClick={onManualTune} title={MANUAL_TUNE_TITLE}>
             Manual
           </Button>
         )}
