@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useBrandLogos } from "../../hooks/useBrandLogos";
 import { useForzaGarage } from "../../hooks/useForzaGarage";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
@@ -7,6 +7,8 @@ import { GarageCarCard } from "./GarageCarCard";
 import { GarageCollectionBar } from "./GarageCollectionBar";
 import { GarageFilters, type GarageGroup, type GarageSort, type GarageViewMode } from "./GarageFilters";
 import { Card } from "../ui/Card";
+
+const PAGE_SIZE = 24;
 
 export function GarageScreen({
   onQuickTune,
@@ -19,18 +21,26 @@ export function GarageScreen({
   onLoadSaved?: (entry: import("../../lib/tuneSaves").SavedTune) => void;
   onBrowseTunes?: () => void;
 }) {
-  const { cars, loading, error, owned, toggleOwned, stats } = useForzaGarage();
+  const { cars, loading, error, owned, toggleOwned, stats, enrich, ensureLoaded } = useForzaGarage();
   const { urlForMake } = useBrandLogos();
+
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   const [view, setView] = useState<GarageViewMode>("all");
   const [group, setGroup] = useState<GarageGroup>("none");
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [sort, setSort] = useState<GarageSort>("pi");
   const [classFilter, setClassFilter] = useState<string | null>(null);
   const [rarityFilter, setRarityFilter] = useState<string | null>(null);
   const [driveFilter, setDriveFilter] = useState<string | null>(null);
   const [makeFilter, setMakeFilter] = useState<string | null>(null);
   const [detail, setDetail] = useState<ForzaGarageCar | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const brandCounts = useMemo(() => {
     const map = new Map<string, { make: string; code: string | null; count: number }>();
@@ -45,7 +55,7 @@ export function GarageScreen({
 
   const filtered = useMemo(() => {
     let list = cars;
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
 
     if (q) {
       list = list.filter(
@@ -67,12 +77,22 @@ export function GarageScreen({
       if (sort === "name") return a.name.localeCompare(b.name);
       return (b.pi ?? 0) - (a.pi ?? 0);
     });
-  }, [cars, query, view, owned, sort, classFilter, rarityFilter, driveFilter, makeFilter]);
+  }, [cars, deferredQuery, view, owned, sort, classFilter, rarityFilter, driveFilter, makeFilter]);
+
+  // Reset window when the result set changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [deferredQuery, view, sort, classFilter, rarityFilter, driveFilter, makeFilter, group]);
+
+  const visibleCars = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount],
+  );
 
   const grouped = useMemo(() => {
-    if (group === "none") return [{ key: "All cars", items: filtered }];
+    if (group === "none") return [{ key: "All cars", items: visibleCars }];
     const map = new Map<string, ForzaGarageCar[]>();
-    for (const c of filtered) {
+    for (const c of visibleCars) {
       const key =
         group === "make" ? c.make : group === "rarity" ? (c.rarity ?? "?") : (c.class ?? "?");
       if (!map.has(key)) map.set(key, []);
@@ -81,18 +101,66 @@ export function GarageScreen({
     return [...map.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, items]) => ({ key, items }));
-  }, [filtered, group]);
+  }, [group, visibleCars]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "280px 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [filtered.length, visibleCount]);
+
+  const openDetail = useCallback(
+    async (car: ForzaGarageCar) => {
+      setDetail(car);
+      setDetailLoading(true);
+      try {
+        const full = await enrich(car);
+        setDetail(full);
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [enrich],
+  );
+
+  const handleQuickTune = useCallback(
+    async (car: ForzaGarageCar) => {
+      if (!onQuickTune) return;
+      const full = await enrich(car);
+      onQuickTune(full);
+    },
+    [enrich, onQuickTune],
+  );
+
+  const handleManualTune = useCallback(
+    async (car: ForzaGarageCar) => {
+      if (!onManualTune) return;
+      const full = await enrich(car);
+      onManualTune(full);
+    },
+    [enrich, onManualTune],
+  );
 
   if (detail) {
     return (
       <CarDetailView
         car={detail}
+        detailLoading={detailLoading}
         owned={owned.has(detail.slug)}
         logoUrl={urlForMake(detail.make)}
         onClose={() => setDetail(null)}
         onToggleOwned={() => toggleOwned(detail.slug)}
-        onQuickTune={onQuickTune ? () => onQuickTune(detail) : undefined}
-        onManualTune={onManualTune ? () => onManualTune(detail) : undefined}
+        onQuickTune={onQuickTune ? () => void handleQuickTune(detail) : undefined}
+        onManualTune={onManualTune ? () => void handleManualTune(detail) : undefined}
         onLoadSaved={onLoadSaved}
         onBrowseTunes={onBrowseTunes}
       />
@@ -181,7 +249,7 @@ export function GarageScreen({
                   car={car}
                   owned={owned.has(car.slug)}
                   logoUrl={urlForMake(car.make)}
-                  onOpen={() => setDetail(car)}
+                  onOpen={() => void openDetail(car)}
                   onToggleOwned={(e) => {
                     e.stopPropagation();
                     toggleOwned(car.slug);
@@ -191,6 +259,12 @@ export function GarageScreen({
             </div>
           </section>
         ))}
+
+      {!loading && visibleCount < filtered.length && (
+        <div ref={sentinelRef} className="py-6 text-center text-xs text-[var(--ts-muted)]">
+          Showing {visibleCount} of {filtered.length} — scroll for more
+        </div>
+      )}
 
       <p className="pt-4 text-center text-xs text-[var(--ts-muted)]">
         Car data from{" "}

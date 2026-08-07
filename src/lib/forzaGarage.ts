@@ -64,6 +64,7 @@ export interface ForzaGarageCar {
   mastery?: ForzaGarageMastery;
   acquisition?: string;
   mediaName?: string;
+  description?: string;
 }
 
 export interface ForzaGarageFile {
@@ -75,21 +76,63 @@ export interface ForzaGarageFile {
   cars: ForzaGarageCar[];
 }
 
-let cache: ForzaGarageFile | null = null;
-let loadPromise: Promise<ForzaGarageFile> | null = null;
+let listCache: ForzaGarageFile | null = null;
+let listPromise: Promise<ForzaGarageFile> | null = null;
+let fullCache: ForzaGarageFile | null = null;
+let fullPromise: Promise<ForzaGarageFile> | null = null;
+const detailBySlug = new Map<string, ForzaGarageCar>();
 
-export async function loadForzaGarage(): Promise<ForzaGarageFile> {
-  if (cache) return cache;
-  if (loadPromise) return loadPromise;
+/** Slim index for garage grid (~300 KB). Prefer this for list UI. */
+export async function loadForzaGarageList(): Promise<ForzaGarageFile> {
+  if (listCache) return listCache;
+  if (listPromise) return listPromise;
 
-  loadPromise = (async () => {
-    const res = await fetch("./forzaGarage.json");
-    if (!res.ok) throw new Error("Failed to load Forza Garage data");
-    cache = (await res.json()) as ForzaGarageFile;
-    return cache;
+  listPromise = (async () => {
+    try {
+      const res = await fetch("./forzaGarage-list.json");
+      if (!res.ok) throw new Error("list missing");
+      listCache = (await res.json()) as ForzaGarageFile;
+      return listCache;
+    } catch {
+      // Older builds / first deploy: fall back to full file, then strip heavy fields in memory.
+      const full = await loadForzaGarage();
+      listCache = {
+        ...full,
+        cars: full.cars.map((car) => {
+          const { mastery: _m, tuneSpecs: _t, description: _d, ...slim } = car;
+          return slim;
+        }),
+      };
+      return listCache;
+    }
   })();
 
-  return loadPromise;
+  return listPromise;
+}
+
+/** Full garage DB (mastery + tuneSpecs). Lazy — only when detail/tune needs it. */
+export async function loadForzaGarage(): Promise<ForzaGarageFile> {
+  if (fullCache) return fullCache;
+  if (fullPromise) return fullPromise;
+
+  fullPromise = (async () => {
+    const res = await fetch("./forzaGarage.json");
+    if (!res.ok) throw new Error("Failed to load Forza Garage data");
+    fullCache = (await res.json()) as ForzaGarageFile;
+    for (const car of fullCache.cars) detailBySlug.set(car.slug, car);
+    return fullCache;
+  })();
+
+  return fullPromise;
+}
+
+/** Merge list car with full detail (mastery / tuneSpecs) when available. */
+export async function enrichGarageCar(car: ForzaGarageCar): Promise<ForzaGarageCar> {
+  if (car.tuneSpecs || car.mastery) return car;
+  const cached = detailBySlug.get(car.slug);
+  if (cached) return cached;
+  const full = await loadForzaGarage();
+  return full.cars.find((c) => c.slug === car.slug) ?? car;
 }
 
 function norm(s: string) {

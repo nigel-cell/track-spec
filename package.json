@@ -10,11 +10,12 @@
     "preview": "vite preview",
     "server": "node server.js",
     "start": "npm run build && node server.js",
-    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images",
+    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images && node scripts/build-garage-list.cjs",
     "import:garage:images": "node scripts/download-garage-images.cjs",
-    "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs",
-    "import:garage:specs": "node scripts/patch-garage-specs.cjs",
-    "import:garage:brands": "node scripts/download-brand-logos.cjs"
+    "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs && node scripts/build-garage-list.cjs",
+    "import:garage:specs": "node scripts/patch-garage-specs.cjs && node scripts/build-garage-list.cjs",
+    "import:garage:brands": "node scripts/download-brand-logos.cjs",
+    "import:garage:list": "node scripts/build-garage-list.cjs"
   },
   "dependencies": {
     "express": "^4.19.2",

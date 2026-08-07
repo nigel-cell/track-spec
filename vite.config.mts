@@ -38,15 +38,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,json,svg,png,woff2,webp}"],
-        globIgnores: ["**/forzaGarage.json", "**/garage/**"],
+        globIgnores: ["**/forzaGarage.json", "**/forzaGarage-list.json", "**/garage/**"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /forzaGarage\.json$/i,
+            urlPattern: /forzaGarage(-list)?\.json$/i,
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "garage-data",
-              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
           {

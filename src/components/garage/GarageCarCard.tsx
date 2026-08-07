@@ -1,9 +1,7 @@
-import type { MouseEvent } from "react";
+import { memo, useEffect, useRef, useState, type MouseEvent } from "react";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
 import { carSubtitle, formatCr, rarityColor } from "../../lib/garageUi";
 import { BrandLogo } from "./BrandLogo";
-import { DriveBadge } from "./DriveBadge";
-import { FaceStatsBar } from "./FaceStatsBar";
 import { PiBadge } from "./PiBadge";
 
 interface GarageCarCardProps {
@@ -14,76 +12,102 @@ interface GarageCarCardProps {
   onToggleOwned: (e: MouseEvent) => void;
 }
 
-export function GarageCarCard({ car, owned, logoUrl, onOpen, onToggleOwned }: GarageCarCardProps) {
+/** Lightweight grid card — no face-stat grid; images only load when near viewport. */
+export const GarageCarCard = memo(function GarageCarCard({
+  car,
+  owned,
+  logoUrl,
+  onOpen,
+  onToggleOwned,
+}: GarageCarCardProps) {
   const accent = rarityColor(car.rarity);
+  const rootRef = useRef<HTMLElement | null>(null);
+  const [showImage, setShowImage] = useState(false);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || !car.image) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShowImage(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShowImage(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [car.image]);
 
   return (
     <article
+      ref={rootRef}
       className={[
-        "group relative flex flex-col overflow-hidden rounded-[var(--ts-radius-lg)] border bg-[var(--ts-card)] transition-all duration-200",
+        "group relative flex flex-col overflow-hidden rounded-[var(--ts-radius-lg)] border bg-[var(--ts-card)]",
+        "content-visibility-auto",
         owned
-          ? "border-[var(--ts-accent)]/60 shadow-[0_0_0_1px_var(--ts-accent-soft),0_8px_24px_rgba(0,0,0,0.25)]"
-          : "border-[var(--ts-border)] hover:border-[var(--ts-border)]/80 hover:shadow-lg",
+          ? "border-[var(--ts-accent)]/60"
+          : "border-[var(--ts-border)]",
       ].join(" ")}
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 240px" }}
     >
-      {/* Top bar */}
       <div
-        className="flex items-center justify-between gap-2 border-b border-[var(--ts-border)] px-3 py-2"
+        className="flex items-center justify-between gap-2 border-b border-[var(--ts-border)] px-2.5 py-1.5"
         style={{ borderLeftWidth: 3, borderLeftColor: accent }}
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <BrandLogo make={car.make} code={car.logoCode} url={logoUrl} size="sm" />
-          <span
-            className="truncate text-[10px] font-bold uppercase tracking-wide"
-            style={{ color: accent }}
-          >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <BrandLogo make={car.make} code={car.logoCode} url={logoUrl} size="xs" />
+          <span className="truncate text-[10px] font-bold uppercase tracking-wide" style={{ color: accent }}>
             {car.rarity ?? "Common"}
           </span>
         </div>
-        <span className="inline-flex items-center gap-1 font-[family-name:var(--ts-font-mono)] text-xs font-bold">
-          <img src="/garage/icons/sp-gold.webp" alt="" className="h-3.5 w-3.5" />
+        <span className="inline-flex shrink-0 items-center gap-1 font-[family-name:var(--ts-font-mono)] text-[11px] font-bold">
+          <img src="/garage/icons/sp-gold.webp" alt="" className="h-3 w-3" width={12} height={12} />
           {formatCr(car.cost)}
         </span>
       </div>
 
       <button type="button" onClick={onOpen} className="flex flex-1 flex-col text-left">
-        <div className="relative aspect-[16/10] bg-gradient-to-b from-[var(--ts-surface)] to-black/50">
-          {car.image ? (
+        <div className="relative aspect-[16/9] bg-[var(--ts-surface)]">
+          {showImage && car.image ? (
             <img
               src={car.image}
               alt=""
-              className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full object-contain p-1.5"
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={320}
+              height={180}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-[var(--ts-muted)]">No image</div>
+            <div className="h-full w-full bg-[var(--ts-surface)]" />
           )}
 
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-8">
-            <FaceStatsBar car={car} compact />
-          </div>
-
-          <div className="absolute right-2 top-2">
+          <div className="absolute right-1.5 top-1.5">
             <PiBadge cls={car.class} pi={car.pi} />
           </div>
 
           {owned && (
-            <div className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ts-accent)] text-xs font-bold text-white shadow-md">
+            <div className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--ts-accent)] text-[10px] font-bold text-white">
               ✓
             </div>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col gap-1 p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="truncate font-[family-name:var(--ts-font-heading)] text-sm font-semibold leading-tight">
-                {car.model}
-              </h3>
-              <p className="truncate text-xs text-[var(--ts-muted)]">{carSubtitle(car)}</p>
-            </div>
-            <DriveBadge drive={car.drive} />
-          </div>
+        <div className="flex flex-1 flex-col gap-0.5 px-2.5 py-2">
+          <h3 className="truncate font-[family-name:var(--ts-font-heading)] text-sm font-semibold leading-tight">
+            {car.model}
+          </h3>
+          <p className="truncate text-[11px] text-[var(--ts-muted)]">
+            {carSubtitle(car)}
+            {car.drive ? ` · ${car.drive}` : ""}
+          </p>
         </div>
       </button>
 
@@ -91,14 +115,14 @@ export function GarageCarCard({ car, owned, logoUrl, onOpen, onToggleOwned }: Ga
         type="button"
         onClick={onToggleOwned}
         className={[
-          "border-t px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
+          "border-t px-2.5 py-2 text-center text-[10px] font-bold uppercase tracking-[0.12em]",
           owned
             ? "border-[var(--ts-accent)]/30 bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
-            : "border-[var(--ts-border)] text-[var(--ts-muted)] hover:bg-[var(--ts-surface)] hover:text-[var(--ts-text)]",
+            : "border-[var(--ts-border)] text-[var(--ts-muted)]",
         ].join(" ")}
       >
         {owned ? "In garage" : "Mark owned"}
       </button>
     </article>
   );
-}
+});

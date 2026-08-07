@@ -22,6 +22,7 @@ import { listBuildProfiles, buildProfileToDraft } from "./lib/buildProfiles";
 import { DEFAULT_CAR } from "./data/constants";
 
 import { TelemetryProvider, useTelemetryContext } from "./context/TelemetryContext";
+import { ForzaGarageProvider } from "./context/ForzaGarageContext";
 
 import { useCarPhoto } from "./hooks/useCarPhoto";
 import { useCarDatabase } from "./hooks/useCarDatabase";
@@ -108,14 +109,17 @@ function AppContent() {
   const [quickTuneManualHandler, setQuickTuneManualHandler] = useState<"garage" | "telemetry" | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
   const [dismissedCarOrdinal, setDismissedCarOrdinal] = useState<number | null>(null);
-
-
+  const [garageVisited, setGarageVisited] = useState(false);
 
   const { telemetry, lookupCarOrdinal } = useTelemetryContext();
 
   const { units, setUnits } = useUnits();
   const { updateReady, refreshing, refreshApp } = useAppRefresh();
   const prevUnitsRef = useRef(units);
+
+  useEffect(() => {
+    if (tab === "garage") setGarageVisited(true);
+  }, [tab]);
 
   useEffect(() => {
     const prev = prevUnitsRef.current;
@@ -390,13 +394,15 @@ function AppContent() {
 
         )}
 
-        {tab === "garage" && (
-          <GarageScreen
-            onQuickTune={handleQuickTuneFromGarage}
-            onManualTune={handleManualTuneFromGarage}
-            onLoadSaved={handleLoadSaved}
-            onBrowseTunes={() => setMyTunesOpen(true)}
-          />
+        {garageVisited && (
+          <div className={tab === "garage" ? "contents" : "hidden"} aria-hidden={tab !== "garage"}>
+            <GarageScreen
+              onQuickTune={handleQuickTuneFromGarage}
+              onManualTune={handleManualTuneFromGarage}
+              onLoadSaved={handleLoadSaved}
+              onBrowseTunes={() => setMyTunesOpen(true)}
+            />
+          </div>
         )}
 
         {tab === "sessions" && <SessionsScreen />}
@@ -521,21 +527,15 @@ function AppContent() {
 
 
 export default function App() {
-
   return (
-
     <ThemeProvider>
-
       <TelemetryProvider>
-
-        <AppContent />
-
+        <ForzaGarageProvider eager={false}>
+          <AppContent />
+        </ForzaGarageProvider>
       </TelemetryProvider>
-
     </ThemeProvider>
-
   );
-
 }
 
 

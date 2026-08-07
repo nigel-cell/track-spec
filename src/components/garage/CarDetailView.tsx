@@ -19,6 +19,7 @@ interface CarDetailViewProps {
   car: ForzaGarageCar;
   owned: boolean;
   logoUrl?: string | null;
+  detailLoading?: boolean;
   onClose: () => void;
   onToggleOwned: () => void;
   onQuickTune?: () => void;
@@ -31,6 +32,7 @@ export function CarDetailView({
   car,
   owned,
   logoUrl,
+  detailLoading,
   onClose,
   onToggleOwned,
   onQuickTune,
@@ -46,7 +48,7 @@ export function CarDetailView({
     { id: "overview", label: "Overview" },
     { id: "specs", label: "Tuning" },
   ];
-  if (car.mastery?.cells?.length) tabs.push({ id: "mastery", label: "Mastery" });
+  if (car.mastery?.cells?.length || detailLoading) tabs.push({ id: "mastery", label: "Mastery" });
 
   return (
     <div className="pb-8">
@@ -198,20 +200,28 @@ export function CarDetailView({
           </>
         )}
 
-        {tab === "specs" && <CarTuneSpecs car={car} />}
+        {tab === "specs" &&
+          (detailLoading && !car.tuneSpecs ? (
+            <p className="py-8 text-center text-sm text-[var(--ts-muted)]">Loading tuning specs…</p>
+          ) : (
+            <CarTuneSpecs car={car} />
+          ))}
 
-        {tab === "mastery" && car.mastery && (
-          <section className="rounded-[var(--ts-radius-lg)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-5">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-wide text-[var(--ts-muted)]">Mastery tree</h2>
-              <span className="inline-flex items-center gap-1 font-[family-name:var(--ts-font-mono)] text-sm font-bold">
-                {car.mastery.totalCost ?? "—"}
-                <img src="/garage/icons/sp-gold.webp" alt="" className="h-4 w-4" /> total
-              </span>
-            </div>
-            <MasteryTree mastery={car.mastery} />
-          </section>
-        )}
+        {tab === "mastery" &&
+          (detailLoading && !car.mastery ? (
+            <p className="py-8 text-center text-sm text-[var(--ts-muted)]">Loading mastery…</p>
+          ) : car.mastery ? (
+            <section className="rounded-[var(--ts-radius-lg)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-5">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wide text-[var(--ts-muted)]">Mastery tree</h2>
+                <span className="inline-flex items-center gap-1 font-[family-name:var(--ts-font-mono)] text-sm font-bold">
+                  {car.mastery.totalCost ?? "—"}
+                  <img src="/garage/icons/sp-gold.webp" alt="" className="h-4 w-4" /> total
+                </span>
+              </div>
+              <MasteryTree mastery={car.mastery} />
+            </section>
+          ) : null)}
 
         <p className="text-center text-xs text-[var(--ts-muted)]">
           Data via{" "}

@@ -248,7 +248,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const { cars, makes, count: carCount, loading: carsLoading } = useCarDatabase();
 
-  const { lookup: lookupGarage } = useForzaGarage();
+  const { lookup: lookupGarage, enrich: enrichGarage } = useForzaGarage();
 
   const { lookup: lookupWiki } = useWikiSwaps();
 
@@ -509,39 +509,45 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         carCount={carCount}
         units={units}
         onSelect={(patch) => {
-          const garage = patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null;
-          const merged = mergeGarageIntoDraft(patch, garage, cars, units);
-          if (merged.make) setMake(merged.make);
-          if (merged.model) setModel(merged.model);
-          if (merged.driveType) setDriveType(merged.driveType);
-          if (merged.weightDist != null) setWeightDist(merged.weightDist);
-          if (merged.weight) setWeight(merged.weight);
-          if (merged.pi) setPi(merged.pi);
-          if (merged.carClass) setCarClass(merged.carClass);
-          if (merged.stockFd !== undefined) setStockFd(merged.stockFd);
-          if (merged.stockGears !== undefined) setStockGears(merged.stockGears);
-          if (merged.redlineRpm) setRedlineRpm(merged.redlineRpm);
-          if (merged.peakTorqueRpm) setPeakTorqueRpm(merged.peakTorqueRpm);
-          if (merged.maxTorque) setMaxTorque(merged.maxTorque);
-          if (merged.topspeed) setTopspeed(merged.topspeed);
-          if (merged.gears) setGears(merged.gears);
-          if (merged.compound) setCompound(merged.compound);
-          if (merged.hasAero !== undefined) setHasAero(merged.hasAero);
-          if (merged.aeroF != null) setAeroF(merged.aeroF);
-          if (merged.aeroR != null) setAeroR(merged.aeroR);
-          if (merged.tireWF) setTireWF(merged.tireWF);
-          if (merged.tireWR) setTireWR(merged.tireWR);
-          if (merged.aspiration) setAspiration(merged.aspiration);
-          if (garage?.tuneSpecs?.aspiration && !merged.aspiration) {
-            setAspiration(aspirationFromGarage(garage.tuneSpecs.aspiration));
+          const slim = patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null;
+          const apply = (garage: typeof slim) => {
+            const merged = mergeGarageIntoDraft(patch, garage, cars, units);
+            if (merged.make) setMake(merged.make);
+            if (merged.model) setModel(merged.model);
+            if (merged.driveType) setDriveType(merged.driveType);
+            if (merged.weightDist != null) setWeightDist(merged.weightDist);
+            if (merged.weight) setWeight(merged.weight);
+            if (merged.pi) setPi(merged.pi);
+            if (merged.carClass) setCarClass(merged.carClass);
+            if (merged.stockFd !== undefined) setStockFd(merged.stockFd);
+            if (merged.stockGears !== undefined) setStockGears(merged.stockGears);
+            if (merged.redlineRpm) setRedlineRpm(merged.redlineRpm);
+            if (merged.peakTorqueRpm) setPeakTorqueRpm(merged.peakTorqueRpm);
+            if (merged.maxTorque) setMaxTorque(merged.maxTorque);
+            if (merged.topspeed) setTopspeed(merged.topspeed);
+            if (merged.gears) setGears(merged.gears);
+            if (merged.compound) setCompound(merged.compound);
+            if (merged.hasAero !== undefined) setHasAero(merged.hasAero);
+            if (merged.aeroF != null) setAeroF(merged.aeroF);
+            if (merged.aeroR != null) setAeroR(merged.aeroR);
+            if (merged.tireWF) setTireWF(merged.tireWF);
+            if (merged.tireWR) setTireWR(merged.tireWR);
+            if (merged.aspiration) setAspiration(merged.aspiration);
+            if (garage?.tuneSpecs?.aspiration && !merged.aspiration) {
+              setAspiration(aspirationFromGarage(garage.tuneSpecs.aspiration));
+            }
+            if (merged.weight) {
+              const lbs = units.weight === "lbs" ? merged.weight : merged.weight * 2.205;
+              setStockWeightLbs(Math.round(lbs));
+            }
+            if (garage?.tuneSpecs?.maxTorqueLbFt) setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
+            setStockDisplacementCc(garage?.tuneSpecs?.displacementCc ?? null);
+            setEngineSwap("None (Stock)");
+          };
+          apply(slim);
+          if (slim && !slim.tuneSpecs) {
+            void enrichGarage(slim).then((full) => apply(full));
           }
-          if (merged.weight) {
-            const lbs = units.weight === "lbs" ? merged.weight : merged.weight * 2.205;
-            setStockWeightLbs(Math.round(lbs));
-          }
-          if (garage?.tuneSpecs?.maxTorqueLbFt) setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
-          setStockDisplacementCc(garage?.tuneSpecs?.displacementCc ?? null);
-          setEngineSwap("None (Stock)");
         }}
       />
       <CarPhotoHero
