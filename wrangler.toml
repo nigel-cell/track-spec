@@ -1,3 +1,9 @@
 name = "track-spec"
 compatibility_date = "2026-08-01"
-pages_build_output_dir = "dist"
+
+# Static Vite PWA — Cloudflare Workers + Assets (new dashboard "Worker" flow)
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+# Serve existing files (JSON, garage heroes) before SPA fallback
+run_worker_first = false

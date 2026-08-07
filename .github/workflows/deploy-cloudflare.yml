@@ -25,9 +25,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=track-spec --commit-dirty=true
+          # Matches dashboard Worker + Assets flow (wrangler.toml [assets])
+          command: deploy --commit-dirty=true
