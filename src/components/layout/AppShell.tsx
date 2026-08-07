@@ -38,7 +38,7 @@ export function AppShell({
     <div className="flex h-dvh overflow-hidden bg-[var(--ts-bg)]">
       <aside
         className={[
-          "hidden shrink-0 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-surface)] md:flex",
+          "hidden shrink-0 flex-col border-r border-[var(--ts-border)] bg-[var(--ts-surface)] lg:flex",
           immersive ? "w-[68px] items-center px-2 py-3" : "w-[220px] p-4",
         ].join(" ")}
       >
@@ -104,7 +104,7 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3 md:hidden">
+        <header className="safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3 lg:hidden">
           <img src="/logo-banner.png" alt="Track Spec" className="h-8 shrink-0" />
           <div className="flex items-center gap-2">
             {onRefresh && (
@@ -138,13 +138,13 @@ export function AppShell({
         <main
           className={[
             "min-h-0 flex-1",
-            lockMainScroll ? "overflow-hidden" : "overflow-auto",
+            lockMainScroll ? "overflow-auto lg:overflow-hidden" : "overflow-auto",
           ].join(" ")}
         >
           {children}
         </main>
 
-        <nav className="safe-bottom relative z-40 flex shrink-0 border-t border-[var(--ts-border)] bg-[var(--ts-surface)] md:hidden">
+        <nav className="safe-bottom relative z-40 flex shrink-0 border-t border-[var(--ts-border)] bg-[var(--ts-surface)] lg:hidden">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
