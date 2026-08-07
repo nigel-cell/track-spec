@@ -3,20 +3,26 @@
   "version": "1.0.0",
   "private": true,
   "description": "Forza Horizon tuning calculator + live telemetry PWA",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"vite --host\" \"node server.js\"",
     "build": "vite build",
+    "build:thumbs": "node scripts/build-garage-thumbs.cjs && node scripts/build-garage-list.cjs",
+    "build:cloud": "npm run build:thumbs && npm run build && node scripts/prepare-cloud-dist.cjs",
     "preview": "vite preview",
     "server": "node server.js",
     "start": "npm run build && node server.js",
-    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images && node scripts/build-garage-list.cjs",
+    "desktop": "npm run build && electron .",
+    "desktop:pack": "npm run build && electron-builder --win portable",
+    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images && npm run build:thumbs",
     "import:garage:images": "node scripts/download-garage-images.cjs",
     "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs && node scripts/build-garage-list.cjs",
     "import:garage:specs": "node scripts/patch-garage-specs.cjs && node scripts/build-garage-list.cjs",
     "import:garage:brands": "node scripts/download-brand-logos.cjs",
     "import:garage:list": "node scripts/build-garage-list.cjs",
-    "deploy:cf": "npm run build && wrangler pages deploy dist --project-name=track-spec"
+    "import:garage:thumbs": "node scripts/build-garage-thumbs.cjs",
+    "deploy:cf": "npm run build:cloud && wrangler deploy"
   },
   "dependencies": {
     "express": "^4.19.2",
@@ -30,9 +36,40 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^8.2.2",
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12",
+    "sharp": "^0.34.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^5.4.0",
     "vite-plugin-pwa": "^0.20.5"
+  },
+  "build": {
+    "appId": "com.nigel.trackspec",
+    "productName": "Track Spec",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "server.js",
+      "server/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon-512.png"
+    },
+    "portable": {
+      "artifactName": "TrackSpec-Live.exe"
+    }
   }
 }

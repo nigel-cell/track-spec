@@ -85,7 +85,8 @@ export const GarageCarCard = memo(function GarageCarCard({
           ].join(" ")}
         >
           <GarageHeroImage
-            src={car.image}
+            src={full ? car.image || car.thumb : car.thumb || car.image}
+            fallbackSrc={car.imageRemote}
             eager={priorityImage}
             className={[
               "h-full w-full object-contain",

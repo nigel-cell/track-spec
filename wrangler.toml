@@ -1,9 +1,9 @@
 name = "track-spec"
 compatibility_date = "2026-08-01"
 
-# Static Vite PWA — Cloudflare Workers + Assets (new dashboard "Worker" flow)
+# Phone / Cloudflare build — use dist-cloud (thumbs, no full heros)
+# Local Live + desktop exe still use full `dist/` via server.js / Electron
 [assets]
-directory = "./dist"
+directory = "./dist-cloud"
 not_found_handling = "single-page-application"
-# Serve existing files (JSON, garage heroes) before SPA fallback
 run_worker_first = false

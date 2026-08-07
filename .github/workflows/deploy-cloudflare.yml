@@ -22,13 +22,12 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build cloud pack (thumbs, no full heros)
+        run: npm run build:cloud
 
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Matches dashboard Worker + Assets flow (wrangler.toml [assets])
           command: deploy --commit-dirty=true

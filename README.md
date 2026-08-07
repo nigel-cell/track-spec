@@ -22,11 +22,63 @@ A mobile-first **PWA** for Forza Horizon tuning and live telemetry. Forked from 
 
 
 
-## Quick start
+## How to run (pick one)
 
 
 
-### Tuning only (no PC server needed)
+| What you want | How |
+|---------------|-----|
+| **Phone Tune + Garage** | Cloudflare URL (light pack — thumbs, no 50MB heros) |
+| **Live telemetry while racing** | Desktop **TrackSpec-Live.exe** or `START.bat` on the gaming PC |
+| **Dev UI only** | `npm run dev` → `http://localhost:5173` |
+
+
+
+### Phone (Cloudflare)
+
+
+
+```bash
+
+npm run deploy:cf
+
+```
+
+
+
+Needs Wrangler login / API token. Install the `*.workers.dev` (or Pages) URL to Home Screen.
+
+
+
+### Live on PC (easiest)
+
+
+
+```bash
+
+npm run desktop:pack
+
+```
+
+
+
+Creates `release/TrackSpec-Live.exe`. Double-click it — UI + UDP relay start together. In Forza: Data Out → this PC → port **9999**.
+
+
+
+Or without packaging:
+
+
+
+```bash
+
+npm run desktop
+
+```
+
+
+
+### Dev (no pack)
 
 
 

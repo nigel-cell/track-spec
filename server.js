@@ -24,7 +24,11 @@ const wss = new WebSocket.Server({ server });
 
 
 
-app.use(express.static(path.join(__dirname, "dist")));
+const DIST_DIR = process.env.TRACK_SPEC_DIST
+  ? path.resolve(process.env.TRACK_SPEC_DIST)
+  : path.join(__dirname, "dist");
+
+app.use(express.static(DIST_DIR));
 
 app.use(express.json());
 
@@ -646,7 +650,7 @@ udpSocket.on("error", (err) => {
 
   }
 
-  process.exit(1);
+  if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
 
 });
 
@@ -658,7 +662,7 @@ udpSocket.bind(FORZA_UDP_PORT);
 
 app.get("*", (req, res) => {
 
-  const indexPath = path.join(__dirname, "dist", "index.html");
+  const indexPath = path.join(DIST_DIR, "index.html");
 
   if (require("fs").existsSync(indexPath)) res.sendFile(indexPath);
 
@@ -700,15 +704,15 @@ server.listen(HTTP_PORT, "0.0.0.0", () => {
 
   }
 
-  console.log("\n  iPhone steps:");
+  if (!process.env.TRACK_SPEC_ELECTRON) {
 
-  console.log("  1. Same Wi-Fi as this PC");
+    console.log("\n  iPhone Tune/Garage: use your Cloudflare URL (recommended)");
 
-  console.log("  2. Open the iPhone URL above in Safari");
+    console.log("  iPhone Live: same Wi-Fi → http://<PC-IP>:3000\n");
 
-  console.log("  3. Share → Add to Home Screen\n");
+  }
 
-  console.log("  Forza: Data Out ON | Port 9999\n");
+  console.log("  Forza: Data Out ON | IP = this PC | Port 9999\n");
 
 });
 

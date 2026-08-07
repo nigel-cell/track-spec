@@ -59,6 +59,10 @@ export interface ForzaGarageCar {
   heroCode: string | null;
   logoCode?: string | null;
   image: string | null;
+  /** Small grid image for mobile / Cloudflare. */
+  thumb?: string | null;
+  /** CDN full hero when local /garage/heros is not deployed. */
+  imageRemote?: string | null;
   stats: Record<string, number>;
   tuneSpecs?: ForzaGarageTuneSpecs;
   mastery?: ForzaGarageMastery;
