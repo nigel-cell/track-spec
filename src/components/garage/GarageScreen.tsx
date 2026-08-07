@@ -1,6 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useBrandLogos } from "../../hooks/useBrandLogos";
 import { useForzaGarage } from "../../hooks/useForzaGarage";
+import { getScrollParent, useIsDesktop } from "../../hooks/useIsDesktop";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
 import { CarDetailView } from "./CarDetailView";
 import { GarageCarCard } from "./GarageCarCard";
@@ -8,7 +9,8 @@ import { GarageCollectionBar } from "./GarageCollectionBar";
 import { GarageFilters, type GarageGroup, type GarageSort, type GarageViewMode } from "./GarageFilters";
 import { Card } from "../ui/Card";
 
-const PAGE_SIZE = 24;
+const MOBILE_PAGE = 20;
+const DESKTOP_PAGE = 60;
 
 export function GarageScreen({
   onQuickTune,
@@ -21,6 +23,10 @@ export function GarageScreen({
   onLoadSaved?: (entry: import("../../lib/tuneSaves").SavedTune) => void;
   onBrowseTunes?: () => void;
 }) {
+  const isDesktop = useIsDesktop();
+  const pageSize = isDesktop ? DESKTOP_PAGE : MOBILE_PAGE;
+  const density = isDesktop ? "full" : "light";
+
   const { cars, loading, error, owned, toggleOwned, stats, enrich, ensureLoaded } = useForzaGarage();
   const { urlForMake } = useBrandLogos();
 
@@ -39,8 +45,12 @@ export function GarageScreen({
   const [makeFilter, setMakeFilter] = useState<string | null>(null);
   const [detail, setDetail] = useState<ForzaGarageCar | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [pageSize]);
 
   const brandCounts = useMemo(() => {
     const map = new Map<string, { make: string; code: string | null; count: number }>();
@@ -79,15 +89,11 @@ export function GarageScreen({
     });
   }, [cars, deferredQuery, view, owned, sort, classFilter, rarityFilter, driveFilter, makeFilter]);
 
-  // Reset window when the result set changes.
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [deferredQuery, view, sort, classFilter, rarityFilter, driveFilter, makeFilter, group]);
+    setVisibleCount(pageSize);
+  }, [deferredQuery, view, sort, classFilter, rarityFilter, driveFilter, makeFilter, group, pageSize]);
 
-  const visibleCars = useMemo(
-    () => filtered.slice(0, visibleCount),
-    [filtered, visibleCount],
-  );
+  const visibleCars = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
   const grouped = useMemo(() => {
     if (group === "none") return [{ key: "All cars", items: visibleCars }];
@@ -103,20 +109,22 @@ export function GarageScreen({
       .map(([key, items]) => ({ key, items }));
   }, [group, visibleCars]);
 
+  // Infinite scroll must use AppShell <main> as root — not the window.
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el) return;
+    if (!el || visibleCount >= filtered.length) return;
+    const root = getScrollParent(el);
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          setVisibleCount((n) => Math.min(n + PAGE_SIZE, filtered.length));
+          setVisibleCount((n) => Math.min(n + pageSize, filtered.length));
         }
       },
-      { rootMargin: "280px 0px" },
+      { root: root instanceof Element ? root : null, rootMargin: "320px 0px", threshold: 0 },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [filtered.length, visibleCount]);
+  }, [filtered.length, visibleCount, pageSize]);
 
   const openDetail = useCallback(
     async (car: ForzaGarageCar) => {
@@ -172,7 +180,9 @@ export function GarageScreen({
       <header>
         <h1 className="font-[family-name:var(--ts-font-heading)] text-3xl font-bold tracking-tight">Garage</h1>
         <p className="mt-1 max-w-xl text-sm text-[var(--ts-muted)]">
-          Browse all {stats.total} FH6 cars — costs, specs, mastery, and your collection progress.
+          {isDesktop
+            ? `Browse all ${stats.total} FH6 cars — costs, specs, mastery, and your collection.`
+            : `Fast mobile browse of ${stats.total} FH6 cars. Tap a car for full specs & photos.`}
         </p>
       </header>
 
@@ -207,7 +217,7 @@ export function GarageScreen({
 
       {loading && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: isDesktop ? 12 : 6 }).map((_, i) => (
             <div
               key={i}
               className="aspect-[3/4] animate-pulse rounded-[var(--ts-radius-lg)] border border-[var(--ts-border)] bg-[var(--ts-card)]"
@@ -242,11 +252,12 @@ export function GarageScreen({
                 </span>
               </h2>
             )}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
               {items.map((car) => (
                 <GarageCarCard
                   key={car.slug}
                   car={car}
+                  density={density}
                   owned={owned.has(car.slug)}
                   logoUrl={urlForMake(car.make)}
                   onOpen={() => void openDetail(car)}

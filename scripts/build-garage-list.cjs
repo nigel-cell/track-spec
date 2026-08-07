@@ -29,6 +29,7 @@ const KEEP = [
   "heroCode",
   "logoCode",
   "image",
+  "stats", // used by desktop full cards (FaceStatsBar)
 ];
 
 const full = JSON.parse(fs.readFileSync(FULL, "utf8"));

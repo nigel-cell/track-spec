@@ -136,6 +136,7 @@ export function AppShell({
         </header>
 
         <main
+          data-app-scroll
           className={[
             "min-h-0 flex-1",
             lockMainScroll ? "overflow-hidden" : "overflow-auto",
