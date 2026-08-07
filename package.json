@@ -15,7 +15,8 @@
     "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs && node scripts/build-garage-list.cjs",
     "import:garage:specs": "node scripts/patch-garage-specs.cjs && node scripts/build-garage-list.cjs",
     "import:garage:brands": "node scripts/download-brand-logos.cjs",
-    "import:garage:list": "node scripts/build-garage-list.cjs"
+    "import:garage:list": "node scripts/build-garage-list.cjs",
+    "deploy:cf": "npm run build && wrangler pages deploy dist --project-name=track-spec"
   },
   "dependencies": {
     "express": "^4.19.2",
