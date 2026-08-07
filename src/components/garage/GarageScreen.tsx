@@ -9,8 +9,10 @@ import { GarageCollectionBar } from "./GarageCollectionBar";
 import { GarageFilters, type GarageGroup, type GarageSort, type GarageViewMode } from "./GarageFilters";
 import { Card } from "../ui/Card";
 
-const MOBILE_PAGE = 20;
-const DESKTOP_PAGE = 60;
+const MOBILE_PAGE = 16;
+const DESKTOP_PAGE = 20;
+/** Only the first row should fetch heroes immediately. */
+const PRIORITY_IMAGES = 8;
 
 export function GarageScreen({
   onQuickTune,
@@ -235,41 +237,49 @@ export function GarageScreen({
       )}
 
       {!loading &&
-        grouped.map(({ key, items }) => (
-          <section key={key}>
-            {group !== "none" && (
-              <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--ts-font-heading)] text-sm font-bold uppercase tracking-[0.14em] text-[var(--ts-muted)]">
-                {group === "make" && items[0] && (
-                  <img
-                    src={urlForMake(items[0].make) ?? undefined}
-                    alt=""
-                    className="h-5 w-5 object-contain"
-                  />
-                )}
-                {key}
-                <span className="font-[family-name:var(--ts-font-mono)] text-xs font-normal normal-case">
-                  {items.length}
-                </span>
-              </h2>
-            )}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-              {items.map((car) => (
-                <GarageCarCard
-                  key={car.slug}
-                  car={car}
-                  density={density}
-                  owned={owned.has(car.slug)}
-                  logoUrl={urlForMake(car.make)}
-                  onOpen={() => void openDetail(car)}
-                  onToggleOwned={(e) => {
-                    e.stopPropagation();
-                    toggleOwned(car.slug);
-                  }}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        (() => {
+          let imageIndex = 0;
+          return grouped.map(({ key, items }) => (
+            <section key={key}>
+              {group !== "none" && (
+                <h2 className="mb-4 flex items-center gap-2 font-[family-name:var(--ts-font-heading)] text-sm font-bold uppercase tracking-[0.14em] text-[var(--ts-muted)]">
+                  {group === "make" && items[0] && (
+                    <img
+                      src={urlForMake(items[0].make) ?? undefined}
+                      alt=""
+                      className="h-5 w-5 object-contain"
+                    />
+                  )}
+                  {key}
+                  <span className="font-[family-name:var(--ts-font-mono)] text-xs font-normal normal-case">
+                    {items.length}
+                  </span>
+                </h2>
+              )}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                {items.map((car) => {
+                  const priorityImage = imageIndex < PRIORITY_IMAGES;
+                  imageIndex += 1;
+                  return (
+                    <GarageCarCard
+                      key={car.slug}
+                      car={car}
+                      density={density}
+                      priorityImage={priorityImage}
+                      owned={owned.has(car.slug)}
+                      logoUrl={urlForMake(car.make)}
+                      onOpen={() => void openDetail(car)}
+                      onToggleOwned={(e) => {
+                        e.stopPropagation();
+                        toggleOwned(car.slug);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ));
+        })()}
 
       {!loading && visibleCount < filtered.length && (
         <div ref={sentinelRef} className="py-6 text-center text-xs text-[var(--ts-muted)]">

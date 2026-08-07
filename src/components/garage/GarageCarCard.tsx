@@ -16,6 +16,8 @@ interface GarageCarCardProps {
   logoUrl?: string | null;
   /** light = mobile (fast); full = desktop (richer). */
   density?: GarageCardDensity;
+  /** First-screen heroes only — never eager-load a whole page of 75KB images. */
+  priorityImage?: boolean;
   onOpen: () => void;
   onToggleOwned: (e: MouseEvent) => void;
 }
@@ -25,6 +27,7 @@ export const GarageCarCard = memo(function GarageCarCard({
   owned,
   logoUrl,
   density = "light",
+  priorityImage = false,
   onOpen,
   onToggleOwned,
 }: GarageCarCardProps) {
@@ -83,14 +86,15 @@ export const GarageCarCard = memo(function GarageCarCard({
         >
           <GarageHeroImage
             src={car.image}
-            eager={full}
+            eager={priorityImage}
             className={[
               "h-full w-full object-contain",
               full ? "p-2 transition-transform duration-300 group-hover:scale-[1.03]" : "p-1.5",
             ].join(" ")}
           />
 
-          {full && (
+          {/* Face stats only on desktop and only when present — skip empty grids */}
+          {full && car.stats && Object.keys(car.stats).length > 0 && (
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-8">
               <FaceStatsBar car={car} compact />
             </div>

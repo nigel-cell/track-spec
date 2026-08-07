@@ -32,22 +32,17 @@ if not exist node_modules (
   )
 )
 
+REM Always stop an old server so we never serve a stale dist
 netstat -ano | findstr ":3000" | findstr "LISTENING" >nul 2>&1
 if not errorlevel 1 (
-  echo  Server already running on port 3000.
-  echo  Opening browser...
-  start "" "http://localhost:3000"
-  echo.
-  echo  iPhone: open Safari and go to:
-  for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
-    for /f "tokens=1" %%b in ("%%a") do echo    http://%%b:3000
+  echo  Stopping previous server on port 3000...
+  for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%a >nul 2>&1
   )
-  echo.
-  pause
-  exit /b 0
+  timeout /t 1 /nobreak >nul
 )
 
-echo  Building app...
+echo  Building app (fresh)...
 call npm run build
 if errorlevel 1 (
   color 0C
