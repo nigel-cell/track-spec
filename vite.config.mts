@@ -42,6 +42,15 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
+            urlPattern: /updates\.json$/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "updates-manifest",
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 },
+              networkTimeoutSeconds: 5,
+            },
+          },
+          {
             urlPattern: /forzaGarage(-list)?\.json$/i,
             handler: "StaleWhileRevalidate",
             options: {

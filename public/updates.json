@@ -1,0 +1,54 @@
+{
+  "version": "1.1.0",
+  "updatedAt": "2026-08-07",
+  "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest",
+  "repoUrl": "https://github.com/nigel-cell/track-spec",
+  "entries": [
+    {
+      "version": "1.1.0",
+      "date": "2026-08-07",
+      "title": "Desktop Live exe, light phone pack, update center",
+      "items": [
+        "TrackSpec-Live.exe — double-click for UI + Live relay",
+        "Cloudflare light pack (~11 MB) with garage thumbs",
+        "Faster Garage: windowed list, slim JSON, deferred images",
+        "Drive icons fixed (front/rear axles)",
+        "In-app update checker and full changelog"
+      ]
+    },
+    {
+      "version": "1.0.2",
+      "date": "2026-08-07",
+      "title": "Garage performance + Cloudflare deploy",
+      "items": [
+        "Slim forzaGarage-list.json for mobile",
+        "Scroll windowing so phones don’t mount 622 cards",
+        "Cloudflare Workers static deploy config",
+        "PWA refresh button (no re-add to Home Screen)"
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-08-07",
+      "title": "Tuning tools + data refresh",
+      "items": [
+        "Quick Tune / Manual flows with garage specs",
+        "Engine swaps from Forza Wiki",
+        "Save, share, compare tunes locally",
+        "Metric / Imperial units",
+        "Live HUD and car detect prompts"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-08-07",
+      "title": "Track Spec launch",
+      "items": [
+        "FH6 tuning calculator PWA",
+        "Garage browser with mastery and collection",
+        "Live telemetry relay (UDP 9999)",
+        "Theme and design settings"
+      ]
+    }
+  ]
+}

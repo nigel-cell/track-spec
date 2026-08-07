@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { AppShell, type TabId } from "./components/layout/AppShell";
 
 import { MenuSheet } from "./components/layout/MenuSheet";
+import { UpdatesSheet } from "./components/layout/UpdatesSheet";
 
 import { SetupScreen } from "./components/telemetry/SetupScreen";
 
@@ -78,6 +79,7 @@ function AppContent() {
   const [tab, setTab] = useState<TabId>("tune");
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
 
   const [myTunesOpen, setMyTunesOpen] = useState(false);
 
@@ -438,22 +440,23 @@ function AppContent() {
         }}
 
         onAiSettings={() => {
-
           setMenuOpen(false);
-
           setAiSettingsOpen(true);
-
         }}
-
+        onUpdates={() => setUpdatesOpen(true)}
         units={units}
-
         onUnitsChange={setUnits}
-
         onRefresh={refreshApp}
-
         refreshBusy={refreshing}
-
         updateReady={updateReady}
+      />
+
+      <UpdatesSheet
+        open={updatesOpen}
+        onClose={() => setUpdatesOpen(false)}
+        updateReady={updateReady}
+        refreshBusy={refreshing}
+        onUpdateNow={() => void refreshApp()}
       />
 
 

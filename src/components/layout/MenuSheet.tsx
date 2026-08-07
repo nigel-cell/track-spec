@@ -9,6 +9,7 @@ interface MenuSheetProps {
   onClose: () => void;
   onMyTunes?: () => void;
   onAiSettings?: () => void;
+  onUpdates?: () => void;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   updateReady?: boolean;
@@ -21,6 +22,7 @@ export function MenuSheet({
   onClose,
   onMyTunes,
   onAiSettings,
+  onUpdates,
   onRefresh,
   refreshBusy,
   updateReady,
@@ -131,17 +133,27 @@ export function MenuSheet({
             ✦ AI provider settings
           </Button>
         )}
+        {onUpdates && (
+          <Button
+            variant={updateReady ? "primary" : "outline"}
+            full
+            className="mb-3"
+            onClick={() => {
+              onUpdates();
+              onClose();
+            }}
+          >
+            {updateReady ? "⬆ Update available" : "⬆ Updates & changelog"}
+          </Button>
+        )}
         {onRefresh && (
           <div className="mb-3 rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-3">
-            <h3 className="text-sm font-semibold text-[var(--ts-text)]">Refresh app</h3>
+            <h3 className="text-sm font-semibold text-[var(--ts-text)]">Quick refresh</h3>
             <p className="mt-1 text-xs leading-snug text-[var(--ts-muted)]">
-              Reload the latest version from your PC. Saved tunes and settings stay on this device — no need to re-add to Home Screen.
+              Reload this install. Saved tunes stay on the device.
             </p>
-            {updateReady && (
-              <p className="mt-2 text-xs font-medium text-[var(--ts-accent)]">A new version is ready to install.</p>
-            )}
             <Button
-              variant={updateReady ? "primary" : "outline"}
+              variant="outline"
               full
               className="mt-3"
               disabled={refreshBusy}
@@ -150,7 +162,7 @@ export function MenuSheet({
                 onClose();
               }}
             >
-              {refreshBusy ? "Refreshing…" : updateReady ? "Update & refresh" : "Refresh now"}
+              {refreshBusy ? "Refreshing…" : "Refresh now"}
             </Button>
           </div>
         )}
