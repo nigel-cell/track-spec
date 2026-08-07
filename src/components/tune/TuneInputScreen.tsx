@@ -43,6 +43,9 @@ import {
 
 import { useCarPhoto } from "../../hooks/useCarPhoto";
 
+import { useWikiSwaps } from "../../hooks/useWikiSwaps";
+import { estimateSwap, parseSwapName } from "../../lib/wikiSwaps";
+
 import { Button } from "../ui/Button";
 
 import { Card, Label } from "../ui/Card";
@@ -229,6 +232,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [inputDevice, setInputDevice] = useState<InputDeviceId>("controller");
   const [stockWeightLbs, setStockWeightLbs] = useState<number | null>(null);
   const [stockTorqueLbFt, setStockTorqueLbFt] = useState<number | null>(null);
+  const [stockDisplacementCc, setStockDisplacementCc] = useState<number | null>(null);
 
   const [tireWF, setTireWF] = useState("275/35R19");
 
@@ -245,6 +249,8 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const { cars, makes, count: carCount, loading: carsLoading } = useCarDatabase();
 
   const { lookup: lookupGarage } = useForzaGarage();
+
+  const { lookup: lookupWiki } = useWikiSwaps();
 
   const { status, url } = useCarPhoto(make, model);
 
@@ -329,8 +335,45 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     [make, model, weight, units, cars],
   );
 
+  const wikiCar = useMemo(() => lookupWiki(make, model), [lookupWiki, make, model]);
+
+  // The wiki lists the exact conversions FH6 offers for this chassis; fall back
+  // to the generic engine list when a car has no page yet.
+  const swapOptions = useMemo(() => {
+    const perCar = wikiCar?.engineSwaps ?? [];
+    return perCar.length ? ["None (Stock)", ...perCar] : [...ENGINE_SWAPS];
+  }, [wikiCar]);
+
+  const usingWikiSwaps = (wikiCar?.engineSwaps?.length ?? 0) > 0;
+
+  useEffect(() => {
+    if (engineSwap !== "None (Stock)" && !swapOptions.includes(engineSwap)) {
+      setEngineSwap("None (Stock)");
+    }
+  }, [swapOptions, engineSwap]);
+
+  const applyWikiSwap = (swap: string) => {
+    const est = estimateSwap(parseSwapName(swap), {
+      weightLbs: stockWeightLbs,
+      displacementCc: stockDisplacementCc,
+    });
+    if (est.weightLbs != null) {
+      setWeight(units.weight === "lbs" ? est.weightLbs : Math.round(est.weightLbs / 2.205));
+    }
+    if (est.maxTorqueLbFt != null) {
+      setMaxTorque(units.weight === "lbs" ? est.maxTorqueLbFt : Math.round(est.maxTorqueLbFt * 1.356));
+    }
+    if (est.redlineRpm != null) setRedlineRpm(est.redlineRpm);
+    if (est.peakTorqueRpm != null) setPeakTorqueRpm(est.peakTorqueRpm);
+    setAspiration(est.aspiration);
+  };
+
   const handleSwapChange = (swap: string) => {
     setEngineSwap(swap);
+    if (swap !== "None (Stock)" && usingWikiSwaps) {
+      applyWikiSwap(swap);
+      return;
+    }
     if (swap === "None (Stock)") {
       if (stockWeightLbs != null) setWeight(units.weight === "lbs" ? stockWeightLbs : Math.round(stockWeightLbs / 2.205));
       return;
@@ -497,6 +540,8 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             setStockWeightLbs(Math.round(lbs));
           }
           if (garage?.tuneSpecs?.maxTorqueLbFt) setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
+          setStockDisplacementCc(garage?.tuneSpecs?.displacementCc ?? null);
+          setEngineSwap("None (Stock)");
         }}
       />
       <CarPhotoHero
@@ -606,10 +651,20 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           onChange={(e) => handleSwapChange(e.target.value)}
           className="min-h-11 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 text-sm"
         >
-          {ENGINE_SWAPS.map((s) => (
+          {swapOptions.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          {usingWikiSwaps
+            ? `${swapOptions.length - 1} conversions available for this car (Forza Wiki). Power and weight are estimated from displacement and induction.`
+            : "No per-car conversion list for this car — showing common swaps."}
+        </p>
+        {wikiCar?.drivetrainSwaps?.length ? (
+          <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+            Drivetrain conversions: {wikiCar.drivetrainSwaps.join(", ")}
+          </p>
+        ) : null}
         <Label>Aspiration</Label>
         <div className="grid gap-2 sm:grid-cols-2">
           {ASPIRATIONS.map((a) => (
