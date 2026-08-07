@@ -136,6 +136,61 @@ export interface SwapEstimate {
   peakTorqueRpm: number | null;
 }
 
+export type DriveType = "FWD" | "RWD" | "AWD";
+
+export const DRIVE_WEIGHT_DIST: Record<DriveType, number> = { FWD: 63, RWD: 47, AWD: 53 };
+
+/** Wiki labels: "AWD Drivetrain", "RWD Drivetrain", or bare "AWD". */
+export function parseDrivetrainSwap(label: string): DriveType | null {
+  const u = label.toUpperCase();
+  if (u.includes("AWD")) return "AWD";
+  if (u.includes("RWD")) return "RWD";
+  if (u.includes("FWD")) return "FWD";
+  return null;
+}
+
+export interface DrivetrainEstimate {
+  driveType: DriveType;
+  weightDist: number;
+  weightLbs: number | null;
+}
+
+/** Estimate weight + balance after an FH6 drivetrain conversion. */
+export function estimateDrivetrainConversion(
+  from: DriveType,
+  to: DriveType,
+  stockWeightLbs?: number | null,
+): DrivetrainEstimate {
+  let weightLbs = stockWeightLbs ?? null;
+  if (weightLbs != null && from !== to) {
+    if (to === "AWD" && from !== "AWD") weightLbs += 95;
+    else if (from === "AWD" && to !== "AWD") weightLbs -= 85;
+    else if (to === "RWD" && from === "FWD") weightLbs -= 25;
+    else if (to === "FWD" && from === "RWD") weightLbs += 15;
+  }
+  return { driveType: to, weightDist: DRIVE_WEIGHT_DIST[to], weightLbs };
+}
+
+/** Build dropdown options: stock + wiki conversions that change the layout. */
+export function buildDrivetrainOptions(
+  stockDrive: DriveType,
+  wikiLabels: string[] | undefined,
+): string[] {
+  const stock = `Stock (${stockDrive})`;
+  if (!wikiLabels?.length) return [stock];
+
+  const seen = new Set<DriveType>([stockDrive]);
+  const out = [stock];
+  for (const label of wikiLabels) {
+    const dt = parseDrivetrainSwap(label);
+    if (dt && !seen.has(dt)) {
+      seen.add(dt);
+      out.push(label);
+    }
+  }
+  return out;
+}
+
 /** Estimate the tune-relevant deltas for a wiki swap. The game does not expose
  *  these numbers anywhere machine-readable, so they are derived from
  *  displacement, induction and engine character. */
