@@ -8,19 +8,24 @@ interface CarDetectBannerProps {
 
 export function CarDetectBanner({ carName, onQuickTune, onDismiss }: CarDetectBannerProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--ts-radius-md)] border border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] px-4 py-3">
-      <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--ts-accent)]">Car detected</p>
-        <p className="truncate text-sm text-[var(--ts-text)]">{carName}</p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Button className="h-8 px-3 text-xs" onClick={onQuickTune}>
-          Quick Tune
-        </Button>
-        <button type="button" onClick={onDismiss} className="min-h-8 min-w-8 text-[var(--ts-muted)]" aria-label="Dismiss">
+    <div className="rounded-[var(--ts-radius-md)] border border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] px-3 py-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ts-accent)]">Car detected</p>
+          <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-[var(--ts-text)]">{carName}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="shrink-0 min-h-8 min-w-8 text-sm text-[var(--ts-muted)]"
+          aria-label="Dismiss"
+        >
           ✕
         </button>
       </div>
+      <Button className="mt-2 h-8 w-full px-3 text-xs sm:w-auto" onClick={onQuickTune}>
+        Quick Tune
+      </Button>
     </div>
   );
 }
