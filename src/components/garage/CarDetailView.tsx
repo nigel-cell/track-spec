@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
 import { formatCredits } from "../../lib/forzaGarage";
+import { assetUrl } from "../../lib/assetUrl";
 import { carSubtitle, rarityColor } from "../../lib/garageUi";
 import { Button } from "../ui/Button";
 import { BrandLogo } from "./BrandLogo";
@@ -98,7 +99,7 @@ export function CarDetailView({
             {car.image && (
               <div className="relative mx-auto w-full max-w-md lg:max-w-none">
                 <img
-                  src={car.image}
+                  src={assetUrl(car.image) ?? car.image}
                   alt={car.name}
                   className="mx-auto max-h-48 w-full object-contain drop-shadow-2xl sm:max-h-56"
                 />

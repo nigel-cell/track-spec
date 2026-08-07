@@ -1,9 +1,11 @@
 import { memo, type MouseEvent } from "react";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
+import { assetUrl } from "../../lib/assetUrl";
 import { carSubtitle, formatCr, rarityColor } from "../../lib/garageUi";
 import { BrandLogo } from "./BrandLogo";
 import { DriveBadge } from "./DriveBadge";
 import { FaceStatsBar } from "./FaceStatsBar";
+import { GarageHeroImage } from "./GarageHeroImage";
 import { PiBadge } from "./PiBadge";
 
 export type GarageCardDensity = "light" | "full";
@@ -47,7 +49,12 @@ export const GarageCarCard = memo(function GarageCarCard({
         style={{ borderLeftWidth: 3, borderLeftColor: accent }}
       >
         <div className="flex min-w-0 items-center gap-1.5">
-          <BrandLogo make={car.make} code={car.logoCode} url={logoUrl} size={full ? "sm" : "xs"} />
+          <BrandLogo
+            make={car.make}
+            code={car.logoCode}
+            url={logoUrl ? assetUrl(logoUrl) : null}
+            size={full ? "sm" : "xs"}
+          />
           <span
             className="truncate text-[10px] font-bold uppercase tracking-wide"
             style={{ color: accent }}
@@ -56,7 +63,13 @@ export const GarageCarCard = memo(function GarageCarCard({
           </span>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1 font-[family-name:var(--ts-font-mono)] text-[11px] font-bold">
-          <img src="/garage/icons/sp-gold.webp" alt="" className="h-3 w-3" width={12} height={12} />
+          <img
+            src={assetUrl("/garage/icons/sp-gold.webp") ?? "/garage/icons/sp-gold.webp"}
+            alt=""
+            className="h-3 w-3"
+            width={12}
+            height={12}
+          />
           {formatCr(car.cost)}
         </span>
       </div>
@@ -68,39 +81,29 @@ export const GarageCarCard = memo(function GarageCarCard({
             full ? "aspect-[16/10]" : "aspect-[16/9]",
           ].join(" ")}
         >
-          {car.image ? (
-            <img
-              src={car.image}
-              alt=""
-              className={[
-                "h-full w-full object-contain",
-                full ? "p-2 transition-transform duration-300 group-hover:scale-[1.03]" : "p-1.5",
-              ].join(" ")}
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-              sizes={full ? "(min-width:1280px) 20vw, (min-width:768px) 25vw, 50vw" : "50vw"}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-[var(--ts-muted)]">
-              No image
-            </div>
-          )}
+          <GarageHeroImage
+            src={car.image}
+            eager={full}
+            className={[
+              "h-full w-full object-contain",
+              full ? "p-2 transition-transform duration-300 group-hover:scale-[1.03]" : "p-1.5",
+            ].join(" ")}
+          />
 
           {full && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-8">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-8">
               <FaceStatsBar car={car} compact />
             </div>
           )}
 
-          <div className={full ? "absolute right-2 top-2" : "absolute right-1.5 top-1.5"}>
+          <div className={["absolute z-[1]", full ? "right-2 top-2" : "right-1.5 top-1.5"].join(" ")}>
             <PiBadge cls={car.class} pi={car.pi} />
           </div>
 
           {owned && (
             <div
               className={[
-                "absolute flex items-center justify-center rounded-full bg-[var(--ts-accent)] font-bold text-white",
+                "absolute z-[1] flex items-center justify-center rounded-full bg-[var(--ts-accent)] font-bold text-white",
                 full ? "left-2 top-2 h-6 w-6 text-xs" : "left-1.5 top-1.5 h-5 w-5 text-[10px]",
               ].join(" ")}
             >
