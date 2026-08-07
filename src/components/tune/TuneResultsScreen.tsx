@@ -20,6 +20,8 @@ import { Card, DataValue, Label } from "../ui/Card";
 
 import { FineTuneFlow } from "./FineTuneFlow";
 
+import { EnhancePromptSheet } from "./EnhancePromptSheet";
+
 import { SaveTunesSheet } from "./SaveTunesSheet";
 import { useForzaGarage } from "../../hooks/useForzaGarage";
 import { configToBuildProfile, saveBuildProfile } from "../../lib/buildProfiles";
