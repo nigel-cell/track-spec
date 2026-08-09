@@ -96,52 +96,57 @@ export function CarPicker({
       </button>
 
       {!open && favoriteCars.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {favoriteCars.map((g) => {
-            const measured = measuredSlugs?.has(g.slug);
-            const active =
-              g.make === make &&
-              (model === g.model || model.startsWith(g.model) || model.includes(g.model));
-            return (
-              <button
-                key={g.slug}
-                type="button"
-                onClick={() => {
-                  const rec = matchCarRecord(cars, g);
-                  if (rec) pick(rec, g.slug);
-                  else {
-                    onSelect(
-                      {
-                        make: g.make,
-                        model: g.year ? `${g.model} '${String(g.year).slice(-2)}` : g.model,
-                        driveType: (g.drive as "FWD" | "RWD" | "AWD") || "RWD",
-                        weightDist: g.drive === "FWD" ? 63 : g.drive === "AWD" ? 53 : 47,
-                        carClass: g.class,
-                        pi: g.pi,
-                        weight: g.weightLbs,
-                      },
-                      { slug: g.slug },
-                    );
-                  }
-                }}
-                className={[
-                  "rounded-[var(--ts-radius-sm)] border px-2.5 py-1.5 text-left text-xs transition-colors",
-                  active
-                    ? "border-[var(--ts-accent)] bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
-                    : "border-[var(--ts-border)] text-[var(--ts-muted)] hover:border-[var(--ts-muted)] hover:text-[var(--ts-text)]",
-                ].join(" ")}
-              >
-                <span className="font-[family-name:var(--ts-font-heading)] font-semibold text-[var(--ts-text)]">
-                  ★ {g.model}
-                </span>
-                {measured && (
-                  <span className="ml-1.5 font-[family-name:var(--ts-font-mono)] text-[9px] uppercase text-[var(--ts-warning)]">
-                    measured
+        <div className="mt-2 space-y-1.5">
+          <div className="flex flex-wrap gap-2">
+            {favoriteCars.map((g) => {
+              const measured = measuredSlugs?.has(g.slug);
+              const active =
+                g.make === make &&
+                (model === g.model || model.startsWith(g.model) || model.includes(g.model));
+              return (
+                <button
+                  key={g.slug}
+                  type="button"
+                  onClick={() => {
+                    const rec = matchCarRecord(cars, g);
+                    if (rec) pick(rec, g.slug);
+                    else {
+                      onSelect(
+                        {
+                          make: g.make,
+                          model: g.year ? `${g.model} '${String(g.year).slice(-2)}` : g.model,
+                          driveType: (g.drive as "FWD" | "RWD" | "AWD") || "RWD",
+                          weightDist: g.drive === "FWD" ? 63 : g.drive === "AWD" ? 53 : 47,
+                          carClass: g.class,
+                          pi: g.pi,
+                          weight: g.weightLbs,
+                        },
+                        { slug: g.slug },
+                      );
+                    }
+                  }}
+                  className={[
+                    "rounded-[var(--ts-radius-sm)] border px-2.5 py-1.5 text-left text-xs transition-colors",
+                    active
+                      ? "border-[var(--ts-accent)] bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
+                      : "border-[var(--ts-border)] text-[var(--ts-muted)] hover:border-[var(--ts-muted)] hover:text-[var(--ts-text)]",
+                  ].join(" ")}
+                >
+                  <span className="font-[family-name:var(--ts-font-heading)] font-semibold text-[var(--ts-text)]">
+                    ★ {g.model}
                   </span>
-                )}
-              </button>
-            );
-          })}
+                  {measured && (
+                    <span className="ml-1.5 font-[family-name:var(--ts-font-mono)] text-[9px] uppercase text-[var(--ts-warning)]">
+                      measured
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+            Favorites keep weight, top speed, torque, tires, springs, and build edits on this device.
+          </p>
         </div>
       )}
 
