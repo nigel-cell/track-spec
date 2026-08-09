@@ -81,6 +81,7 @@ import {
 } from "../../lib/sliderLimits";
 import { saveFavoriteDraft } from "../../lib/carFavorites";
 import { ensureFavoriteProfile, hydrateFavoriteProfiles } from "../../lib/favoriteProfiles";
+import type { SavedTune } from "../../lib/tuneSaves";
 
 import { Button } from "../ui/Button";
 
@@ -91,6 +92,7 @@ import { SegmentedControl } from "../ui/SegmentedControl";
 import { CarPhotoHero } from "./CarPhotoHero";
 
 import { CarPicker } from "./CarPicker";
+import { ManualGaragePanel } from "./ManualGaragePanel";
 
 import { TuneModeGrid } from "./TuneModeGrid";
 import { TuneSectionNav, TuneSummaryChips } from "./TuneSectionNav";
@@ -203,6 +205,8 @@ interface TuneInputScreenProps {
 
   onMyTunes?: () => void;
 
+  onLoadSaved?: (entry: SavedTune) => void;
+
   initialDraft?: Partial<TuneConfig> | null;
 
   units: TuneUnits;
@@ -255,7 +259,13 @@ const SURFACE_BY_MODE: Record<string, string> = {
 
 
 
-export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: TuneInputScreenProps) {
+export function TuneInputScreen({
+  onDeploy,
+  onMyTunes,
+  onLoadSaved,
+  initialDraft,
+  units,
+}: TuneInputScreenProps) {
 
   type InputSection = "car" | "tune" | "specs" | "engine";
   const [section, setSection] = useState<InputSection>("car");
@@ -370,6 +380,18 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     () => garageCars.filter((c) => favorites.has(c.slug)),
     [garageCars, favorites],
   );
+
+  const activeGarageCar = useMemo(() => {
+    const hit = lookupGarage(make, model.split(" '")[0]);
+    if (hit) return hit;
+    return (
+      favoriteCars.find(
+        (c) =>
+          c.make === make &&
+          (model === c.model || model.startsWith(c.model) || model.includes(c.model)),
+      ) ?? null
+    );
+  }, [make, model, lookupGarage, favoriteCars]);
 
   const measuredSlugs = useMemo(() => {
     const set = new Set<string>();
@@ -1174,6 +1196,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         status={status}
         url={url}
         subtitle={`${carClass} ${pi} PI · ${driveType} · ${Math.round(weight)} ${weightLabel(units)}`}
+      />
+      <ManualGaragePanel
+        car={activeGarageCar}
+        enrich={enrichGarage}
+        onLoadSaved={onLoadSaved}
+        onBrowseTunes={onMyTunes}
       />
         </>
       )}
