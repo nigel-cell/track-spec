@@ -1,0 +1,664 @@
+{
+  "version": 2,
+  "categories": [
+    {"key": "start", "title": "Start Here", "summary": "What KFPS does and the shortest path to your first working vinyl."},
+    {"key": "generate", "title": "Create a Vinyl", "summary": "Source images, presets, shape limits, checkpoints, and generation progress."},
+    {"key": "json", "title": "Outputs & Files", "summary": "Find, preview, search, select, and understand saved vinyl JSON files."},
+    {"key": "editor", "title": "Manual Editor", "summary": "Open projects, arrange shapes, use guides, and export finished work."},
+    {"key": "transfer", "title": "Import & Export", "summary": "Move vinyls between KFPS and FH4, FH5, FH6, or FM8 safely."},
+    {"key": "community", "title": "Community Library", "summary": "Browse, inspect, download, publish, and report community-made vinyls."},
+    {"key": "tools", "title": "Tools & Settings", "summary": "Prepare images, make reports, update KFPS, and find local folders."},
+    {"key": "troubleshooting", "title": "Fix a Problem", "summary": "Plain checks for common startup, generation, editor, and transfer problems."},
+    {"key": "limits", "title": "Safety & Limits", "summary": "What KFPS can change, what it cannot do, and how to protect your work."}
+  ],
+  "topics": [
+    {
+      "key": "first-run",
+      "category": "start",
+      "title": "Make your first vinyl",
+      "summary": "Choose an image, generate shape files, inspect one, import it, and save the result in the game.",
+      "keywords": ["first", "beginner", "start", "workflow", "new user", "what is kfps"],
+      "steps": [
+        "Open Create and choose the image you want to reproduce. A clean PNG with a transparent background is the easiest starting point.",
+        "Keep the preset KFPS chooses automatically. Leave the advanced options off; 2x Mode is the only extra option most people should try.",
+        "Choose a shape limit. This is the most shapes KFPS may use, and it must fit the template you will open in the game.",
+        "Select Generate Vinyl. Keep KFPS open until the status says finalization is complete.",
+        "Open Outputs, choose Generated finals, and click the finished vinyl you want to use.",
+        "Prepare the running game. For FH6, open your saved, reopened, and ungrouped circle template in Vinyl Group Editor.",
+        "Choose the correct game and exact template layer count, then select Online Import to Game.",
+        "Wait for the transfer to finish. Save the vinyl in the game, leave the editor, and reopen it before judging the final result."
+      ],
+      "sections": [
+        {"heading": "What KFPS makes", "body": "KFPS turns a normal image into a list of Forza shapes. That list is stored in a JSON file. The generator makes the first version; the manual editor is available when you want to move, recolor, group, or replace individual shapes."},
+        {"heading": "What online means here", "body": "Online import and export do not upload your artwork. Online means KFPS talks to a game that is running on this computer through live memory. Offline means KFPS works with supported local game save files instead."},
+        {"heading": "The normal path", "body": "For most work, use Create -> Outputs -> Online Import to Game. Use the manual editor only when the generated result needs changes that require your judgment."}
+      ],
+      "pitfalls": [
+        "Do not run KFPS from GitHub's main/source ZIP. Use an official release folder.",
+        "Do not import a raw checkpoint when a finished JSON is available in the finals folder.",
+        "Do not guess the game template layer count. Enter the number shown by the open template.",
+        "Do not switch game menus while an online transfer is locating or writing layers."
+      ],
+      "related": ["source-check", "preset-selection", "final-checkpoints", "fh6-template", "import-fh6"]
+    },
+    {
+      "key": "community-browse",
+      "category": "community",
+      "title": "Browse and download community vinyls",
+      "summary": "Search the shared catalog, inspect a full preview, and save a compatible JSON to your local library.",
+      "keywords": ["community", "browse", "catalog", "download", "creator", "favorite", "github", "preview", "supporter", "supporters"],
+      "steps": [
+        "Open Community. Browsing, searching, filtering, creator pages, and previews work without an account.",
+        "Use the category, game, and sort menus to narrow the catalog. Search matches artwork titles, tags, and creator names.",
+        "Open Supporters to browse vinyls shared only with verified KFPS supporters. The tab stays visible without a key and shows how to unlock supporter vinyl sharing.",
+        "Select a tile to read its details. Double-click the tile or preview to open the large inspector, then zoom or use the arrow buttons to move between results.",
+        "Connect your GitHub identity, then select Download to Library. KFPS validates the file before placing it in the local community download folder.",
+        "Open Outputs and choose the relevant library source when you are ready to inspect, edit, or import the downloaded JSON.",
+        "A GitHub identity is required for downloads, favorites, follows, reports, uploads, and managing your own public creator profile. Browsing artwork and creator profiles remains public. KFPS does not request your password or repository access."
+      ],
+      "sections": [
+        {"heading": "Use at your own risk", "body": "Catalog availability is not approval by Turn 10 Studios, Playground Games, Microsoft, or the Forza enforcement team. Community content is not classified against current game rules. You are responsible for what you download, import, publish, or display."},
+        {"heading": "Accounts and usernames", "body": "GitHub establishes a stable identity. Your separate public Community username is chosen once and cannot be changed. KFPS shows the exact spelling and capitalization on a second confirmation screen before sending the claim."},
+        {"heading": "Supporter vinyl sharing", "body": "Supporter-only listings are visible and downloadable only after an active supporter key is connected to your signed-in Community profile. The activation service sends the Community service a short-lived signed entitlement; supporter keys, receipts, purchaser details, and device identity are not shared with the Community service."},
+        {"heading": "Reports", "body": "Sign in, select somebody else's listing, and choose Report in the artwork detail view. Choose the closest reason and add useful context. Reports stay private and visibly flag the listing in the administrator's review console."},
+        {"heading": "Compatibility labels", "body": "KFPS reads the JSON format and any embedded game origin. Recognized formats show their detected label. An unrecognized label means the shape list passed structural checks, but KFPS cannot promise that every part will import correctly."}
+      ],
+      "pitfalls": [
+        "A polished preview does not guarantee that a design is permitted under the game's current rules.",
+        "Do not import a downloaded file if KFPS reports that its structure or checksum is invalid.",
+        "Browsing and previews are public; downloading and all contribution features require an account."
+      ],
+      "related": ["community-publish", "json-browser", "wrong-shapes", "support-checklist"]
+    },
+    {
+      "key": "community-publish",
+      "category": "community",
+      "title": "Publish a community vinyl",
+      "summary": "Share a local KFPS JSON with a rendered preview, useful listing details, and an auditable revision history.",
+      "keywords": ["community", "upload", "publish", "revision", "moderation", "rights", "profile"],
+      "steps": [
+        "Open Community, connect your GitHub identity, and choose your permanent Community username if this is your first upload. Review it, then confirm the exact spelling and capitalization on the second screen.",
+        "Open Upload, choose Generated finals, Editor exports, Game exports, or Library, then select a JSON tile. Use Import JSON File when the file is somewhere else. KFPS renders the preview from that JSON; it does not upload a source image.",
+        "Check the detected JSON format and game origin, then add a short title, useful description, category, and searchable tags. You do not choose a game manually.",
+        "Choose Handmade or Toolmade, then choose Everyone or Supporters as the audience. Supporters requires verified supporter access. Classification and audience cannot be changed after publication, including through a revision.",
+        "If KFPS marks a structurally valid format as unrecognized, read and accept the compatibility warning before publishing. Files without a usable shape list are rejected.",
+        "Confirm that you made the artwork or have permission to share it, then publish it.",
+        "Use My uploads to track published, rejected, or removed work. A server configured for manual review may also show pending work.",
+        "To update published work, select it as the revision target, choose the replacement JSON, and explain what changed. The original local file is not modified.",
+        "To remove your work, open My uploads, select the listing, and choose Remove. This unlists the community copy; it does not delete your local JSON or copies already downloaded by other users."
+      ],
+      "sections": [
+        {"heading": "What leaves this computer", "body": "The service receives a sanitized KFPS design, a full rendered preview, a compact thumbnail, and the public listing fields you enter. Local paths, source images, generator reports, settings, supporter data, and arbitrary JSON metadata are removed or rejected."},
+        {"heading": "Supported formats", "body": "KFPS recognizes its primitive JSONs, canonical Community JSON, FH5/FH6/FM8 live type-code exports, local save-library exports, decoded Forza file exports, flat C_group JSON, and converted Forza Designer 6 files. FD6 files are converted in a private runtime copy for preview and upload; the selected original is not changed."},
+        {"heading": "Validation and reports", "body": "The service checks structure, size, shape values, previews, hashes, and duplicates before publishing. These checks cannot judge ownership or artwork content. Signed-in users can privately report a listing, which highlights it for administrator review."},
+        {"heading": "Audience", "body": "Everyone listings appear in the public catalog. Supporters listings use the same Handmade or Toolmade classification but stay in the protected supporter catalog. A revision may replace the design and update normal listing details, but it cannot move an existing listing into or out of supporter-only sharing."},
+        {"heading": "Ownership", "body": "Only upload work you created or have permission to distribute. Removing a listing stops normal catalog access but cannot recall copies that other users already downloaded."}
+      ],
+      "pitfalls": [
+        "Do not upload source images, archives, executables, game saves, or generated report folders.",
+        "Do not reuse somebody else's preview for a different design.",
+        "Do not choose a Community username as a temporary test name; it is permanent."
+      ],
+      "related": ["community-browse", "json-browser", "final-checkpoints", "support-checklist"]
+    },
+    {
+      "key": "source-check",
+      "category": "generate",
+      "title": "Choose a good source image",
+      "summary": "A clean, readable source saves time and prevents shapes from being wasted on a background or compression noise.",
+      "keywords": ["source", "image", "png", "transparent", "background", "resolution", "heatmap"],
+      "steps": [
+        "Choose the source on Create or in Image Tools.",
+        "Check that the subject fills the image and is not tiny inside a large empty border.",
+        "Use transparency for cutout art when possible. A checkerboard visible in an image viewer is a useful sign, but still check for a hidden solid background.",
+        "Read the source check. Fix red warnings before a long run; review yellow warnings before deciding to continue.",
+        "Use Preview Detail Map to see where KFPS detects edges and small features."
+      ],
+      "sections": [
+        {"heading": "Good sources", "body": "Logos, illustrations, and characters work best when their edges are clear and important details are large enough to see. A larger file is not automatically better if it is blurry or heavily compressed."},
+        {"heading": "Transparent versus solid backgrounds", "body": "Transparent PNGs are best for stickers and cutout art. If the background is part of the design, keep it. If it is not, remove it before generation so the shape budget is spent on the subject."}
+      ],
+      "pitfalls": [
+        "Upscaling cannot restore detail that is completely missing from the source.",
+        "Very thin lines may still need manual editor cleanup after generation.",
+        "A hidden nearly solid background can consume hundreds of shapes."
+      ],
+      "related": ["preset-selection", "image-tools", "final-checkpoints"]
+    },
+    {
+      "key": "preset-selection",
+      "category": "generate",
+      "title": "Presets and generation options",
+      "summary": "Let KFPS choose a preset first, then change only what solves a visible problem.",
+      "keywords": ["preset", "flat", "shaded", "gradient", "2x", "heatmap", "luma", "edge repair", "seed"],
+      "steps": [
+        "Choose a source image and let KFPS select a preset.",
+        "Use Flat Colors for logos, text, icons, and art with clear color regions.",
+        "Use Shaded Art for illustrations or subjects with normal light and shadow.",
+        "Use Gradients for smooth color changes where banding would be obvious.",
+        "Leave Detail Heatmap, Luma Prep, and Edge Repair off unless you are testing a specific problem.",
+        "Try 2x Mode when the normal run needs better shape choices and you can accept a longer run."
+      ],
+      "sections": [
+        {"heading": "Automatic choices", "body": "KFPS inspects the selected image and chooses suitable defaults. The checkboxes let advanced users force parts of that preparation, but forcing every option does not produce a better image."},
+        {"heading": "2x Mode", "body": "2x Mode spends roughly twice the search work looking for useful shape matches. It may improve edges, small details, or shading, but it also takes longer. It does not double the final shape count."},
+        {"heading": "Manual overrides", "body": "Settings can reveal resolution, random sample, mutated sample, and seed fields. These are testing controls. Presets already fill normal values, so leave Manual generator overrides off unless you understand the tradeoff you are measuring."}
+      ],
+      "pitfalls": [
+        "Turning on every option can reduce quality or make a run much slower.",
+        "Changing several advanced values at once makes comparisons difficult.",
+        "The same seed helps repeat a search, but different software or source changes can still change the result."
+      ],
+      "related": ["source-check", "final-checkpoints", "generation-log"]
+    },
+    {
+      "key": "final-checkpoints",
+      "category": "generate",
+      "title": "Shape limit and finished checkpoints",
+      "summary": "Set one maximum shape budget and save usable finished versions at smaller counts along the way.",
+      "keywords": ["layers", "shapes", "limit", "checkpoint", "final", "v2", "raw", "budget"],
+      "steps": [
+        "Set Template layers to the largest shape count you want this run to reach.",
+        "Keep that number at or below the number of editable layers in your game template.",
+        "List the counts you want saved in Finalize checkpoints, separated by commas.",
+        "Let generation and finalization finish before closing KFPS.",
+        "In Outputs, compare the finished versions and choose the lowest count that keeps the detail you need."
+      ],
+      "sections": [
+        {"heading": "Why save several counts", "body": "A 1500-shape result may look almost the same as a 2000-shape result and be easier to edit or import. Finished checkpoints let you compare without rerunning the entire search."},
+        {"heading": "Finished versus raw", "body": "Raw checkpoints are recovery data from the search. Finished JSONs are checked, limited to the requested budget, previewed, and prepared for normal import. Use the finals folder unless you are recovering a damaged run."},
+        {"heading": "Where the files go", "body": "Each job under imgs/generated has separate finals, checkpoints, previews, and reports folders. Outputs normally shows the finished JSONs for you."}
+      ],
+      "pitfalls": [
+        "More shapes do not guarantee a visibly better result.",
+        "A JSON cannot fit into an online template with fewer editable layers.",
+        "Closing during finalization can leave raw checkpoints without finished JSONs."
+      ],
+      "related": ["generation-log", "json-browser", "fh6-template"]
+    },
+    {
+      "key": "generation-log",
+      "category": "generate",
+      "title": "Read generation progress",
+      "summary": "Use the preview and live log to tell normal progress from a stopped or failed run.",
+      "keywords": ["log", "progress", "preview", "stuck", "stop", "force", "save"],
+      "steps": [
+        "After selecting Generate Vinyl, watch the status and live output preview.",
+        "Expect the preview to update in steps rather than after every shape.",
+        "Wait for finalization after the search reaches its target. This is when finished JSONs and their previews are written.",
+        "Use Stop Safely when you want completed work saved before the run ends.",
+        "Use Stop Now only when safe stopping does not respond. Completed checkpoints are kept, but the active step is lost."
+      ],
+      "sections": [
+        {"heading": "Normal pauses", "body": "Some steps take longer because KFPS is testing many candidates, writing a checkpoint, or building previews. A quiet preview alone does not mean the process has failed; check the status and log."},
+        {"heading": "After a failure", "body": "Keep the job folder and its reports. A later run can be compared with the last completed checkpoint, and the log usually identifies whether the generator, finalizer, or file write failed."}
+      ],
+      "pitfalls": [
+        "Do not close the console or KFPS while finalization is still running.",
+        "Do not assume the highest checkpoint is finished until its JSON and preview appear in finals/previews.",
+        "Repeated force stops can leave incomplete temporary files."
+      ],
+      "related": ["final-checkpoints", "reports", "support-checklist"]
+    },
+    {
+      "key": "json-browser",
+      "category": "json",
+      "title": "Use the Outputs browser",
+      "summary": "Choose a source, search by vinyl name, inspect thumbnails, and select the exact JSON you want.",
+      "keywords": ["outputs", "json", "thumbnail", "search", "generated", "editor", "library", "fd6"],
+      "steps": [
+        "Open Outputs and choose an Output source.",
+        "Use Generated finals for generator results, Editor exports for manual-editor work, and Game exports for JSON read from a running game.",
+        "Use Library for vinyls found by an offline save scan.",
+        "Type part of a vinyl name in Search to filter only the current source. Empty the box to show everything again.",
+        "Click a thumbnail once to select it. Double-click it to open a larger preview and file details.",
+        "Check the displayed shape count before importing."
+      ],
+      "sections": [
+        {"heading": "Manual JSON files", "body": "Add JSON lets you choose a compatible file outside the normal folders. When a supported Forza Designer 6 shapes file is chosen, KFPS detects and converts it in the background without changing the original file."},
+        {"heading": "Thumbnails", "body": "KFPS caches previews so later starts are faster. A missing preview does not make a valid JSON unusable; select or refresh the source and allow the thumbnail index to finish."},
+        {"heading": "Library items", "body": "Items scanned from local game save files are already in that game's saved library, so live online import stays unavailable for them. Artwork downloaded from the Community folder is not a save scan and can be imported normally."}
+      ],
+      "pitfalls": [
+        "Output search only filters the source currently selected.",
+        "Two vinyls can have similar names. Check the preview, folder, and shape count.",
+        "Raw generator checkpoints are hidden from normal browsing because finished files are safer."
+      ],
+      "related": ["final-checkpoints", "editor-export", "export-games"]
+    },
+    {
+      "key": "fh6-template",
+      "category": "transfer",
+      "title": "Make the FH4 or FH6 import template",
+      "summary": "Create one flat group of 3000 white circles, save and reopen it once, then ungroup it before every online import.",
+      "keywords": ["fh4", "fh6", "template", "3000", "circle", "ungroup", "vinyl group editor", "setup"],
+      "steps": [
+        "Start FH4 or FH6 and open Vinyl Group Editor. Do not use the car livery screen or the screen that only applies a saved vinyl.",
+        "Create or load a vinyl group made from 3000 simple plain white circle layers. The circles are placeholders; their size and position do not matter.",
+        "Make sure all 3000 circles are individual layers. Do not leave smaller groups nested inside the template.",
+        "Save this circle group in the game once.",
+        "Leave the group editor, reopen the saved circle group, and choose Ungroup so individual circle layers are visible and editable.",
+        "Stay on that editor screen. In KFPS Outputs, choose the running game and enter 3000 for Template layers.",
+        "Reuse this same saved template for later imports: reopen it, ungroup it, and keep the exact count in KFPS."
+      ],
+      "sections": [
+        {"heading": "Why KFPS needs it", "body": "Online import replaces layer slots that already exist in the running game. It cannot create thousands of new live layers from an empty group, so the circles provide safe editable slots for the imported design."},
+        {"heading": "Why save and reopen once", "body": "The game does not always expose a newly created group in the same stable state as a saved group. Saving, leaving, and reopening gives the locator a predictable live layer table."},
+        {"heading": "How to know it is ready", "body": "You are inside Vinyl Group Editor, the template itself is open, individual circles can be selected, no nested group is selected as one object, and KFPS shows the same layer count as the game."},
+        {"heading": "Smaller templates", "body": "A smaller flat template can work when its exact count is entered, but it can only accept a JSON with that many shapes or fewer. The 3000-circle template is recommended because it covers the full supported budget."}
+      ],
+      "pitfalls": [
+        "A grouped template looks like one object and cannot be used as 3000 editable slots.",
+        "Do not leave duplicate template groups stacked above the group you intend to edit.",
+        "Do not enter the JSON shape count when KFPS asks for the template count unless those numbers are actually equal.",
+        "Do not switch game menus after starting an online import."
+      ],
+      "related": ["import-fh6", "troubleshooting-transfer", "wrong-shapes"]
+    },
+    {
+      "key": "import-fh6",
+      "category": "transfer",
+      "title": "Online import into FH4 or FH6",
+      "summary": "Open the correct circle template, select a finished JSON, enter the exact count, and let KFPS locate and replace the live layers.",
+      "keywords": ["fh4", "fh6", "online", "live", "memory", "import", "locate", "running game"],
+      "steps": [
+        "Start FH4 or FH6 and open your saved circle template in Vinyl Group Editor.",
+        "Ungroup the template and confirm individual layers can be selected.",
+        "Open Outputs in KFPS, choose the running game, and enter the template's exact layer count, normally 3000.",
+        "Choose Generated finals, Editor exports, or Game exports, then select the JSON you want.",
+        "Leave Clear Extra Template Layers on for normal use.",
+        "Select Online Import to Game and do not change screens in the game while KFPS locates and writes the layers.",
+        "When the transfer reports success, save the vinyl, leave the editor, and reopen it to check the final result."
+      ],
+      "sections": [
+        {"heading": "Location is automatic", "body": "KFPS searches the selected running game for the open template when you import. You do not need a separate locate button. Restart the import after reopening the template if the game was restarted or the editor screen changed."},
+        {"heading": "Clear extra layers", "body": "If the JSON uses fewer shapes than the template, this option hides the unused placeholder circles. Leave it enabled unless you are doing a controlled transfer test."},
+        {"heading": "Permission", "body": "KFPS and the game must be running on the same Windows computer. If Windows blocks live memory access, run KFPS with the same or higher permission level as the game."}
+      ],
+      "pitfalls": [
+        "Applying a vinyl to a car is not the same as editing a vinyl group.",
+        "A stale or wrong layer count can make location fail or find the wrong group.",
+        "Do not touch the game until KFPS says the transfer is complete.",
+        "Save and reopen before deciding that a live thumbnail or shape resource is wrong."
+      ],
+      "related": ["fh6-template", "troubleshooting-transfer", "wrong-shapes"]
+    },
+    {
+      "key": "export-games",
+      "category": "transfer",
+      "title": "Online and offline transfer",
+      "summary": "Online works with a running game; offline works with supported local save files.",
+      "keywords": ["online", "offline", "export", "import", "fh4", "fh5", "fh6", "fm8", "library", "save"],
+      "steps": [
+        "For online export, open the vinyl group in Vinyl Group Editor, choose the same game in Outputs, and enter the group's exact layer count.",
+        "Select Online Export from Game. KFPS reads the open group and adds the resulting JSON to Game Exports.",
+        "For online import, open a fresh saved and ungrouped circle template before selecting Online Import to Game.",
+        "Offline features read or write supported local save files and do not require the game to be open."
+      ],
+      "sections": [
+        {"heading": "Online means live", "body": "Online import and export read or edit the selected game's live memory. FH4, FH5, FH6, and FM8 must be running on the same Windows computer as KFPS."},
+        {"heading": "FH4 support", "body": "FH4 currently supports online live import and export. Local save scanning and offline import are not enabled yet."},
+        {"heading": "Offline support", "body": "FH6 and FM8 support offline import. FH5 supports offline save-library scanning. The disabled buttons in Outputs show which local-save operations are not available."}
+      ],
+      "pitfalls": [
+        "The number in Template layers must match the group currently open in the game.",
+        "Do not change game screens while an online transfer is locating or reading layers.",
+        "Use a fresh circle template for each import; an exported group does not need the circle placeholders."
+      ],
+      "related": ["fh6-template", "import-fh6", "json-browser", "troubleshooting-transfer"]
+    },
+    {
+      "key": "editor-overview",
+      "category": "editor",
+      "title": "Open and save editor projects",
+      "summary": "Use the manual editor for changes that need human judgment, then keep the project and export JSON as separate files.",
+      "keywords": ["editor", "project", "new", "open", "save", "save as", "recovery", "browser"],
+      "steps": [
+        "Open Editor in KFPS.",
+        "Choose New Canvas for a blank design, Import JSON to begin from an existing vinyl, or select a saved project and choose Open Project.",
+        "Choose Save early. After the first save, Save updates that project and Save As creates another copy.",
+        "Build by hand with native shapes, text, and pixel-art tools, or clean up an imported design.",
+        "Review Export Check, then export a JSON when the design is ready for KFPS Outputs."
+      ],
+      "sections": [
+        {"heading": "Project versus JSON", "body": "A project is the editable working document and keeps groups, guides, names, locks, collapsed folders, and the reference image. An exported JSON is the flat portable shape list used by Outputs and game transfer tools."},
+        {"heading": "Recovery versus Save", "body": "The editor updates a temporary recovery copy after changes and warns before closing unsaved work. Recovery helps after a crash, but only Save creates the project you should rely on."},
+        {"heading": "Why use the editor", "body": "Use it to create vinyls completely by hand or to refine generated work. Exact text, logos, eyes, outlines, alignment, masks, deliberate grouping, and small corrections all benefit from human judgment."}
+      ],
+      "pitfalls": [
+        "Do not treat the recovery copy as a normal saved project.",
+        "Exporting a JSON does not automatically replace the saved editor project.",
+        "Opening another JSON, project, or blank canvas asks before replacing unsaved work.",
+        "The project title says Unsaved changes whenever layers, guides, groups, or the reference differ from the last successful save."
+      ],
+      "related": ["editor-layers", "editor-history", "editor-snapping", "editor-export"]
+    },
+    {
+      "key": "editor-layers",
+      "category": "editor",
+      "title": "Select, arrange, and group shapes",
+      "summary": "Understand layer order, multi-selection, groups, and the difference between moving one shape and moving a set.",
+      "keywords": ["layers", "groups", "selection", "order", "move", "duplicate", "shape"],
+      "steps": [
+        "Select a shape on the canvas or in the layer list.",
+        "Use multi-selection when several shapes must move, scale, rotate, align, distribute, copy, or recolor together.",
+        "Group shapes that form one logical feature, such as a letter, eye, or badge.",
+        "Use layer order to place foreground shapes above background shapes.",
+        "Save the project before a large regrouping or reordering change."
+      ],
+      "sections": [
+        {"heading": "Layer order", "body": "Shapes are drawn in order. Forward and Back move one step; To Front and To Back move selected layers to an edge. The upper Layers panel remains visible while another inspector is open."},
+        {"heading": "Groups", "body": "A group organizes related layers without changing the flat game export. Rename layers and groups, hide or lock whole groups, and drag the dock divider when a long layer list needs more room."},
+        {"heading": "Selection helpers", "body": "All, Invert, Same Shape, and Same Color handle large selections quickly. Properties also provides exact transforms, flips, quarter turns, and canvas- or selection-based alignment."},
+        {"heading": "Selection outline", "body": "The highlight stays thin on screen as you zoom. It shows the editor selection and is not part of the exported vinyl."}
+      ],
+      "pitfalls": [
+        "Moving a parent group and one of its selected children together can apply a transform twice in poorly formed imports.",
+        "A shape hidden behind another layer is not necessarily deleted.",
+        "Hidden editor layers still export; Export Check warns so you can show or delete them intentionally."
+      ],
+      "related": ["editor-overview", "editor-history", "editor-snapping", "editor-export"]
+    },
+    {
+      "key": "editor-snapping",
+      "category": "editor",
+      "title": "Use snapping, guides, and references",
+      "summary": "Align shapes precisely without making reference images or guides part of the exported vinyl.",
+      "keywords": ["snap", "grid", "guide", "reference", "overlay", "source", "align", "zoom"],
+      "steps": [
+        "Zoom to the area you want to adjust.",
+        "Enable the grid or guide type that matches the alignment you need.",
+        "Turn snapping on when shapes should lock to those guides.",
+        "Add a reference image for tracing or color sampling and adjust its opacity when it hides the vinyl.",
+        "Turn snapping off for small freehand corrections."
+      ],
+      "sections": [
+        {"heading": "Project-only helpers", "body": "The grid, guides, selection outlines, and reference image are editor aids. Save keeps them with the project; they never consume layers or enter the exported JSON."},
+        {"heading": "Reference color", "body": "Dominant sampling usually suits flat artwork. Average sampling suits softer shading. Live reference color can update selected shapes while they move."},
+        {"heading": "Dock space", "body": "Drag the divider between Layers and the inspector, collapse Layers temporarily, or hide Panels when the canvas needs more room."}
+      ],
+      "pitfalls": [
+        "Snapping that is useful for a logo may fight small organic adjustments.",
+        "An opaque reference image can make correct shapes look missing.",
+        "Judge line thickness in the exported preview, not from the selection outline."
+      ],
+      "related": ["editor-layers", "editor-export", "pixel-art"]
+    },
+    {
+      "key": "editor-history",
+      "category": "editor",
+      "title": "Use history and recovery safely",
+      "summary": "Understand visible history, the loaded-source boundary, unsaved state, and the temporary recovery copy.",
+      "keywords": ["history", "undo", "redo", "recovery", "autosave", "dirty", "unsaved", "crash"],
+      "steps": [
+        "Save the project once so the editor has a reliable saved baseline.",
+        "Open History to see each meaningful edit and the current position.",
+        "Click an earlier entry or use Undo; the loaded source boundary cannot be crossed accidentally.",
+        "Use Redo or click a later entry to move forward again.",
+        "When the title says Unsaved changes, use Save before closing if the work should be kept."
+      ],
+      "sections": [
+        {"heading": "Visible history", "body": "The editor keeps up to 80 shape, guide, grouping, and layer-order states. Each entry has a reason, time, layer count, and current or saved marker."},
+        {"heading": "Recovery copy", "body": "A temporary recovery copy is updated after edits and includes the reference image. It may be offered after an interrupted session, but it can be replaced by later work and is not a normal project."},
+        {"heading": "Closing protection", "body": "The browser asks for confirmation when a project has unsaved layer or reference changes. Exporting JSON does not mark the editable project as saved."}
+      ],
+      "pitfalls": [
+        "Undo cannot move earlier than the loaded source; this prevents an imported design from disappearing in one click.",
+        "Saving an export and saving a project are separate actions.",
+        "Discard the recovery copy only after confirming that no unfinished work is needed."
+      ],
+      "related": ["editor-overview", "editor-layers", "editor-export"]
+    },
+    {
+      "key": "editor-export",
+      "category": "editor",
+      "title": "Export from the manual editor",
+      "summary": "Save editable work as a project, then export a game-ready JSON for Outputs.",
+      "keywords": ["editor", "export", "json", "project", "preview", "outputs"],
+      "steps": [
+        "Save the editor project so you can return to the exact working state.",
+        "Open Export Check and review blocking errors plus hidden, off-canvas, duplicate, unresolved-resource, and mask warnings.",
+        "Export the design as JSON from the editor.",
+        "Return to KFPS Outputs and choose Editor exports.",
+        "Select the exported JSON, inspect its thumbnail and shape count, then import it normally."
+      ],
+      "sections": [
+        {"heading": "Two files, two jobs", "body": "The project keeps editor-only information. The exported JSON is the transfer file. Saving one does not replace the other."},
+        {"heading": "Before import", "body": "Export is blocked for invalid or zero-scale transforms. Warnings cover hidden layers that still export, completely off-canvas geometry, exact duplicates, unresolved native resources, and masks with nothing below to cut."}
+      ],
+      "pitfalls": [
+        "Do not delete the project just because the JSON exported successfully.",
+        "A JSON over the template budget must be reduced before online import.",
+        "Refresh Editor exports if a new file does not appear immediately."
+      ],
+      "related": ["json-browser", "editor-overview", "editor-history", "import-fh6"]
+    },
+    {
+      "key": "pixel-art",
+      "category": "editor",
+      "title": "Build pixel art",
+      "summary": "Use the Pixel tool to detect a deliberate source grid and merge same-color cells into efficient native rectangles.",
+      "keywords": ["pixel", "grid", "square", "palette", "retro"],
+      "steps": [
+        "Open Pixel from the left tool rail and choose a clear source with hard pixel edges and no smoothing.",
+        "Check the detected width and height, then adjust alpha cutoff and color tolerance when needed.",
+        "Generate the pixel layers. Adjacent same-color cells are merged into stretched rectangles automatically.",
+        "Check the resulting layer count and use Undo if the detected grid or palette was wrong.",
+        "Inspect the exported preview at normal size as well as zoomed in."
+      ],
+      "sections": [
+        {"heading": "Budget", "body": "The editor merges adjacent same-color cells, so one filled cell does not always cost one shape. Busy checker patterns still approach one shape per visible cell and must stay within 3000 layers."},
+        {"heading": "Clean edges", "body": "Avoid source scaling that blurs pixels. Hard edges and a limited palette are easier to reproduce consistently."}
+      ],
+      "pitfalls": [
+        "A grid larger than the layer budget cannot be fully represented.",
+        "Anti-aliased source pixels can create unwanted extra colors.",
+        "Tiny gaps may become more visible after the game rescales the vinyl."
+      ],
+      "related": ["editor-snapping", "editor-export", "limitations"]
+    },
+    {
+      "key": "image-tools",
+      "category": "tools",
+      "title": "Prepare images before generation",
+      "summary": "Remove unwanted backgrounds, enlarge genuinely small sources, or convert oversized files before a long run.",
+      "keywords": ["image", "background", "remove", "upscale", "resize", "compress", "squoosh"],
+      "steps": [
+        "Open Tools.",
+        "Use Remove background when the subject should be transparent but the source has a solid or messy background.",
+        "Use Upscale small sources only when important details are too small for the generator to read.",
+        "Use Resize or compress when a file is unnecessarily huge or in an awkward format.",
+        "Save the prepared result as a clear PNG or another supported format, then run Source image check again."
+      ],
+      "sections": [
+        {"heading": "External websites", "body": "The Tools buttons open third-party websites in your browser. KFPS does not upload the image itself. Read each site's terms and privacy information before submitting private artwork."},
+        {"heading": "Keep the original", "body": "Prepare a copy so you can compare results or return to the untouched source later."}
+      ],
+      "pitfalls": [
+        "Background removal can erase thin lines or pale details; inspect the edges closely.",
+        "Upscaling a blurry image can make it larger without making it more accurate.",
+        "Heavy compression adds blocks and halos that waste shapes."
+      ],
+      "related": ["source-check", "preset-selection"]
+    },
+    {
+      "key": "reports",
+      "category": "tools",
+      "title": "Create a useful local report",
+      "summary": "Describe a bug or suggestion, review optional private context, and save a text report locally.",
+      "keywords": ["report", "bug", "suggestion", "log", "privacy", "support"],
+      "steps": [
+        "Open Settings and choose Create Report, or open Reports directly.",
+        "Choose Bug or Suggestion and enter a short title.",
+        "Write what you clicked, what happened, what you expected, and the last step that worked.",
+        "Choose whether to include the app version, visible log, or local paths.",
+        "Preview the report and remove anything private you do not want to share.",
+        "Save the report. KFPS does not send it automatically."
+      ],
+      "sections": [
+        {"heading": "Privacy", "body": "Runtime logs can contain filenames. Local paths can contain your Windows username. Those options are off or clearly labeled so you can decide what to include."},
+        {"heading": "Useful evidence", "body": "A clear reproduction, exact error text, selected game, template count, JSON name, and relevant screenshot are more useful than a general statement that it does not work."}
+      ],
+      "pitfalls": [
+        "Review reports before posting them publicly.",
+        "Do not include supporter keys, account credentials, or private save files.",
+        "Keep the generated job report when the problem happened during generation."
+      ],
+      "related": ["support-checklist", "generation-log", "troubleshooting-transfer"]
+    },
+    {
+      "key": "updates-runtime",
+      "category": "tools",
+      "title": "Update KFPS and check its runtime",
+      "summary": "Use the built-in updater, keep personal folders in place, and understand what the Python checks mean.",
+      "keywords": ["update", "python", "runtime", "dependencies", "release", "github"],
+      "steps": [
+        "Open Update and choose Check Now.",
+        "Read the patch notes, then choose Update when a newer version is available.",
+        "Let KFPS close and run its existing updater. It reopens after a successful update.",
+        "If startup reports missing Python, confirm you downloaded the release that includes Python or installed the required runtime for the unbundled release.",
+        "Use Settings -> Open Logs when an update or runtime check fails."
+      ],
+      "sections": [
+        {"heading": "What is preserved", "body": "The updater is designed to preserve generated images, JSON outputs, editor projects, runtime data, local dependencies, and supporter-key data."},
+        {"heading": "Release versus source", "body": "GitHub's main/source ZIP is project code, not a supported app package. KFPS blocks that layout and points to the latest official release."
+        }
+      ],
+      "pitfalls": [
+        "Do not unpack an update over a running KFPS process by hand.",
+        "Do not delete personal output folders to repair a missing runtime.",
+        "The release without bundled Python requires a working compatible Python installation and dependencies."
+      ],
+      "related": ["install-folder-structure", "support-checklist"]
+    },
+    {
+      "key": "install-folder-structure",
+      "category": "troubleshooting",
+      "title": "Fix a broken or incomplete installation",
+      "summary": "Check that KFPS came from an official release and that its expected folders, executables, and runtime stayed together.",
+      "keywords": ["install", "folder", "missing", "python", "exe", "main zip", "wrong download", "startup"],
+      "steps": [
+        "Confirm the folder came from an official KFPS release, not GitHub's main/source ZIP.",
+        "Keep the full release folder together. Do not run only one copied EXE from another location.",
+        "For the bundled release, confirm its Python and dependency folders are still present.",
+        "Check antivirus quarantine if an executable or dependency disappeared.",
+        "Open Logs and keep the first missing-file or startup error.",
+        "Extract a fresh release to a new folder when the installation itself is damaged; move personal work only after the clean copy starts."
+      ],
+      "sections": [
+        {"heading": "Two release types", "body": "The bundled release includes Python and dependencies and is the simplest choice. The smaller unbundled release is for users who already maintain a compatible Python environment."},
+        {"heading": "Personal files", "body": "Generated jobs, images, editor projects, JSON outputs, reports, and key files are personal data. Back them up before replacing or cleaning an old installation."}
+      ],
+      "pitfalls": [
+        "Do not delete the whole folder before checking it for personal work.",
+        "Do not download random replacement DLL or Python files from third-party sites.",
+        "Do not report a source ZIP as a broken release; download the latest release first."
+      ],
+      "related": ["updates-runtime", "support-checklist"]
+    },
+    {
+      "key": "troubleshooting-transfer",
+      "category": "troubleshooting",
+      "title": "Fix import or export",
+      "summary": "Check the game screen, group state, exact layer count, permissions, and whether the action is online or offline.",
+      "keywords": ["import", "export", "failed", "locate", "null", "ungroup", "permission", "offline"],
+      "steps": [
+        "Decide whether you are using online live-memory transfer or offline local-save transfer.",
+        "For online transfer, confirm the game is running and the vinyl group itself is open in Vinyl Group Editor.",
+        "For FH6 online import, reopen the saved circle template and ungroup it.",
+        "Enter the exact number of layers in the open game group or template.",
+        "Close the game before an offline write, then scan the correct game saves again.",
+        "Retry once after reopening the correct group. If access is denied, run KFPS with the same or higher permission level as the game.",
+        "Keep the transfer log and copy the first clear error if it still fails."
+      ],
+      "sections": [
+        {"heading": "No safe group found", "body": "KFPS could not verify a live layer table. The usual causes are the wrong editor screen, a grouped template, a wrong count, or a game process that restarted."},
+        {"heading": "Null or stale layer", "body": "The editor state changed after location or a different duplicate group matched part of the check. Reopen the intended group, remove duplicate templates above it, and retry without changing menus."},
+        {"heading": "Offline save not found", "body": "Make sure the selected game has created a local save for this Windows profile. Cloud-only, moved, locked, or actively open saves may not be available for offline editing."}
+      ],
+      "pitfalls": [
+        "Do not keep retrying live writes while changing menus in the game.",
+        "Do not offline-edit a save while the game is open.",
+        "Do not discard backup files until the game loads and saves the result correctly."
+      ],
+      "related": ["fh6-template", "import-fh6", "export-games", "support-checklist"]
+    },
+    {
+      "key": "wrong-shapes",
+      "category": "troubleshooting",
+      "title": "Fix wrong, missing, or swapped shapes",
+      "summary": "Separate a bad JSON from a bad live preview, wrong game resources, stale template state, or an editor display issue.",
+      "keywords": ["wrong", "shape", "missing", "swapped", "resource", "preview", "community shape", "blob"],
+      "steps": [
+        "Open the JSON preview in Outputs or the manual editor. If it is already wrong there, the file or conversion is the problem.",
+        "If the KFPS preview is correct but the live game view is wrong, save the vinyl and reopen it once before judging.",
+        "Confirm the correct game target was selected because shape resource numbers differ between games.",
+        "For FH6, reopen and ungroup a clean template, enter its exact layer count, and import again.",
+        "Check that the JSON fits the template and that Clear Extra Template Layers is enabled.",
+        "Keep screenshots of both the KFPS preview and the reopened game result if the mismatch remains."
+      ],
+      "sections": [
+        {"heading": "Centered blob", "body": "When several groups collapse to one center, the export likely lost each group's accumulated position. Use the game-specific offline export path and report which source and game created the file."},
+        {"heading": "Community shapes", "body": "A low-resolution or incorrect community shape in the editor may be a renderer or resource-map issue, not damaged geometry. Compare it with the game or another known viewer before replacing shapes."},
+        {"heading": "Live preview versus saved result", "body": "Forza can show temporary resource or thumbnail state immediately after a write. Saving and reopening is the reliable comparison point."}
+      ],
+      "pitfalls": [
+        "Do not overwrite the last known-good saved group while diagnosing a mismatch.",
+        "Do not assume every game uses the same shape code for the same-looking asset.",
+        "Do not compare a raw checkpoint with a finalized preview as if they are identical files."
+      ],
+      "related": ["json-browser", "troubleshooting-transfer", "editor-layers"]
+    },
+    {
+      "key": "support-checklist",
+      "category": "troubleshooting",
+      "title": "Ask for help effectively",
+      "summary": "Send the smallest set of facts that lets someone reproduce or identify the problem without exposing private data.",
+      "keywords": ["support", "help", "checklist", "report", "screenshot", "log", "error"],
+      "steps": [
+        "Copy Support Info from Help or create a local report from Settings.",
+        "State the KFPS version, Windows version, game, and whether the action was online or offline.",
+        "Write the exact buttons or steps used from a fresh app start.",
+        "Copy the first clear error and a few lines around it rather than only saying it crashed.",
+        "For generation, include the source type, preset, shape limit, last completed checkpoint, and job report.",
+        "For transfer, include the JSON name and shape count, exact template count, editor screen, and grouped or ungrouped state.",
+        "Add a screenshot that shows the full relevant window, then remove private names or paths before sharing."
+      ],
+      "sections": [
+        {"heading": "Never share", "body": "Do not send supporter keys, activation receipts, account credentials, private game saves, purchase files, or personal artwork unless you deliberately choose to."},
+        {"heading": "A useful short report", "body": "Example: KFPS version, Windows 11, FH6 online import, 3000-layer saved/reopened template ungrouped, selected 1842-shape final JSON, then the exact first error line."}
+      ],
+      "pitfalls": [
+        "A cropped screenshot that hides the selected game, count, or status may remove the useful clue.",
+        "Do not paste thousands of repeated progress lines when the first failure line is enough.",
+        "Review logs and reports for local filenames and Windows usernames before posting publicly."
+      ],
+      "related": ["reports", "generation-log", "troubleshooting-transfer", "install-folder-structure"]
+    },
+    {
+      "key": "limitations",
+      "category": "limits",
+      "title": "Know the current limits",
+      "summary": "KFPS is powerful, but game budgets, source quality, save formats, and live editor state still set hard boundaries.",
+      "keywords": ["limits", "safety", "3000", "shapes", "quality", "backup", "unsupported"],
+      "steps": [
+        "Keep each design within the target game's supported shape and layer budget.",
+        "Use a source with enough visible information; the generator cannot recover details that do not exist.",
+        "Keep backups of editor projects, generated jobs, JSONs, and game saves used for offline work.",
+        "Treat live-memory and save-file features as game-version-specific. Update KFPS after a game update.",
+        "Use final previews and a saved/reopened game result as the quality check."
+      ],
+      "sections": [
+        {"heading": "Generation", "body": "KFPS approximates pixels with a limited library of vector shapes. More search work and more layers can help, but exact photographic reproduction is not possible within a fixed game budget."},
+        {"heading": "Transfer", "body": "Online tools depend on the running game's current memory layout. Offline tools depend on supported local save formats. A game update can require a locator or format update before transfer works again."},
+        {"heading": "Manual work", "body": "Text, exact logos, tiny facial features, masks, and deliberate line work often benefit from the manual editor even after a strong generation."}
+      ],
+      "pitfalls": [
+        "Do not test risky offline changes without a restorable backup.",
+        "Do not assume a tool for one game or save version is safe for another.",
+        "Do not delete source images or projects after producing only one exported JSON."
+      ],
+      "related": ["final-checkpoints", "export-games", "support-checklist"]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+from __future__ import annotations
+
+from PySide6.QtCore import QObject, Property, Signal, Slot
+
+
+class AppController(QObject):
+    changed = Signal()
+
+    # Creation-first public navigation. Older routes stay valid so docs,
+    # shortcuts, screenshots, and update flows do not break.
+    PAGES = {
+        "create": "Create",
+        "outputs": "Outputs",
+        "community": "Community",
+        "editor": "Editor",
+        "support": "Support KFPS",
+        "help": "Help",
+        "settings": "Settings",
+        "dashboard": "Create",
+        "generate": "Advanced Generator",
+        "json": "Outputs",
+        "library": "Outputs",
+        "images": "Source Check",
+        "tools": "Tools",
+        "reports": "Reports",
+        "update": "Update",
+        "credits": "Credits",
+    }
+
+    SUBTITLES = {
+        "create": "Source, generation, preview, and next step without page scrolling.",
+        "outputs": "Select one JSON, inspect it, then import or export.",
+        "community": "Browse, share, and download community-made vinyl artwork.",
+        "editor": "Open the local vinyl editor and manage saved projects.",
+        "support": "See the optional one-time supporter extras and open the official Ko-fi page.",
+        "help": "Workflow guides, import notes, and troubleshooting.",
+        "settings": "Preferences, folders, maintenance, and diagnostics.",
+        "generate": "Full generator controls for advanced/manual runs.",
+        "images": "Source image measurements and resize guidance.",
+        "tools": "External source-prep links. Check each website's privacy policy before uploading artwork.",
+        "reports": "Create a local diagnostic report for support.",
+        "update": "Check and apply app updates.",
+        "credits": "Project lineage, community thanks, upstream research, and license notices.",
+    }
+
+    # Keep the primary workflow free from the bottom log panel so all visible
+    # options fit on screen. Advanced/maintenance pages keep the live log.
+    LOG_PAGES = {"generate", "images", "reports"}
+    ALIASES = {"dashboard": "create", "json": "outputs", "library": "outputs", "learn": "help"}
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._page = "create"
+
+    def _canonical(self, page: str) -> str:
+        return self.ALIASES.get(str(page or ""), str(page or ""))
+
+    @Property(str, notify=changed)
+    def currentPage(self):
+        return self._page
+
+    @Property(str, notify=changed)
+    def pageTitle(self):
+        return self.PAGES.get(self._page, "KFPS")
+
+    @Property(str, notify=changed)
+    def pageSubtitle(self):
+        return self.SUBTITLES.get(self._page, "Creation-focused KFPS workspace.")
+
+    @Property(str, notify=changed)
+    def windowTitle(self):
+        return f"KFPS — {self.pageTitle}"
+
+    @Property(bool, notify=changed)
+    def showBottomPanel(self):
+        return self._page in self.LOG_PAGES
+
+    @Property(str, notify=changed)
+    def bottomMode(self):
+        return "log"
+
+    @Slot(str)
+    def navigate(self, page):
+        target = self._canonical(page)
+        if target in self.PAGES and target != self._page:
+            self._page = target
+            self.changed.emit()

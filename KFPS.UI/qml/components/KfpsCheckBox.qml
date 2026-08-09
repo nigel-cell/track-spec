@@ -1,0 +1,120 @@
+import QtQuick 6.7
+import QtQuick.Controls 6.7
+import QtQuick.Layouts 6.7
+import Kfps.Theme 1.0
+
+CheckBox {
+    id: root
+
+    objectName: "KfpsCheckBox:" + root.text
+
+    property bool dense: false
+    property string toolTipText: ""
+    readonly property string effectiveToolTipText: toolTipText.trim().length > 0 ? toolTipText : text
+
+    spacing: Theme.px(9)
+    leftPadding: 0
+    rightPadding: 0
+    topPadding: Theme.px(2)
+    bottomPadding: Theme.px(2)
+    hoverEnabled: true
+    focusPolicy: Qt.StrongFocus
+
+    implicitHeight: Math.max(
+                        Theme.px(dense ? 25 : 28),
+                        Math.max(indicatorItem.implicitHeight, labelText.implicitHeight) + topPadding + bottomPadding)
+    implicitWidth: indicatorItem.implicitWidth + spacing + labelText.implicitWidth
+    Layout.minimumHeight: root.implicitHeight
+
+    indicator: Rectangle {
+        id: indicatorItem
+        implicitWidth: Theme.px(dense ? 16 : 18)
+        implicitHeight: implicitWidth
+        x: root.leftPadding
+        y: Math.round((root.height - height) / 2)
+        radius: Theme.corner(Theme.customFrameExclusive ? Theme.px(6) : Theme.px(5))
+        color: Theme.angularControlsEnabled
+               ? "transparent"
+               : (Theme.classicMode
+               ? Theme.checkboxSurface
+               : (root.checked
+               ? (root.hovered ? Theme.primaryBright : Theme.checkboxCheckedSurface)
+               : (root.hovered ? Theme.checkboxHoverSurface : Theme.checkboxSurface)))
+        border.width: Theme.classicMode
+                      ? 0
+                      : (Theme.angularControlsEnabled
+                      ? 0
+                      : (root.activeFocus
+                      ? Theme.px(2)
+                      : (Theme.customFrameExclusive ? 0 : Theme.px(1))))
+        border.color: root.activeFocus ? Theme.focusColor
+                                       : (root.checked ? (root.hovered ? Theme.focusColor : Theme.primaryBright)
+                                                       : (root.hovered ? Theme.primary : Theme.borderSoft))
+        scale: Theme.classicMode ? 1.0 : (root.pressed ? 0.88 : (root.hovered ? 1.06 : 1.0))
+        Behavior on color { enabled: !Theme.reducedMotion; ColorAnimation { duration: 105 } }
+        Behavior on scale { enabled: !Theme.reducedMotion; NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+
+        AngularControlFrame {
+            anchors.fill: parent
+            fillColor: root.checked
+                       ? (root.hovered ? Theme.primaryBright : Theme.checkboxCheckedSurface)
+                       : (root.hovered ? Theme.checkboxHoverSurface : Theme.checkboxSurface)
+            borderColor: root.activeFocus
+                         ? Theme.focusColor
+                         : (root.checked ? Theme.signalSecondary : (root.hovered ? Theme.primary : Theme.borderSoft))
+            accentColor: Theme.signalSecondary
+            hovered: root.hovered
+            pressed: root.pressed
+            selected: root.checked
+            focused: root.activeFocus
+            frameEnabled: root.enabled
+            cutOverride: Theme.px(4)
+            notchOverride: Theme.px(2)
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: Theme.terminalMode || Theme.classicMode || Theme.angularControlsEnabled ? "X" : "✓"
+            visible: root.checked
+            color: Theme.classicMode ? Theme.borderStrong : (root.hovered ? Theme.backgroundA : Theme.primaryText)
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.px(dense ? 10 : 12)
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        ClassicBevel {
+            anchors.fill: parent
+            sunken: true
+        }
+
+        ClassicFocusRect {
+            anchors.fill: parent
+            anchors.margins: -Theme.px(3)
+            active: root.activeFocus
+        }
+    }
+
+    contentItem: Text {
+        id: labelText
+        leftPadding: indicatorItem.implicitWidth + root.spacing
+        rightPadding: 0
+        text: root.text
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.px(dense ? 10.5 : 11.5)
+        font.capitalization: Theme.terminalMode ? Font.AllUppercase : Font.MixedCase
+        color: root.enabled ? Theme.text : Theme.subtle
+        opacity: root.hovered ? 1.0 : 0.92
+        Behavior on opacity { enabled: !Theme.reducedMotion; NumberAnimation { duration: 100 } }
+        verticalAlignment: Text.AlignVCenter
+        wrapMode: Text.Wrap
+        maximumLineCount: 2
+        elide: Text.ElideRight
+    }
+
+    KfpsToolTip {
+        visible: root.hovered && root.effectiveToolTipText.length > 0
+        text: root.effectiveToolTipText
+    }
+}
