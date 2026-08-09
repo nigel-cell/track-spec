@@ -18,13 +18,20 @@ export interface AeroGameLimits {
   rearMax: number | null;
 }
 
+export interface RideGameLimits {
+  frontMin: number;
+  frontMax: number;
+  rearMin: number;
+  rearMax: number;
+}
+
 export interface GameLimits {
   arb: { min: number; max: number };
   damping: { min: number; max: number };
   camber: { min: number; max: number }; // more negative = min
   toe: { min: number; max: number };
   caster: { min: number; max: number };
-  rideCm: { min: number; max: number };
+  rideCm: RideGameLimits;
   brakeBal: { min: number; max: number };
   brakePressure: { min: number; max: number };
   diff: { min: number; max: number };
@@ -83,7 +90,7 @@ export function buildGameLimits(args: {
   units: CalcTuneUnits;
   springLimits?: Partial<SpringLimits> | null;
   aeroLimits?: Partial<AeroGameLimits> | null;
-  rideLimits?: { min?: number; max?: number } | null;
+  rideLimits?: Partial<RideGameLimits> | null;
   offRoad?: boolean;
 }): GameLimits {
   const est = estimateSpringLimitsLbs(args.weightLbs, args.weightDist);
@@ -115,21 +122,39 @@ export function buildGameLimits(args: {
     springs.rearMax = t;
   }
 
-  const rideMin = args.rideLimits?.min ?? (args.offRoad ? 18 : 15);
-  const rideMax = args.rideLimits?.max ?? (args.offRoad ? 34 : 26);
+  // Default ride envelope; per-car Soft/High ends override when measured.
+  const defRideMin = args.offRoad ? 18 : 11.2;
+  const defRideMax = args.offRoad ? 34 : 26;
+  const ride: RideGameLimits = {
+    frontMin: args.rideLimits?.frontMin ?? defRideMin,
+    frontMax: args.rideLimits?.frontMax ?? defRideMax,
+    rearMin: args.rideLimits?.rearMin ?? defRideMin,
+    rearMax: args.rideLimits?.rearMax ?? defRideMax,
+  };
+  for (const side of ["front", "rear"] as const) {
+    const lo = `${side}Min` as const;
+    const hi = `${side}Max` as const;
+    if (ride[lo] > ride[hi]) {
+      const t = ride[lo];
+      ride[lo] = ride[hi];
+      ride[hi] = t;
+    }
+  }
 
   return {
+    // Confirmed Soft/Stiff ends from FH6 gameplay sweeps (GR86 + 430 Scuderia).
     arb: { min: 1, max: 65 },
     damping: { min: 1, max: 20 },
     camber: { min: -5, max: 0 },
     toe: { min: -1, max: 1 },
     caster: { min: args.offRoad ? 1.5 : 5.0, max: 7.0 },
-    rideCm: { min: rideMin, max: Math.max(rideMin + 1, rideMax) },
-    brakeBal: { min: 1, max: 100 },
-    brakePressure: { min: 1, max: 200 },
+    rideCm: ride,
+    brakeBal: { min: 0, max: 100 },
+    brakePressure: { min: 0, max: 200 },
     diff: { min: 0, max: 100 },
-    tirePsi: { min: 15, max: 50 },
-    tireBar: { min: 1.0, max: 3.5 },
+    // Tire pressure: 1.0–3.8 bar confirmed in-game (≈14.5–55.1 psi).
+    tirePsi: { min: 14.5, max: 55.1 },
+    tireBar: { min: 1.0, max: 3.8 },
     finalDrive: { min: 2.2, max: 6.1 },
     gearRatio: { min: 0.5, max: 6.0 },
     springs,

@@ -81,6 +81,8 @@ export interface CalcTuneInput {
   springLimits?: Partial<SpringLimits> | null;
   /** Optional aero DF min/max in kg (from garage / user). */
   aeroLimits?: Partial<AeroGameLimits> | null;
+  /** Optional per-axle ride height min/max in cm. */
+  rideLimits?: Partial<import("./gameLimits").RideGameLimits> | null;
 }
 
 export interface TuneRow {
@@ -103,7 +105,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     hasAero, aeroF, aeroR, dragCd, pi, carClass,
     units: rawUnits, feelBalance, feelAggression, stockFd, stockGears, includeGearing, dragDist,
     brakePressureDelta, brakeBalDelta, transFdMult, springLimits: springLimitInput,
-    aeroLimits: aeroLimitInput,
+    aeroLimits: aeroLimitInput, rideLimits: rideLimitInput,
   } = s;
 
   const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits };
@@ -140,6 +142,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     units,
     springLimits: springLimitInput,
     aeroLimits: aeroLimitInput,
+    rideLimits: rideLimitInput,
     offRoad: isRally || isOffRoad || isSnow,
   });
 
@@ -566,8 +569,8 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   const springDigits = sUnit === "kgf/mm" ? 2 : 1;
   const fSpringC = clampNumber(fSpring, limits.springs.frontMin, limits.springs.frontMax, springDigits);
   const rSpringC = clampNumber(rSpring, limits.springs.rearMin, limits.springs.rearMax, springDigits);
-  const fRideC = clampNumber(fRide, limits.rideCm.min, limits.rideCm.max, 1);
-  const rRideC = clampNumber(rRide, limits.rideCm.min, limits.rideCm.max, 1);
+  const fRideC = clampNumber(fRide, limits.rideCm.frontMin, limits.rideCm.frontMax, 1);
+  const rRideC = clampNumber(rRide, limits.rideCm.rearMin, limits.rideCm.rearMax, 1);
 
   const fARBC = clampNumber(fARB, limits.arb.min, limits.arb.max, 1);
   const rARBC = clampNumber(rARB, limits.arb.min, limits.arb.max, 1);
@@ -727,17 +730,17 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
           "Front Ride Height",
           units.weight === "kg" ? `${fRideC.value.toFixed(1)} cm` : `${(fRideC.value / 2.54).toFixed(1)} in`,
           fRideC.hit,
-          fRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
+          fRideC.hit === "min" ? limits.rideCm.frontMin : limits.rideCm.frontMax,
           "cm",
-          pctOf(fRideC.value, limits.rideCm.min, limits.rideCm.max),
+          pctOf(fRideC.value, limits.rideCm.frontMin, limits.rideCm.frontMax),
         ),
         row(
           "Rear Ride Height",
           units.weight === "kg" ? `${rRideC.value.toFixed(1)} cm` : `${(rRideC.value / 2.54).toFixed(1)} in`,
           rRideC.hit,
-          rRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
+          rRideC.hit === "min" ? limits.rideCm.rearMin : limits.rideCm.rearMax,
           "cm",
-          pctOf(rRideC.value, limits.rideCm.min, limits.rideCm.max),
+          pctOf(rRideC.value, limits.rideCm.rearMin, limits.rideCm.rearMax),
         ),
       ],
       tip: springTip,

@@ -81,6 +81,18 @@ export function buildCalcInput(
             rearMax: config.aeroRearMax ?? config.aeroR ?? null,
           }
         : null,
+    rideLimits:
+      config.rideFrontMin != null ||
+      config.rideFrontMax != null ||
+      config.rideRearMin != null ||
+      config.rideRearMax != null
+        ? {
+            frontMin: config.rideFrontMin,
+            frontMax: config.rideFrontMax,
+            rearMin: config.rideRearMin,
+            rearMax: config.rideRearMax,
+          }
+        : null,
   };
 }
 

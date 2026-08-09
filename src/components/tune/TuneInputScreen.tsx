@@ -176,6 +176,12 @@ export interface TuneConfig {
   aeroRearMin?: number;
   aeroRearMax?: number | null;
 
+  /** Optional ride height slider bounds (cm). */
+  rideFrontMin?: number;
+  rideFrontMax?: number;
+  rideRearMin?: number;
+  rideRearMax?: number;
+
   /** estimated | measured | user — from carSliderLimits.json / overrides. */
   sliderLimitsSource?: "estimated" | "measured" | "user";
 
@@ -275,6 +281,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [aeroFrontMax, setAeroFrontMax] = useState<number | "">("");
   const [aeroRearMin, setAeroRearMin] = useState<number | "">("");
   const [aeroRearMax, setAeroRearMax] = useState<number | "">("");
+  const [rideFrontMin, setRideFrontMin] = useState<number | "">("");
+  const [rideFrontMax, setRideFrontMax] = useState<number | "">("");
+  const [rideRearMin, setRideRearMin] = useState<number | "">("");
+  const [rideRearMax, setRideRearMax] = useState<number | "">("");
   const [sliderLimitsSource, setSliderLimitsSource] = useState<
     "estimated" | "measured" | "user" | undefined
   >(undefined);
@@ -421,6 +431,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     if (initialDraft.aeroFrontMax != null) setAeroFrontMax(initialDraft.aeroFrontMax);
     if (initialDraft.aeroRearMin != null) setAeroRearMin(initialDraft.aeroRearMin);
     if (initialDraft.aeroRearMax != null) setAeroRearMax(initialDraft.aeroRearMax);
+    if (initialDraft.rideFrontMin != null) setRideFrontMin(initialDraft.rideFrontMin);
+    if (initialDraft.rideFrontMax != null) setRideFrontMax(initialDraft.rideFrontMax);
+    if (initialDraft.rideRearMin != null) setRideRearMin(initialDraft.rideRearMin);
+    if (initialDraft.rideRearMax != null) setRideRearMax(initialDraft.rideRearMax);
     if (initialDraft.sliderLimitsSource) setSliderLimitsSource(initialDraft.sliderLimitsSource);
   }, [initialDraft]);
 
@@ -429,7 +443,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   }, []);
 
   const applySliderLimits = (limits: CarSliderLimits | null, springUnit: TuneUnits["springs"]) => {
-    if (!limits?.springs) {
+    if (!limits) {
       setSpringFrontMin("");
       setSpringFrontMax("");
       setSpringRearMin("");
@@ -438,17 +452,23 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       setAeroFrontMax("");
       setAeroRearMin("");
       setAeroRearMax("");
+      setRideFrontMin("");
+      setRideFrontMax("");
+      setRideRearMin("");
+      setRideRearMax("");
       setSliderLimitsSource(undefined);
       return;
     }
-    const srcUnit = limits.springs.unit ?? "lbs/in";
-    const round = (v: number) =>
-      springUnit === "kgf/mm" ? +convertSpringValue(v, srcUnit, springUnit).toFixed(2)
-        : +convertSpringValue(v, srcUnit, springUnit).toFixed(1);
-    setSpringFrontMin(round(limits.springs.frontMin));
-    setSpringFrontMax(round(limits.springs.frontMax));
-    setSpringRearMin(round(limits.springs.rearMin));
-    setSpringRearMax(round(limits.springs.rearMax));
+    if (limits.springs) {
+      const srcUnit = limits.springs.unit ?? "lbs/in";
+      const round = (v: number) =>
+        springUnit === "kgf/mm" ? +convertSpringValue(v, srcUnit, springUnit).toFixed(2)
+          : +convertSpringValue(v, srcUnit, springUnit).toFixed(1);
+      setSpringFrontMin(round(limits.springs.frontMin));
+      setSpringFrontMax(round(limits.springs.frontMax));
+      setSpringRearMin(round(limits.springs.rearMin));
+      setSpringRearMax(round(limits.springs.rearMax));
+    }
     if (limits.aero) {
       setAeroFrontMin(limits.aero.frontMin ?? 0);
       setAeroFrontMax(limits.aero.frontMax ?? "");
@@ -459,6 +479,17 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       setAeroFrontMax("");
       setAeroRearMin("");
       setAeroRearMax("");
+    }
+    if (limits.ride) {
+      setRideFrontMin(limits.ride.frontMin);
+      setRideFrontMax(limits.ride.frontMax);
+      setRideRearMin(limits.ride.rearMin);
+      setRideRearMax(limits.ride.rearMax);
+    } else {
+      setRideFrontMin("");
+      setRideFrontMax("");
+      setRideRearMin("");
+      setRideRearMax("");
     }
     setSliderLimitsSource(limits.source);
   };
@@ -867,6 +898,11 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       aeroFrontMax: aeroFrontMax === "" ? undefined : aeroFrontMax,
       aeroRearMin: aeroRearMin === "" ? undefined : aeroRearMin,
       aeroRearMax: aeroRearMax === "" ? undefined : aeroRearMax,
+
+      rideFrontMin: rideFrontMin === "" ? undefined : rideFrontMin,
+      rideFrontMax: rideFrontMax === "" ? undefined : rideFrontMax,
+      rideRearMin: rideRearMin === "" ? undefined : rideRearMin,
+      rideRearMax: rideRearMax === "" ? undefined : rideRearMax,
       sliderLimitsSource,
 
       aspiration,
