@@ -5,9 +5,16 @@ interface GarageCollectionBarProps {
   total: number;
   ownedCost: number;
   missingCost: number;
+  favorites?: number;
 }
 
-export function GarageCollectionBar({ owned, total, ownedCost, missingCost }: GarageCollectionBarProps) {
+export function GarageCollectionBar({
+  owned,
+  total,
+  ownedCost,
+  missingCost,
+  favorites = 0,
+}: GarageCollectionBarProps) {
   const pct = total ? Math.round((owned / total) * 100) : 0;
 
   return (
@@ -23,6 +30,11 @@ export function GarageCollectionBar({ owned, total, ownedCost, missingCost }: Ga
             <span className="ml-2 rounded-full bg-[var(--ts-accent-soft)] px-2.5 py-0.5 text-xs font-bold text-[var(--ts-accent)]">
               {pct}%
             </span>
+            {favorites > 0 && (
+              <span className="rounded-full bg-[var(--ts-warning)]/15 px-2.5 py-0.5 text-xs font-bold text-[var(--ts-warning)]">
+                ★ {favorites}
+              </span>
+            )}
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--ts-border)]">
             <div

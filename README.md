@@ -269,6 +269,7 @@ Built in-house, no third-party dependencies:
 - [x] Game min/max clamping (ARB, damping, alignment, springs, brakes, gearing) + optional in-game spring limits
 - [x] Per-car spring/aero/ride slider limits (`carSliderLimits.json`) + results as slider %
 - [x] Gameplay Soft/Stiff sweeps → measured limits (GR86, 430 Scuderia) + game-wide tire/ARB/damping/brake/diff ends
+- [x] Favorite cars filter (seeded GR86 + 430 Scuderia) + resume last Manual draft per favorite
 - [x] Local GameDB extractor for measured spring/aero ranges (`scripts/EXTRACT-GAMEDB.md`)
 - [x] Build profiles per car (local)
 - [x] Tune library export/import + compare

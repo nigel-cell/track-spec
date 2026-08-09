@@ -19,6 +19,7 @@ import { QuickTuneSheet } from "./components/tune/QuickTuneSheet";
 import { TuneCompareSheet } from "./components/tune/TuneCompareSheet";
 import { listSavedTunes } from "./lib/tuneSaves";
 import { listBuildProfiles, buildProfileToDraft } from "./lib/buildProfiles";
+import { loadFavoriteDraft } from "./lib/carFavorites";
 
 import { DEFAULT_CAR } from "./data/constants";
 
@@ -285,7 +286,13 @@ function AppContent() {
   };
 
   const handleManualTuneFromGarage = (car: ForzaGarageCar) => {
-    openTuneEditor(tuneDraftFromGarage(car, cars, units));
+    const base = tuneDraftFromGarage(car, cars, units);
+    // Resume last Manual setup for favorite cars (measured limits stay in carSliderLimits).
+    const saved = loadFavoriteDraft<Partial<TuneConfig>>(car.slug);
+    const draft = saved
+      ? { ...base, ...saved, make: base.make ?? saved.make, model: base.model ?? saved.model }
+      : base;
+    openTuneEditor(draft);
   };
 
 

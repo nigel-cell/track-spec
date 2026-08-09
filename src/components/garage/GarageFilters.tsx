@@ -1,5 +1,5 @@
 import { BrandFilter, type BrandFilterItem } from "./BrandFilter";
-export type GarageViewMode = "all" | "owned" | "missing";
+export type GarageViewMode = "all" | "favorites" | "owned" | "missing";
 export type GarageSort = "pi" | "cost" | "name";
 export type GarageGroup = "none" | "make" | "rarity" | "class";
 
@@ -97,6 +97,7 @@ export function GarageFilters({
         {(
           [
             { id: "all" as const, label: "All" },
+            { id: "favorites" as const, label: "Favorites" },
             { id: "owned" as const, label: "Owned" },
             { id: "missing" as const, label: "Missing" },
           ] as const

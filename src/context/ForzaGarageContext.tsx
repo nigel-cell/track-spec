@@ -16,6 +16,7 @@ import {
   saveOwnedSlugs,
   type ForzaGarageCar,
 } from "../lib/forzaGarage";
+import { loadFavoriteSlugs, saveFavoriteSlugs } from "../lib/carFavorites";
 
 type GarageCtx = {
   cars: ForzaGarageCar[];
@@ -23,11 +24,14 @@ type GarageCtx = {
   error: string | null;
   owned: Set<string>;
   toggleOwned: (slug: string) => void;
+  favorites: Set<string>;
+  toggleFavorite: (slug: string) => void;
   lookup: (make: string, model: string) => ForzaGarageCar | null;
   lookupByName: (name: string) => ForzaGarageCar | null;
   enrich: (car: ForzaGarageCar) => Promise<ForzaGarageCar>;
   stats: {
     owned: number;
+    favorites: number;
     total: number;
     ownedCost: number;
     totalCost: number;
@@ -52,6 +56,7 @@ export function ForzaGarageProvider({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [owned, setOwned] = useState<Set<string>>(() => loadOwnedSlugs());
+  const [favorites, setFavorites] = useState<Set<string>>(() => loadFavoriteSlugs());
 
   const ensureLoaded = useCallback(() => setWanted(true), []);
 
@@ -87,6 +92,16 @@ export function ForzaGarageProvider({
     });
   }, []);
 
+  const toggleFavorite = useCallback((slug: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      saveFavoriteSlugs(next);
+      return next;
+    });
+  }, []);
+
   const lookup = useCallback(
     (make: string, model: string) => {
       if (!wanted) setWanted(true);
@@ -109,6 +124,7 @@ export function ForzaGarageProvider({
     let ownedCount = 0;
     let ownedCost = 0;
     let totalCost = 0;
+    let favoritesCount = 0;
     for (const c of cars) {
       const cost = c.cost ?? 0;
       totalCost += cost;
@@ -116,15 +132,17 @@ export function ForzaGarageProvider({
         ownedCount++;
         ownedCost += cost;
       }
+      if (favorites.has(c.slug)) favoritesCount++;
     }
     return {
       owned: ownedCount,
+      favorites: favoritesCount,
       total: cars.length,
       ownedCost,
       totalCost,
       missingCost: totalCost - ownedCost,
     };
-  }, [cars, owned]);
+  }, [cars, owned, favorites]);
 
   const value = useMemo(
     () => ({
@@ -133,6 +151,8 @@ export function ForzaGarageProvider({
       error,
       owned,
       toggleOwned,
+      favorites,
+      toggleFavorite,
       lookup,
       lookupByName,
       enrich,
@@ -146,6 +166,8 @@ export function ForzaGarageProvider({
       error,
       owned,
       toggleOwned,
+      favorites,
+      toggleFavorite,
       lookup,
       lookupByName,
       enrich,

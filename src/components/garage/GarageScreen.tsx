@@ -29,14 +29,25 @@ export function GarageScreen({
   const pageSize = isDesktop ? DESKTOP_PAGE : MOBILE_PAGE;
   const density = isDesktop ? "full" : "light";
 
-  const { cars, loading, error, owned, toggleOwned, stats, enrich, ensureLoaded } = useForzaGarage();
+  const {
+    cars,
+    loading,
+    error,
+    owned,
+    toggleOwned,
+    favorites,
+    toggleFavorite,
+    stats,
+    enrich,
+    ensureLoaded,
+  } = useForzaGarage();
   const { urlForMake } = useBrandLogos();
 
   useEffect(() => {
     ensureLoaded();
   }, [ensureLoaded]);
 
-  const [view, setView] = useState<GarageViewMode>("all");
+  const [view, setView] = useState<GarageViewMode>("favorites");
   const [group, setGroup] = useState<GarageGroup>("none");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -77,6 +88,7 @@ export function GarageScreen({
           c.model.toLowerCase().includes(q),
       );
     }
+    if (view === "favorites") list = list.filter((c) => favorites.has(c.slug));
     if (view === "owned") list = list.filter((c) => owned.has(c.slug));
     if (view === "missing") list = list.filter((c) => !owned.has(c.slug));
     if (makeFilter) list = list.filter((c) => c.make === makeFilter);
@@ -85,11 +97,15 @@ export function GarageScreen({
     if (driveFilter) list = list.filter((c) => c.drive?.toUpperCase() === driveFilter);
 
     return [...list].sort((a, b) => {
+      if (view === "favorites") {
+        // Keep measured favorites (GR86 / F430) easy to find first by name.
+        return a.name.localeCompare(b.name);
+      }
       if (sort === "cost") return (b.cost ?? 0) - (a.cost ?? 0);
       if (sort === "name") return a.name.localeCompare(b.name);
       return (b.pi ?? 0) - (a.pi ?? 0);
     });
-  }, [cars, deferredQuery, view, owned, sort, classFilter, rarityFilter, driveFilter, makeFilter]);
+  }, [cars, deferredQuery, view, owned, favorites, sort, classFilter, rarityFilter, driveFilter, makeFilter]);
 
   useEffect(() => {
     setVisibleCount(pageSize);
@@ -166,9 +182,11 @@ export function GarageScreen({
         car={detail}
         detailLoading={detailLoading}
         owned={owned.has(detail.slug)}
+        favorite={favorites.has(detail.slug)}
         logoUrl={urlForMake(detail.make)}
         onClose={() => setDetail(null)}
         onToggleOwned={() => toggleOwned(detail.slug)}
+        onToggleFavorite={() => toggleFavorite(detail.slug)}
         onQuickTune={onQuickTune ? () => void handleQuickTune(detail) : undefined}
         onManualTune={onManualTune ? () => void handleManualTune(detail) : undefined}
         onLoadSaved={onLoadSaved}
@@ -193,6 +211,7 @@ export function GarageScreen({
         total={stats.total}
         ownedCost={stats.ownedCost}
         missingCost={stats.missingCost}
+        favorites={stats.favorites}
       />
 
       <GarageFilters
@@ -232,7 +251,9 @@ export function GarageScreen({
 
       {!loading && filtered.length === 0 && (
         <Card className="py-12 text-center text-sm text-[var(--ts-muted)]">
-          No cars match your filters. Try clearing brand, class, rarity, or search.
+          {view === "favorites"
+            ? "No favorites yet. Star a car to keep its tune data handy — GR86 and 430 Scuderia are seeded for you."
+            : "No cars match your filters. Try clearing brand, class, rarity, or search."}
         </Card>
       )}
 
@@ -267,11 +288,16 @@ export function GarageScreen({
                       density={density}
                       priorityImage={priorityImage}
                       owned={owned.has(car.slug)}
+                      favorite={favorites.has(car.slug)}
                       logoUrl={urlForMake(car.make)}
                       onOpen={() => void openDetail(car)}
                       onToggleOwned={(e) => {
                         e.stopPropagation();
                         toggleOwned(car.slug);
+                      }}
+                      onToggleFavorite={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(car.slug);
                       }}
                     />
                   );

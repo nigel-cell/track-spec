@@ -79,6 +79,7 @@ import {
   type CarSliderLimits,
   type SliderLimitsFile,
 } from "../../lib/sliderLimits";
+import { saveFavoriteDraft } from "../../lib/carFavorites";
 
 import { Button } from "../ui/Button";
 
@@ -352,7 +353,31 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const { cars, makes, count: carCount, loading: carsLoading } = useCarDatabase();
 
-  const { lookup: lookupGarage, enrich: enrichGarage } = useForzaGarage();
+  const {
+    cars: garageCars,
+    lookup: lookupGarage,
+    enrich: enrichGarage,
+    favorites,
+    ensureLoaded: ensureGarageLoaded,
+  } = useForzaGarage();
+
+  useEffect(() => {
+    ensureGarageLoaded();
+  }, [ensureGarageLoaded]);
+
+  const favoriteCars = useMemo(
+    () => garageCars.filter((c) => favorites.has(c.slug)),
+    [garageCars, favorites],
+  );
+
+  const measuredSlugs = useMemo(() => {
+    const set = new Set<string>();
+    if (!sliderLimitsFile?.cars) return set;
+    for (const [slug, car] of Object.entries(sliderLimitsFile.cars)) {
+      if (car.source === "measured") set.add(slug);
+    }
+    return set;
+  }, [sliderLimitsFile]);
 
   const { lookup: lookupWiki } = useWikiSwaps();
 
@@ -913,6 +938,62 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
     });
 
+    const garageHit = lookupGarage(make, model.split(" '")[0]);
+    if (garageHit && favorites.has(garageHit.slug)) {
+      saveFavoriteDraft(garageHit.slug, {
+        make,
+        model,
+        driveType,
+        weight,
+        weightDist,
+        pi,
+        carClass,
+        tuneId,
+        mode,
+        surface,
+        compound,
+        redlineRpm,
+        peakTorqueRpm,
+        maxTorque,
+        topspeed,
+        gears,
+        hasAero,
+        aeroF,
+        aeroR,
+        dragCd,
+        tireWF,
+        tireWR,
+        stockFd,
+        stockGears,
+        engineSwap,
+        drivetrainSwap,
+        stockDriveType,
+        weightPackage,
+        chassisPackage,
+        powerStage,
+        tirePackage,
+        transPackage,
+        brakePackage,
+        aeroPackage,
+        springFrontMin: springFrontMin === "" ? undefined : springFrontMin,
+        springFrontMax: springFrontMax === "" ? undefined : springFrontMax,
+        springRearMin: springRearMin === "" ? undefined : springRearMin,
+        springRearMax: springRearMax === "" ? undefined : springRearMax,
+        aeroFrontMin: aeroFrontMin === "" ? undefined : aeroFrontMin,
+        aeroFrontMax: aeroFrontMax === "" ? undefined : aeroFrontMax,
+        aeroRearMin: aeroRearMin === "" ? undefined : aeroRearMin,
+        aeroRearMax: aeroRearMax === "" ? undefined : aeroRearMax,
+        rideFrontMin: rideFrontMin === "" ? undefined : rideFrontMin,
+        rideFrontMax: rideFrontMax === "" ? undefined : rideFrontMax,
+        rideRearMin: rideRearMin === "" ? undefined : rideRearMin,
+        rideRearMax: rideRearMax === "" ? undefined : rideRearMax,
+        sliderLimitsSource,
+        aspiration,
+        inputDevice,
+        units,
+      });
+    }
+
     if (
       sliderLimitsSource === "user" &&
       make &&
@@ -996,8 +1077,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         cars={cars}
         carCount={carCount}
         units={units}
-        onSelect={(patch) => {
-          const slim = patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null;
+        favoriteCars={favoriteCars}
+        measuredSlugs={measuredSlugs}
+        onSelect={(patch, meta) => {
+          const slim =
+            (meta?.slug ? garageCars.find((c) => c.slug === meta.slug) : null) ??
+            (patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null);
           const apply = (garage: typeof slim) => {
             const merged = mergeGarageIntoDraft(patch, garage, cars, units);
             if (merged.make) setMake(merged.make);
