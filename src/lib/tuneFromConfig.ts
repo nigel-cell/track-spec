@@ -68,6 +68,19 @@ export function buildCalcInput(
           rearMax: config.springRearMax,
         }
       : null,
+    aeroLimits:
+      config.hasAero ||
+      config.aeroFrontMax != null ||
+      config.aeroRearMax != null ||
+      config.aeroF != null ||
+      config.aeroR != null
+        ? {
+            frontMin: config.aeroFrontMin ?? 0,
+            frontMax: config.aeroFrontMax ?? config.aeroF ?? null,
+            rearMin: config.aeroRearMin ?? 0,
+            rearMax: config.aeroRearMax ?? config.aeroR ?? null,
+          }
+        : null,
   };
 }
 

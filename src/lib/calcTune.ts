@@ -5,6 +5,8 @@ import {
   buildGameLimits,
   clampNote,
   clampNumber,
+  sliderPercent,
+  type AeroGameLimits,
   type SpringLimits,
 } from "./gameLimits";
 
@@ -77,6 +79,8 @@ export interface CalcTuneInput {
   transFdMult?: number;
   /** Optional in-game spring slider min/max (same unit as units.springs). */
   springLimits?: Partial<SpringLimits> | null;
+  /** Optional aero DF min/max in kg (from garage / user). */
+  aeroLimits?: Partial<AeroGameLimits> | null;
 }
 
 export interface TuneRow {
@@ -85,6 +89,8 @@ export interface TuneRow {
   note?: string;
   /** Set when value was forced inside FH6 slider bounds. */
   clamped?: "min" | "max";
+  /** 0–100 position on the in-game slider (when a range is known). */
+  pct?: number;
 }
 export interface TunePageData { values: TuneRow[]; tip?: string }
 export type CalcTuneResult = Record<string, TunePageData | null>;
@@ -97,6 +103,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     hasAero, aeroF, aeroR, dragCd, pi, carClass,
     units: rawUnits, feelBalance, feelAggression, stockFd, stockGears, includeGearing, dragDist,
     brakePressureDelta, brakeBalDelta, transFdMult, springLimits: springLimitInput,
+    aeroLimits: aeroLimitInput,
   } = s;
 
   const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits };
@@ -132,6 +139,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     weightDist,
     units,
     springLimits: springLimitInput,
+    aeroLimits: aeroLimitInput,
     offRoad: isRally || isOffRoad || isSnow,
   });
 
@@ -527,19 +535,23 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     gearingData = { finalDrive, ratios, gearsWereReduced, requestedGears: activeGears };
   }
 
-  // ── CLAMP TO FH6 SLIDER BOUNDS
+  // ── CLAMP TO FH6 SLIDER BOUNDS + SLIDER %
   const row = (
     key: string,
     value: string,
     hit: "min" | "max" | null,
     bound: number,
     unit = "",
+    pct?: number,
   ): TuneRow => ({
     key,
     value,
     clamped: hit || undefined,
     note: clampNote(hit, bound, unit),
+    pct,
   });
+
+  const pctOf = (value: number, min: number, max: number) => sliderPercent(value, min, max);
 
   const pBound = pUnit === "bar" ? limits.tireBar : limits.tirePsi;
   const fPsiC = clampNumber(fpsi, pBound.min, pBound.max, pUnit === "bar" ? 2 : 1);
@@ -579,7 +591,16 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   const gearRows: TuneRow[] = [];
   if (gearingData) {
     const fdC = clampNumber(gearingData.finalDrive, limits.finalDrive.min, limits.finalDrive.max, 2);
-    gearRows.push(row("Final Drive", String(fdC.value), fdC.hit, fdC.hit === "min" ? limits.finalDrive.min : limits.finalDrive.max));
+    gearRows.push(
+      row(
+        "Final Drive",
+        String(fdC.value),
+        fdC.hit,
+        fdC.hit === "min" ? limits.finalDrive.min : limits.finalDrive.max,
+        "",
+        pctOf(fdC.value, limits.finalDrive.min, limits.finalDrive.max),
+      ),
+    );
     const ratios = gearingData.ratios.map((r) => clampNumber(r, limits.gearRatio.min, limits.gearRatio.max, 2));
     ratios.forEach((r, i) => {
       gearRows.push(
@@ -588,6 +609,8 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
           String(r.value),
           r.hit,
           r.hit === "min" ? limits.gearRatio.min : limits.gearRatio.max,
+          "",
+          pctOf(r.value, limits.gearRatio.min, limits.gearRatio.max),
         ),
       );
     });
@@ -596,6 +619,22 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
       finalDrive: fdC.value,
       ratios: ratios.map((r) => r.value),
     };
+  }
+
+  // Aero: clamp to per-car max when known (garage downforce figures).
+  let aeroFOut = aeroF;
+  let aeroROut = aeroR;
+  let aeroFHit: "min" | "max" | null = null;
+  let aeroRHit: "min" | "max" | null = null;
+  if (limits.aero.frontMax != null && Number.isFinite(limits.aero.frontMax)) {
+    const c = clampNumber(aeroF, limits.aero.frontMin, limits.aero.frontMax, 1);
+    aeroFOut = c.value;
+    aeroFHit = c.hit;
+  }
+  if (limits.aero.rearMax != null && Number.isFinite(limits.aero.rearMax)) {
+    const c = clampNumber(aeroR, limits.aero.rearMin, limits.aero.rearMax, 1);
+    aeroROut = c.value;
+    aeroRHit = c.hit;
   }
 
   const anyClamped = [
@@ -624,34 +663,38 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     ? `${springTipBase} Springs clamped to estimated race-suspension range (${limits.springs.frontMin}–${limits.springs.frontMax} F / ${limits.springs.rearMin}–${limits.springs.rearMax} R ${sUnit}) — enter your in-game spring min/max for a perfect match.`
     : springTipBase;
 
+  const dPct = (v: number) => pctOf(v, limits.diff.min, limits.diff.max);
   const diffValues: TuneRow[] = isFWD
     ? [
-        row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-        row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+        row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(fAccelC.value)),
+        row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(fDecelC.value)),
       ]
     : isRWD
       ? [
-          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(rAccelC.value)),
+          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(rDecelC.value)),
         ]
       : [
-          row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-          row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
-          row("Center Balance", `${centerC.value}% rear`, centerC.hit, centerC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(fAccelC.value)),
+          row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(fDecelC.value)),
+          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(rAccelC.value)),
+          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(rDecelC.value)),
+          row("Center Balance", `${centerC.value}% rear`, centerC.hit, centerC.hit === "min" ? limits.diff.min : limits.diff.max, "%", dPct(centerC.value)),
         ];
 
   void gearingClamped;
 
+  const aeroFMax = limits.aero.frontMax;
+  const aeroRMax = limits.aero.rearMax;
+
   return {
     Tires: {
       values: [
-        row("Front Pressure", pStr(fPsiC.value), fPsiC.hit, fPsiC.hit === "min" ? pBound.min : pBound.max, pUnit),
-        row("Rear Pressure", pStr(rPsiC.value), rPsiC.hit, rPsiC.hit === "min" ? pBound.min : pBound.max, pUnit),
-        { key: "Front Width", value: tireWF.includes("/") ? `${tireWF.replace(/mm$/, "")}` : `${tireWF}mm` },
-        { key: "Rear Width", value: tireWR.includes("/") ? tireWR : tireWR + " mm" },
-        { key: "Compound", value: compound },
+        row("Front Pressure", pStr(fPsiC.value), fPsiC.hit, fPsiC.hit === "min" ? pBound.min : pBound.max, pUnit, pctOf(fPsiC.value, pBound.min, pBound.max)),
+        row("Rear Pressure", pStr(rPsiC.value), rPsiC.hit, rPsiC.hit === "min" ? pBound.min : pBound.max, pUnit, pctOf(rPsiC.value, pBound.min, pBound.max)),
+        { key: "Front Width", value: String(tireWF).includes("/") ? `${String(tireWF).replace(/mm$/, "")}` : `${tireWF}mm` },
+        { key: "Rear Width", value: String(tireWR).includes("/") ? String(tireWR) : `${tireWR} mm` },
+        { key: "Compound", value: String(compound ?? "Sport") },
       ],
       tip: tireTip,
     },
@@ -667,25 +710,26 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
 
     Alignment: {
       values: [
-        row("Front Camber", `${fCamC.value.toFixed(1)}°`, fCamC.hit, fCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°"),
-        row("Rear Camber", `${rCamC.value.toFixed(1)}°`, rCamC.hit, rCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°"),
-        row("Front Toe", `${fToeC.value.toFixed(1)}°`, fToeC.hit, fToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°"),
-        row("Rear Toe", `${rToeC.value.toFixed(1)}°`, rToeC.hit, rToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°"),
-        row("Front Caster", `${casterC.value.toFixed(1)}°`, casterC.hit, casterC.hit === "min" ? limits.caster.min : limits.caster.max, "°"),
+        row("Front Camber", `${fCamC.value.toFixed(1)}°`, fCamC.hit, fCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°", pctOf(fCamC.value, limits.camber.min, limits.camber.max)),
+        row("Rear Camber", `${rCamC.value.toFixed(1)}°`, rCamC.hit, rCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°", pctOf(rCamC.value, limits.camber.min, limits.camber.max)),
+        row("Front Toe", `${fToeC.value.toFixed(1)}°`, fToeC.hit, fToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°", pctOf(fToeC.value, limits.toe.min, limits.toe.max)),
+        row("Rear Toe", `${rToeC.value.toFixed(1)}°`, rToeC.hit, rToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°", pctOf(rToeC.value, limits.toe.min, limits.toe.max)),
+        row("Front Caster", `${casterC.value.toFixed(1)}°`, casterC.hit, casterC.hit === "min" ? limits.caster.min : limits.caster.max, "°", pctOf(casterC.value, limits.caster.min, limits.caster.max)),
       ],
       tip: "Adjust camber in 0.2° steps — too much causes uneven tire wear and kills straight-line grip.",
     },
 
     Springs: {
       values: [
-        row("Front Spring", sStr(fSpringC.value), fSpringC.hit, fSpringC.hit === "min" ? limits.springs.frontMin : limits.springs.frontMax, sUnit),
-        row("Rear Spring", sStr(rSpringC.value), rSpringC.hit, rSpringC.hit === "min" ? limits.springs.rearMin : limits.springs.rearMax, sUnit),
+        row("Front Spring", sStr(fSpringC.value), fSpringC.hit, fSpringC.hit === "min" ? limits.springs.frontMin : limits.springs.frontMax, sUnit, pctOf(fSpringC.value, limits.springs.frontMin, limits.springs.frontMax)),
+        row("Rear Spring", sStr(rSpringC.value), rSpringC.hit, rSpringC.hit === "min" ? limits.springs.rearMin : limits.springs.rearMax, sUnit, pctOf(rSpringC.value, limits.springs.rearMin, limits.springs.rearMax)),
         row(
           "Front Ride Height",
           units.weight === "kg" ? `${fRideC.value.toFixed(1)} cm` : `${(fRideC.value / 2.54).toFixed(1)} in`,
           fRideC.hit,
           fRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
           "cm",
+          pctOf(fRideC.value, limits.rideCm.min, limits.rideCm.max),
         ),
         row(
           "Rear Ride Height",
@@ -693,6 +737,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
           rRideC.hit,
           rRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
           "cm",
+          pctOf(rRideC.value, limits.rideCm.min, limits.rideCm.max),
         ),
       ],
       tip: springTip,
@@ -700,26 +745,26 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
 
     "Antiroll Bars": {
       values: [
-        row("Front ARB", fARBC.value.toFixed(1), fARBC.hit, fARBC.hit === "min" ? limits.arb.min : limits.arb.max),
-        row("Rear ARB", rARBC.value.toFixed(1), rARBC.hit, rARBC.hit === "min" ? limits.arb.min : limits.arb.max),
+        row("Front ARB", fARBC.value.toFixed(1), fARBC.hit, fARBC.hit === "min" ? limits.arb.min : limits.arb.max, "", pctOf(fARBC.value, limits.arb.min, limits.arb.max)),
+        row("Rear ARB", rARBC.value.toFixed(1), rARBC.hit, rARBC.hit === "min" ? limits.arb.min : limits.arb.max, "", pctOf(rARBC.value, limits.arb.min, limits.arb.max)),
       ],
-      tip: "If the car snaps on entry: soften rear ARB. If it understeers: soften front ARB.",
+      tip: "If the car snaps on entry: soften rear ARB. If it understeers: soften front ARB. % is position on the 1–65 slider.",
     },
 
     Damping: {
       values: [
-        row("Front Rebound", fRebC.value.toFixed(1), fRebC.hit, fRebC.hit === "min" ? limits.damping.min : limits.damping.max),
-        row("Rear Rebound", rRebC.value.toFixed(1), rRebC.hit, rRebC.hit === "min" ? limits.damping.min : limits.damping.max),
-        row("Front Bump", fBumpC.value.toFixed(1), fBumpC.hit, fBumpC.hit === "min" ? limits.damping.min : limits.damping.max),
-        row("Rear Bump", rBumpC.value.toFixed(1), rBumpC.hit, rBumpC.hit === "min" ? limits.damping.min : limits.damping.max),
+        row("Front Rebound", fRebC.value.toFixed(1), fRebC.hit, fRebC.hit === "min" ? limits.damping.min : limits.damping.max, "", pctOf(fRebC.value, limits.damping.min, limits.damping.max)),
+        row("Rear Rebound", rRebC.value.toFixed(1), rRebC.hit, rRebC.hit === "min" ? limits.damping.min : limits.damping.max, "", pctOf(rRebC.value, limits.damping.min, limits.damping.max)),
+        row("Front Bump", fBumpC.value.toFixed(1), fBumpC.hit, fBumpC.hit === "min" ? limits.damping.min : limits.damping.max, "", pctOf(fBumpC.value, limits.damping.min, limits.damping.max)),
+        row("Rear Bump", rBumpC.value.toFixed(1), rBumpC.hit, rBumpC.hit === "min" ? limits.damping.min : limits.damping.max, "", pctOf(rBumpC.value, limits.damping.min, limits.damping.max)),
       ],
-      tip: "Rebound always higher than bump. Bouncy over bumps: increase bump. Wooden feel: decrease rebound.",
+      tip: "Rebound always higher than bump. Bouncy over bumps: increase bump. Wooden feel: decrease rebound. % is position on the 1–20 slider.",
     },
 
     Brake: {
       values: [
-        row("Brake Balance", `${brakeBalC.value}% F`, brakeBalC.hit, brakeBalC.hit === "min" ? limits.brakeBal.min : limits.brakeBal.max, "%"),
-        row("Brake Pressure", `${brakePressureC.value}%`, brakePressureC.hit, brakePressureC.hit === "min" ? limits.brakePressure.min : limits.brakePressure.max, "%"),
+        row("Brake Balance", `${brakeBalC.value}% F`, brakeBalC.hit, brakeBalC.hit === "min" ? limits.brakeBal.min : limits.brakeBal.max, "%", pctOf(brakeBalC.value, limits.brakeBal.min, limits.brakeBal.max)),
+        row("Brake Pressure", `${brakePressureC.value}%`, brakePressureC.hit, brakePressureC.hit === "min" ? limits.brakePressure.min : limits.brakePressure.max, "%", pctOf(brakePressureC.value, limits.brakePressure.min, limits.brakePressure.max)),
         { key: "Trail Brake Rating", value: `${trailRating}/10` },
       ],
       tip: isWheel
@@ -743,20 +788,28 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     Aero: hasAero
       ? {
           values: [
-            {
-              key: "Front Downforce",
-              value: units.weight === "lbs" ? `${Math.round(aeroF * 2.205)} lbs` : `${aeroF} kg`,
-            },
-            {
-              key: "Rear Downforce",
-              value: units.weight === "lbs" ? `${Math.round(aeroR * 2.205)} lbs` : `${aeroR} kg`,
-            },
+            row(
+              "Front Downforce",
+              units.weight === "lbs" ? `${Math.round(aeroFOut * 2.205)} lbs` : `${aeroFOut} kg`,
+              aeroFHit,
+              aeroFHit === "min" ? limits.aero.frontMin : (aeroFMax ?? 0),
+              "kg",
+              aeroFMax != null ? pctOf(aeroFOut, limits.aero.frontMin, aeroFMax) : undefined,
+            ),
+            row(
+              "Rear Downforce",
+              units.weight === "lbs" ? `${Math.round(aeroROut * 2.205)} lbs` : `${aeroROut} kg`,
+              aeroRHit,
+              aeroRHit === "min" ? limits.aero.rearMin : (aeroRMax ?? 0),
+              "kg",
+              aeroRMax != null ? pctOf(aeroROut, limits.aero.rearMin, aeroRMax) : undefined,
+            ),
             { key: "Drag Cd", value: dragCd.toFixed(2) },
             {
               key: "Aero Balance",
               value:
-                aeroF + aeroR > 0
-                  ? `${Math.round((aeroF / (aeroF + aeroR)) * 100)}% F / ${Math.round((aeroR / (aeroF + aeroR)) * 100)}% R`
+                aeroFOut + aeroROut > 0
+                  ? `${Math.round((aeroFOut / (aeroFOut + aeroROut)) * 100)}% F / ${Math.round((aeroROut / (aeroFOut + aeroROut)) * 100)}% R`
                   : "N/A",
             },
           ],
@@ -764,7 +817,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
             ? "Drag tune: minimise front downforce, run max rear for straight-line stability. Cd matters more than balance."
             : isWangan
               ? "High speed: raise rear downforce first for stability, match front to taste."
-              : "Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. Increase rear if fast corners feel loose. Keep DF at or below your car's in-game aero slider max.",
+              : "Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. DF % uses this car's garage aero max when known.",
         }
       : null,
   };

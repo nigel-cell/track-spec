@@ -11,6 +11,13 @@ export interface SpringLimits {
   unit: CalcTuneUnits["springs"];
 }
 
+export interface AeroGameLimits {
+  frontMin: number;
+  frontMax: number | null;
+  rearMin: number;
+  rearMax: number | null;
+}
+
 export interface GameLimits {
   arb: { min: number; max: number };
   damping: { min: number; max: number };
@@ -26,6 +33,7 @@ export interface GameLimits {
   finalDrive: { min: number; max: number };
   gearRatio: { min: number; max: number };
   springs: SpringLimits;
+  aero: AeroGameLimits;
 }
 
 /** Convert true lbs/in ↔ game display spring units (same factors as calcTune). */
@@ -46,26 +54,26 @@ export function convertSpringValue(
 
 /**
  * Estimate race-suspension spring slider range from curb weight.
- * Per-car ranges vary — override with in-game min/max when known.
+ * Calibrated to community min/max examples (~0.07×W – ~0.41×W lbs/in).
+ * Per-car ranges vary — override with in-game min/max or carSliderLimits.json.
  */
 export function estimateSpringLimitsLbs(
   weightLbs: number,
   weightDist = 50,
 ): Omit<SpringLimits, "unit"> {
   const w = Math.max(1200, Math.min(7000, weightLbs));
-  // Soft floor / stiff ceiling scale with mass; front gets a bit more span when nose-heavy.
   const frontBias = Math.max(0.4, Math.min(0.6, weightDist / 100));
-  const baseMin = w * 0.055;
-  const baseMax = w * 0.3;
-  const fMin = Math.round(baseMin * (0.9 + frontBias * 0.2));
-  const fMax = Math.round(baseMax * (0.95 + frontBias * 0.15));
-  const rMin = Math.round(baseMin * (1.05 - frontBias * 0.2));
-  const rMax = Math.round(baseMax * (1.05 - frontBias * 0.1));
+  const baseMin = w * 0.07;
+  const baseMax = w * 0.41;
+  const fMin = Math.round(baseMin * (0.92 + frontBias * 0.16));
+  const fMax = Math.round(baseMax * (0.94 + frontBias * 0.12));
+  const rMin = Math.round(baseMin * (1.08 - frontBias * 0.16));
+  const rMax = Math.round(baseMax * (1.06 - frontBias * 0.1));
   return {
-    frontMin: Math.max(80, fMin),
-    frontMax: Math.max(fMin + 80, fMax),
-    rearMin: Math.max(80, rMin),
-    rearMax: Math.max(rMin + 80, rMax),
+    frontMin: Math.max(90, fMin),
+    frontMax: Math.max(fMin + 100, fMax),
+    rearMin: Math.max(90, rMin),
+    rearMax: Math.max(rMin + 100, rMax),
   };
 }
 
@@ -74,6 +82,8 @@ export function buildGameLimits(args: {
   weightDist: number;
   units: CalcTuneUnits;
   springLimits?: Partial<SpringLimits> | null;
+  aeroLimits?: Partial<AeroGameLimits> | null;
+  rideLimits?: { min?: number; max?: number } | null;
   offRoad?: boolean;
 }): GameLimits {
   const est = estimateSpringLimitsLbs(args.weightLbs, args.weightDist);
@@ -105,13 +115,16 @@ export function buildGameLimits(args: {
     springs.rearMax = t;
   }
 
+  const rideMin = args.rideLimits?.min ?? (args.offRoad ? 18 : 15);
+  const rideMax = args.rideLimits?.max ?? (args.offRoad ? 34 : 26);
+
   return {
     arb: { min: 1, max: 65 },
     damping: { min: 1, max: 20 },
     camber: { min: -5, max: 0 },
     toe: { min: -1, max: 1 },
     caster: { min: args.offRoad ? 1.5 : 5.0, max: 7.0 },
-    rideCm: { min: args.offRoad ? 18 : 15, max: args.offRoad ? 34 : 26 },
+    rideCm: { min: rideMin, max: Math.max(rideMin + 1, rideMax) },
     brakeBal: { min: 1, max: 100 },
     brakePressure: { min: 1, max: 200 },
     diff: { min: 0, max: 100 },
@@ -120,7 +133,21 @@ export function buildGameLimits(args: {
     finalDrive: { min: 2.2, max: 6.1 },
     gearRatio: { min: 0.5, max: 6.0 },
     springs,
+    aero: {
+      frontMin: args.aeroLimits?.frontMin ?? 0,
+      frontMax: args.aeroLimits?.frontMax ?? null,
+      rearMin: args.aeroLimits?.rearMin ?? 0,
+      rearMax: args.aeroLimits?.rearMax ?? null,
+    },
   };
+}
+
+/** 0–100 position on a min→max slider. */
+export function sliderPercent(value: number, min: number, max: number): number | undefined {
+  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+    return undefined;
+  }
+  return Math.max(0, Math.min(100, Math.round(((value - min) / (max - min)) * 100)));
 }
 
 export type ClampHit = "min" | "max" | null;

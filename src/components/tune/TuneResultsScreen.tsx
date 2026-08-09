@@ -381,8 +381,8 @@ export function TuneResultsScreen({
         {pages &&
           Object.values(pages).some((p) => p?.values.some((v) => v.clamped)) && (
             <p className="mt-4 rounded-[var(--ts-radius-sm)] border border-[var(--ts-warning)]/40 bg-[var(--ts-warning)]/10 px-3 py-2 text-[11px] leading-snug text-[var(--ts-warning)]">
-              Some values were clamped to FH6 slider min/max so they stay legal in-game. Springs use your
-              in-game min/max when entered in Specs; otherwise a weight-based estimate.
+              Some values were clamped to FH6 slider min/max so they stay legal in-game. Percents are
+              slider position (0–100%). Springs use Specs min/max, GameDB extract, or a weight estimate.
             </p>
           )}
 
@@ -406,7 +406,14 @@ export function TuneResultsScreen({
                   )}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-0.5">
-                  <DataValue>{row.value}</DataValue>
+                  <div className="flex items-baseline gap-2">
+                    {row.pct != null && (
+                      <span className="font-[family-name:var(--ts-font-mono)] text-[11px] tabular-nums text-[var(--ts-muted)]">
+                        {row.pct}%
+                      </span>
+                    )}
+                    <DataValue>{row.value}</DataValue>
+                  </div>
                   {row.clamped && (
                     <span className="font-[family-name:var(--ts-font-mono)] text-[9px] uppercase tracking-wider text-[var(--ts-warning)]">
                       {row.clamped === "max" ? "game max" : "game min"}

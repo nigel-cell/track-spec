@@ -267,6 +267,8 @@ Built in-house, no third-party dependencies:
 - [x] Upgrade packages — weight, chassis, power stages, tires/rims, transmission, brakes, aero
 - [x] PI / class builder (suggest + apply a stay-in-class build)
 - [x] Game min/max clamping (ARB, damping, alignment, springs, brakes, gearing) + optional in-game spring limits
+- [x] Per-car spring/aero slider limits (`carSliderLimits.json`) + results as slider %
+- [x] Local GameDB extractor for measured spring/aero ranges (`scripts/EXTRACT-GAMEDB.md`)
 - [x] Build profiles per car (local)
 - [x] Tune library export/import + compare
 - [x] Metric / Imperial tuning units

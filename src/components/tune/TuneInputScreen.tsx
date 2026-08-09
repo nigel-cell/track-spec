@@ -71,6 +71,14 @@ import type {
   TransPackageId,
   WeightPackageId,
 } from "../../data/upgradePackages";
+import { convertSpringValue } from "../../lib/gameLimits";
+import {
+  findSliderLimits,
+  loadSliderLimitsFile,
+  saveUserSliderLimits,
+  type CarSliderLimits,
+  type SliderLimitsFile,
+} from "../../lib/sliderLimits";
 
 import { Button } from "../ui/Button";
 
@@ -161,6 +169,15 @@ export interface TuneConfig {
   springFrontMax?: number;
   springRearMin?: number;
   springRearMax?: number;
+
+  /** Optional aero DF slider bounds (kg). */
+  aeroFrontMin?: number;
+  aeroFrontMax?: number | null;
+  aeroRearMin?: number;
+  aeroRearMax?: number | null;
+
+  /** estimated | measured | user — from carSliderLimits.json / overrides. */
+  sliderLimitsSource?: "estimated" | "measured" | "user";
 
   aspiration?: import("../../data/engineData").AspirationId;
 
@@ -254,6 +271,14 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [springFrontMax, setSpringFrontMax] = useState<number | "">("");
   const [springRearMin, setSpringRearMin] = useState<number | "">("");
   const [springRearMax, setSpringRearMax] = useState<number | "">("");
+  const [aeroFrontMin, setAeroFrontMin] = useState<number | "">("");
+  const [aeroFrontMax, setAeroFrontMax] = useState<number | "">("");
+  const [aeroRearMin, setAeroRearMin] = useState<number | "">("");
+  const [aeroRearMax, setAeroRearMax] = useState<number | "">("");
+  const [sliderLimitsSource, setSliderLimitsSource] = useState<
+    "estimated" | "measured" | "user" | undefined
+  >(undefined);
+  const [sliderLimitsFile, setSliderLimitsFile] = useState<SliderLimitsFile | null>(null);
 
   const [make, setMake] = useState(DEFAULT_CAR.make);
 
@@ -392,14 +417,79 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     if (initialDraft.springFrontMax != null) setSpringFrontMax(initialDraft.springFrontMax);
     if (initialDraft.springRearMin != null) setSpringRearMin(initialDraft.springRearMin);
     if (initialDraft.springRearMax != null) setSpringRearMax(initialDraft.springRearMax);
+    if (initialDraft.aeroFrontMin != null) setAeroFrontMin(initialDraft.aeroFrontMin);
+    if (initialDraft.aeroFrontMax != null) setAeroFrontMax(initialDraft.aeroFrontMax);
+    if (initialDraft.aeroRearMin != null) setAeroRearMin(initialDraft.aeroRearMin);
+    if (initialDraft.aeroRearMax != null) setAeroRearMax(initialDraft.aeroRearMax);
+    if (initialDraft.sliderLimitsSource) setSliderLimitsSource(initialDraft.sliderLimitsSource);
   }, [initialDraft]);
 
   useEffect(() => {
+    void loadSliderLimitsFile().then(setSliderLimitsFile);
+  }, []);
+
+  const applySliderLimits = (limits: CarSliderLimits | null, springUnit: TuneUnits["springs"]) => {
+    if (!limits?.springs) {
+      setSpringFrontMin("");
+      setSpringFrontMax("");
+      setSpringRearMin("");
+      setSpringRearMax("");
+      setAeroFrontMin("");
+      setAeroFrontMax("");
+      setAeroRearMin("");
+      setAeroRearMax("");
+      setSliderLimitsSource(undefined);
+      return;
+    }
+    const srcUnit = limits.springs.unit ?? "lbs/in";
+    const round = (v: number) =>
+      springUnit === "kgf/mm" ? +convertSpringValue(v, srcUnit, springUnit).toFixed(2)
+        : +convertSpringValue(v, srcUnit, springUnit).toFixed(1);
+    setSpringFrontMin(round(limits.springs.frontMin));
+    setSpringFrontMax(round(limits.springs.frontMax));
+    setSpringRearMin(round(limits.springs.rearMin));
+    setSpringRearMax(round(limits.springs.rearMax));
+    if (limits.aero) {
+      setAeroFrontMin(limits.aero.frontMin ?? 0);
+      setAeroFrontMax(limits.aero.frontMax ?? "");
+      setAeroRearMin(limits.aero.rearMin ?? 0);
+      setAeroRearMax(limits.aero.rearMax ?? "");
+    } else {
+      setAeroFrontMin("");
+      setAeroFrontMax("");
+      setAeroRearMin("");
+      setAeroRearMax("");
+    }
+    setSliderLimitsSource(limits.source);
+  };
+
+  useEffect(() => {
+    if (!sliderLimitsFile || !make || !model) return;
+    // Don't clobber values restored from a draft that already set springs.
+    if (initialDraft?.springFrontMin != null || initialDraft?.springFrontMax != null) return;
+    const limits = findSliderLimits(sliderLimitsFile, make, model);
+    if (limits) applySliderLimits(limits, units.springs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only auto-fill when file/car identity changes
+  }, [sliderLimitsFile, make, model]);
+
+  useEffect(() => {
     const prev = prevUnitsRef.current;
-    if (prev.weight === units.weight && prev.speed === units.speed) return;
+    if (prev.weight === units.weight && prev.speed === units.speed && prev.springs === units.springs) {
+      return;
+    }
     setWeight((w) => convertWeight(w, prev.weight, units.weight));
     setTopspeed((s) => convertSpeed(s, prev.speed, units.speed));
     setMaxTorque((t) => convertTorque(t, prev.weight, units.weight));
+    if (prev.springs !== units.springs) {
+      const conv = (v: number | "") =>
+        v === "" ? "" : +convertSpringValue(v, prev.springs, units.springs).toFixed(
+          units.springs === "kgf/mm" ? 2 : 1,
+        );
+      setSpringFrontMin((v) => conv(v));
+      setSpringFrontMax((v) => conv(v));
+      setSpringRearMin((v) => conv(v));
+      setSpringRearMax((v) => conv(v));
+    }
     prevUnitsRef.current = units;
   }, [units]);
 
@@ -695,8 +785,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
 
 
-  const deploy = () =>
-
+  const deploy = () => {
     onDeploy({
 
       make,
@@ -774,6 +863,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       springRearMin: springRearMin === "" ? undefined : springRearMin,
       springRearMax: springRearMax === "" ? undefined : springRearMax,
 
+      aeroFrontMin: aeroFrontMin === "" ? undefined : aeroFrontMin,
+      aeroFrontMax: aeroFrontMax === "" ? undefined : aeroFrontMax,
+      aeroRearMin: aeroRearMin === "" ? undefined : aeroRearMin,
+      aeroRearMax: aeroRearMax === "" ? undefined : aeroRearMax,
+      sliderLimitsSource,
+
       aspiration,
 
       inputDevice,
@@ -782,7 +877,36 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
     });
 
-
+    if (
+      sliderLimitsSource === "user" &&
+      make &&
+      model &&
+      springFrontMin !== "" &&
+      springFrontMax !== "" &&
+      springRearMin !== "" &&
+      springRearMax !== ""
+    ) {
+      saveUserSliderLimits(make, model, {
+        springs: {
+          unit: units.springs,
+          frontMin: springFrontMin,
+          frontMax: springFrontMax,
+          rearMin: springRearMin,
+          rearMax: springRearMax,
+        },
+        aero:
+          aeroFrontMax !== "" || aeroRearMax !== ""
+            ? {
+                unit: "kg",
+                frontMin: aeroFrontMin === "" ? 0 : aeroFrontMin,
+                frontMax: aeroFrontMax === "" ? null : aeroFrontMax,
+                rearMin: aeroRearMin === "" ? 0 : aeroRearMin,
+                rearMax: aeroRearMax === "" ? null : aeroRearMax,
+              }
+            : undefined,
+      });
+    }
+  };
 
   return (
 
@@ -910,6 +1034,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             setCompound(tires.compound);
             setTireWF(tires.tireWF);
             setTireWR(tires.tireWR);
+            const mMake = merged.make ?? patch.make ?? make;
+            const mModel = merged.model ?? patch.model ?? model;
+            if (mMake && mModel) {
+              const limits = findSliderLimits(sliderLimitsFile, mMake, mModel);
+              applySliderLimits(limits, units.springs);
+            }
           };
           apply(slim);
           if (slim && !slim.tuneSpecs) {
@@ -1031,10 +1161,18 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         </Card>
       </div>
       <Card className="space-y-3">
-        <Label>In-game spring min / max (optional)</Label>
+        <Label>In-game spring min / max</Label>
         <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
-          Open Tune → Springs in FH6 and copy the slider endpoints. Prevents recommending rates above your car&apos;s max.
-          Leave blank to use a weight-based estimate.
+          Auto-filled from{" "}
+          {sliderLimitsSource === "measured"
+            ? "GameDB extract (measured)"
+            : sliderLimitsSource === "user"
+              ? "your saved overrides"
+              : sliderLimitsSource === "estimated"
+                ? "weight-based estimates"
+                : "carSliderLimits.json when available"}
+          . Edit to match Tune → Springs in FH6; values save when you deploy.
+          Extract real ranges: <code className="text-[var(--ts-muted)]">scripts/EXTRACT-GAMEDB.md</code>
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>
@@ -1042,7 +1180,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             <input
               type="number"
               value={springFrontMin}
-              onChange={(e) => setSpringFrontMin(e.target.value === "" ? "" : +e.target.value)}
+              onChange={(e) => {
+                setSpringFrontMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
               placeholder="auto"
               className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
             />
@@ -1052,7 +1193,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             <input
               type="number"
               value={springFrontMax}
-              onChange={(e) => setSpringFrontMax(e.target.value === "" ? "" : +e.target.value)}
+              onChange={(e) => {
+                setSpringFrontMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
               placeholder="auto"
               className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
             />
@@ -1062,7 +1206,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             <input
               type="number"
               value={springRearMin}
-              onChange={(e) => setSpringRearMin(e.target.value === "" ? "" : +e.target.value)}
+              onChange={(e) => {
+                setSpringRearMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
               placeholder="auto"
               className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
             />
@@ -1072,7 +1219,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             <input
               type="number"
               value={springRearMax}
-              onChange={(e) => setSpringRearMax(e.target.value === "" ? "" : +e.target.value)}
+              onChange={(e) => {
+                setSpringRearMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
               placeholder="auto"
               className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
             />
