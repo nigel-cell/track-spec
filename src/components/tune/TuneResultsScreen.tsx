@@ -378,6 +378,14 @@ export function TuneResultsScreen({
           </div>
         </div>
 
+        {pages &&
+          Object.values(pages).some((p) => p?.values.some((v) => v.clamped)) && (
+            <p className="mt-4 rounded-[var(--ts-radius-sm)] border border-[var(--ts-warning)]/40 bg-[var(--ts-warning)]/10 px-3 py-2 text-[11px] leading-snug text-[var(--ts-warning)]">
+              Some values were clamped to FH6 slider min/max so they stay legal in-game. Springs use your
+              in-game min/max when entered in Specs; otherwise a weight-based estimate.
+            </p>
+          )}
+
         {data && (
           <Card className="mt-4 overflow-hidden p-0" padding={false}>
             <div className="border-b border-[var(--ts-border)] px-4 py-2 font-[family-name:var(--ts-font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--ts-accent)]">
@@ -391,8 +399,20 @@ export function TuneResultsScreen({
                   i < data.values.length - 1 ? "border-b border-[var(--ts-border)]" : "",
                 ].join(" ")}
               >
-                <span className="text-sm text-[var(--ts-text)]">{row.key}</span>
-                <DataValue>{row.value}</DataValue>
+                <div className="min-w-0">
+                  <span className="text-sm text-[var(--ts-text)]">{row.key}</span>
+                  {row.note && (
+                    <div className="mt-0.5 text-[10px] text-[var(--ts-warning)]">{row.note}</div>
+                  )}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
+                  <DataValue>{row.value}</DataValue>
+                  {row.clamped && (
+                    <span className="font-[family-name:var(--ts-font-mono)] text-[9px] uppercase tracking-wider text-[var(--ts-warning)]">
+                      {row.clamped === "max" ? "game max" : "game min"}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             {data.tip && (

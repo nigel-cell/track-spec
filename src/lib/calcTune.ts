@@ -1,6 +1,12 @@
 // Ported from TuneTab.jsx — FH6 physics engine (MIT TuneLab)
 
 import { IMPERIAL_UNITS } from "./units";
+import {
+  buildGameLimits,
+  clampNote,
+  clampNumber,
+  type SpringLimits,
+} from "./gameLimits";
 
 // ─── PHYSICS CONSTANTS ────────────────────────────────────────────────────────
 // FH5-baseline spring frequencies — FH6 rewards SOFTER springs than physics predicts.
@@ -69,9 +75,17 @@ export interface CalcTuneInput {
   brakeBalDelta?: number;
   /** Transmission package final-drive multiplier. */
   transFdMult?: number;
+  /** Optional in-game spring slider min/max (same unit as units.springs). */
+  springLimits?: Partial<SpringLimits> | null;
 }
 
-export interface TuneRow { key: string; value: string; note?: string }
+export interface TuneRow {
+  key: string;
+  value: string;
+  note?: string;
+  /** Set when value was forced inside FH6 slider bounds. */
+  clamped?: "min" | "max";
+}
 export interface TunePageData { values: TuneRow[]; tip?: string }
 export type CalcTuneResult = Record<string, TunePageData | null>;
 
@@ -82,12 +96,13 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     topspeed, gears, tireWF, tireWR, compound,
     hasAero, aeroF, aeroR, dragCd, pi, carClass,
     units: rawUnits, feelBalance, feelAggression, stockFd, stockGears, includeGearing, dragDist,
-    brakePressureDelta, brakeBalDelta, transFdMult,
+    brakePressureDelta, brakeBalDelta, transFdMult, springLimits: springLimitInput,
   } = s;
 
   const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits };
 
   const wKg        = units.weight === "lbs" ? weight / 2.205 : weight;
+  const weightLbs  = units.weight === "lbs" ? weight : weight * 2.205;
   const speedKmh   = units.speed  === "mph" ? topspeed * 1.609 : topspeed;
   const torqueNm   = units.weight === "lbs" ? maxTorque * 1.356 : maxTorque;
   const pUnit      = units.pressure;
@@ -112,6 +127,13 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   const isWheel  = inputDevice === "wheel";
   const isSnow   = surface === "Snow";
   const pwr2wt   = (units.weight === "lbs" ? maxTorque * 1.356 : maxTorque) / (wKg / 1000);
+  const limits = buildGameLimits({
+    weightLbs,
+    weightDist,
+    units,
+    springLimits: springLimitInput,
+    offRoad: isRally || isOffRoad || isSnow,
+  });
 
   // ── PI-based natural frequency (ForzaTune polynomial method)
   // baseFreq scales with car class: D≈2.45Hz → X≈3.8Hz
@@ -505,9 +527,88 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     gearingData = { finalDrive, ratios, gearsWereReduced, requestedGears: activeGears };
   }
 
+  // ── CLAMP TO FH6 SLIDER BOUNDS
+  const row = (
+    key: string,
+    value: string,
+    hit: "min" | "max" | null,
+    bound: number,
+    unit = "",
+  ): TuneRow => ({
+    key,
+    value,
+    clamped: hit || undefined,
+    note: clampNote(hit, bound, unit),
+  });
+
+  const pBound = pUnit === "bar" ? limits.tireBar : limits.tirePsi;
+  const fPsiC = clampNumber(fpsi, pBound.min, pBound.max, pUnit === "bar" ? 2 : 1);
+  const rPsiC = clampNumber(rpsi, pBound.min, pBound.max, pUnit === "bar" ? 2 : 1);
+
+  const fCamC = clampNumber(fCamber, limits.camber.min, limits.camber.max, 1);
+  const rCamC = clampNumber(rCamber, limits.camber.min, limits.camber.max, 1);
+  const fToeC = clampNumber(fToe, limits.toe.min, limits.toe.max, 1);
+  const rToeC = clampNumber(rToe, limits.toe.min, limits.toe.max, 1);
+  const casterC = clampNumber(Number(caster), limits.caster.min, limits.caster.max, 1);
+
+  const springDigits = sUnit === "kgf/mm" ? 2 : 1;
+  const fSpringC = clampNumber(fSpring, limits.springs.frontMin, limits.springs.frontMax, springDigits);
+  const rSpringC = clampNumber(rSpring, limits.springs.rearMin, limits.springs.rearMax, springDigits);
+  const fRideC = clampNumber(fRide, limits.rideCm.min, limits.rideCm.max, 1);
+  const rRideC = clampNumber(rRide, limits.rideCm.min, limits.rideCm.max, 1);
+
+  const fARBC = clampNumber(fARB, limits.arb.min, limits.arb.max, 1);
+  const rARBC = clampNumber(rARB, limits.arb.min, limits.arb.max, 1);
+
+  const fRebC = clampNumber(fRebound, limits.damping.min, limits.damping.max, 1);
+  const rRebC = clampNumber(rRebound, limits.damping.min, limits.damping.max, 1);
+  const fBumpC = clampNumber(fBump, limits.damping.min, limits.damping.max, 1);
+  const rBumpC = clampNumber(rBump, limits.damping.min, limits.damping.max, 1);
+
+  const brakeBalC = clampNumber(brakeBal, limits.brakeBal.min, limits.brakeBal.max, 0);
+  const brakePressureC = clampNumber(brakePressure, limits.brakePressure.min, limits.brakePressure.max, 0);
+
+  const clampDiff = (v: number) => clampNumber(v, limits.diff.min, limits.diff.max, 0);
+  const fAccelC = clampDiff(fAccel);
+  const fDecelC = clampDiff(fDecel);
+  const rAccelC = clampDiff(rAccel);
+  const rDecelC = clampDiff(rDecel);
+  const centerC = clampDiff(center);
+
+  let gearingClamped = gearingData;
+  const gearRows: TuneRow[] = [];
+  if (gearingData) {
+    const fdC = clampNumber(gearingData.finalDrive, limits.finalDrive.min, limits.finalDrive.max, 2);
+    gearRows.push(row("Final Drive", String(fdC.value), fdC.hit, fdC.hit === "min" ? limits.finalDrive.min : limits.finalDrive.max));
+    const ratios = gearingData.ratios.map((r) => clampNumber(r, limits.gearRatio.min, limits.gearRatio.max, 2));
+    ratios.forEach((r, i) => {
+      gearRows.push(
+        row(
+          `${i + 1}${["st", "nd", "rd"][i] || "th"} Gear`,
+          String(r.value),
+          r.hit,
+          r.hit === "min" ? limits.gearRatio.min : limits.gearRatio.max,
+        ),
+      );
+    });
+    gearingClamped = {
+      ...gearingData,
+      finalDrive: fdC.value,
+      ratios: ratios.map((r) => r.value),
+    };
+  }
+
+  const anyClamped = [
+    fPsiC, rPsiC, fCamC, rCamC, fToeC, rToeC, casterC,
+    fSpringC, rSpringC, fRideC, rRideC, fARBC, rARBC,
+    fRebC, rRebC, fBumpC, rBumpC, brakeBalC, brakePressureC,
+    fAccelC, fDecelC, rAccelC, rDecelC, centerC,
+    ...gearRows.filter((g) => g.clamped).map(() => ({ hit: "max" as const })),
+  ].some((c) => c.hit);
+
   // ── FORMAT HELPERS
-  const pStr = v => pUnit==="bar" ? `${v} bar` : `${v} psi`;
-  const sStr = v => `${v} ${sUnit}`;
+  const pStr = (v: number) => (pUnit === "bar" ? `${v} bar` : `${v} psi`);
+  const sStr = (v: number) => `${v} ${sUnit}`;
   const tireTip = isDrift
     ? "Lower rear pressure breaks traction predictably on throttle."
     : isRain
@@ -516,77 +617,155 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
         ? "Adjust ±0.03 bar front if you feel mid-corner push."
         : "Adjust ±0.5 psi front if you feel mid-corner push.";
 
-  const diffValues = isFWD ? [
-    {key:"Front Accel",value:`${fAccel}%`},{key:"Front Decel",value:`${fDecel}%`},
-  ] : isRWD ? [
-    {key:"Rear Accel",value:`${rAccel}%`},{key:"Rear Decel",value:`${rDecel}%`},
-  ] : [
-    {key:"Front Accel",value:`${fAccel}%`},{key:"Front Decel",value:`${fDecel}%`},
-    {key:"Rear Accel", value:`${rAccel}%`},{key:"Rear Decel", value:`${rDecel}%`},
-    {key:"Center Balance",value:`${center}% rear`},
-  ];
+  const springTipBase = isRally
+    ? "Prioritise ground clearance over aero — ride height matters more than spring stiffness on dirt."
+    : "Front equal to or slightly lower than rear for high-speed stability.";
+  const springTip = anyClamped && (fSpringC.hit || rSpringC.hit)
+    ? `${springTipBase} Springs clamped to estimated race-suspension range (${limits.springs.frontMin}–${limits.springs.frontMax} F / ${limits.springs.rearMin}–${limits.springs.rearMax} R ${sUnit}) — enter your in-game spring min/max for a perfect match.`
+    : springTipBase;
 
-  const gearingValues = gearingData ? [
-    {key:"Final Drive", value:String(gearingData.finalDrive)},
-    ...gearingData.ratios.map((r,i)=>({key:`${i+1}${["st","nd","rd"][i]||"th"} Gear`,value:String(r)})),
-  ] : null;
+  const diffValues: TuneRow[] = isFWD
+    ? [
+        row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+        row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+      ]
+    : isRWD
+      ? [
+          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+        ]
+      : [
+          row("Front Accel", `${fAccelC.value}%`, fAccelC.hit, fAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Front Decel", `${fDecelC.value}%`, fDecelC.hit, fDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Rear Accel", `${rAccelC.value}%`, rAccelC.hit, rAccelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Rear Decel", `${rDecelC.value}%`, rDecelC.hit, rDecelC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+          row("Center Balance", `${centerC.value}% rear`, centerC.hit, centerC.hit === "min" ? limits.diff.min : limits.diff.max, "%"),
+        ];
+
+  void gearingClamped;
 
   return {
-    Tires: { values:[
-      {key:"Front Pressure", value:pStr(fpsi)},
-      {key:"Rear Pressure",  value:pStr(rpsi)},
-      {key:"Front Width",    value:tireWF.includes("/")?`${tireWF.replace(/mm$/,"")}`:`${tireWF}mm`},
-      {key:"Rear Width",     value:tireWR.includes("/")?tireWR:tireWR+" mm"},
-      {key:"Compound",       value:compound},
-    ], tip: tireTip},
+    Tires: {
+      values: [
+        row("Front Pressure", pStr(fPsiC.value), fPsiC.hit, fPsiC.hit === "min" ? pBound.min : pBound.max, pUnit),
+        row("Rear Pressure", pStr(rPsiC.value), rPsiC.hit, rPsiC.hit === "min" ? pBound.min : pBound.max, pUnit),
+        { key: "Front Width", value: tireWF.includes("/") ? `${tireWF.replace(/mm$/, "")}` : `${tireWF}mm` },
+        { key: "Rear Width", value: tireWR.includes("/") ? tireWR : tireWR + " mm" },
+        { key: "Compound", value: compound },
+      ],
+      tip: tireTip,
+    },
 
-    Gearing: gearingValues ? {
-      values: gearingValues,
-      tip: gearingData.gearsWereReduced
-        ? `Used ${gearingData.ratios.length} of ${gearingData.requestedGears} gears — this car's torque/speed range can't support more without gears overlapping. Final drive is most reliable.`
-        : "Final drive is most reliable. Adjust individual ratios in-game to taste.",
-    } : null,
+    Gearing: gearRows.length
+      ? {
+          values: gearRows,
+          tip: gearingData.gearsWereReduced
+            ? `Used ${gearingData.ratios.length} of ${gearingData.requestedGears} gears — this car's torque/speed range can't support more without gears overlapping. Final drive is most reliable.`
+            : "Final drive is most reliable. Adjust individual ratios in-game to taste.",
+        }
+      : null,
 
-    Alignment: { values:[
-      {key:"Front Camber", value:`${fCamber.toFixed(1)}°`},
-      {key:"Rear Camber",  value:`${rCamber.toFixed(1)}°`},
-      {key:"Front Toe",    value:`${fToe.toFixed(1)}°`},
-      {key:"Rear Toe",     value:`${rToe.toFixed(1)}°`},
-      {key:"Front Caster", value:`${caster.toFixed(1)}°`},
-    ], tip:"Adjust camber in 0.2° steps — too much causes uneven tire wear and kills straight-line grip."},
+    Alignment: {
+      values: [
+        row("Front Camber", `${fCamC.value.toFixed(1)}°`, fCamC.hit, fCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°"),
+        row("Rear Camber", `${rCamC.value.toFixed(1)}°`, rCamC.hit, rCamC.hit === "min" ? limits.camber.min : limits.camber.max, "°"),
+        row("Front Toe", `${fToeC.value.toFixed(1)}°`, fToeC.hit, fToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°"),
+        row("Rear Toe", `${rToeC.value.toFixed(1)}°`, rToeC.hit, rToeC.hit === "min" ? limits.toe.min : limits.toe.max, "°"),
+        row("Front Caster", `${casterC.value.toFixed(1)}°`, casterC.hit, casterC.hit === "min" ? limits.caster.min : limits.caster.max, "°"),
+      ],
+      tip: "Adjust camber in 0.2° steps — too much causes uneven tire wear and kills straight-line grip.",
+    },
 
-    Springs: { values:[
-      {key:"Front Spring", value:sStr(fSpring)},
-      {key:"Rear Spring",  value:sStr(rSpring)},
-      {key:"Front Ride Height", value:units.weight==="kg"?`${fRide.toFixed(1)} cm`:`${(fRide/2.54).toFixed(1)} in`},
-      {key:"Rear Ride Height",  value:units.weight==="kg"?`${rRide.toFixed(1)} cm`:`${(rRide/2.54).toFixed(1)} in`},
-    ], tip: isRally?"Prioritise ground clearance over aero — ride height matters more than spring stiffness on dirt.":"Front equal to or slightly lower than rear for high-speed stability."},
+    Springs: {
+      values: [
+        row("Front Spring", sStr(fSpringC.value), fSpringC.hit, fSpringC.hit === "min" ? limits.springs.frontMin : limits.springs.frontMax, sUnit),
+        row("Rear Spring", sStr(rSpringC.value), rSpringC.hit, rSpringC.hit === "min" ? limits.springs.rearMin : limits.springs.rearMax, sUnit),
+        row(
+          "Front Ride Height",
+          units.weight === "kg" ? `${fRideC.value.toFixed(1)} cm` : `${(fRideC.value / 2.54).toFixed(1)} in`,
+          fRideC.hit,
+          fRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
+          "cm",
+        ),
+        row(
+          "Rear Ride Height",
+          units.weight === "kg" ? `${rRideC.value.toFixed(1)} cm` : `${(rRideC.value / 2.54).toFixed(1)} in`,
+          rRideC.hit,
+          rRideC.hit === "min" ? limits.rideCm.min : limits.rideCm.max,
+          "cm",
+        ),
+      ],
+      tip: springTip,
+    },
 
-    "Antiroll Bars": { values:[
-      {key:"Front ARB", value:fARB.toFixed(1)},
-      {key:"Rear ARB",  value:rARB.toFixed(1)},
-    ], tip:"If the car snaps on entry: soften rear ARB. If it understeers: soften front ARB."},
+    "Antiroll Bars": {
+      values: [
+        row("Front ARB", fARBC.value.toFixed(1), fARBC.hit, fARBC.hit === "min" ? limits.arb.min : limits.arb.max),
+        row("Rear ARB", rARBC.value.toFixed(1), rARBC.hit, rARBC.hit === "min" ? limits.arb.min : limits.arb.max),
+      ],
+      tip: "If the car snaps on entry: soften rear ARB. If it understeers: soften front ARB.",
+    },
 
-    Damping: { values:[
-      {key:"Front Rebound", value:fRebound.toFixed(1)},
-      {key:"Rear Rebound",  value:rRebound.toFixed(1)},
-      {key:"Front Bump",    value:fBump.toFixed(1)},
-      {key:"Rear Bump",     value:rBump.toFixed(1)},
-    ], tip:"Rebound always higher than bump. Bouncy over bumps: increase bump. Wooden feel: decrease rebound."},
+    Damping: {
+      values: [
+        row("Front Rebound", fRebC.value.toFixed(1), fRebC.hit, fRebC.hit === "min" ? limits.damping.min : limits.damping.max),
+        row("Rear Rebound", rRebC.value.toFixed(1), rRebC.hit, rRebC.hit === "min" ? limits.damping.min : limits.damping.max),
+        row("Front Bump", fBumpC.value.toFixed(1), fBumpC.hit, fBumpC.hit === "min" ? limits.damping.min : limits.damping.max),
+        row("Rear Bump", rBumpC.value.toFixed(1), rBumpC.hit, rBumpC.hit === "min" ? limits.damping.min : limits.damping.max),
+      ],
+      tip: "Rebound always higher than bump. Bouncy over bumps: increase bump. Wooden feel: decrease rebound.",
+    },
 
-    Brake: { values:[
-      {key:"Brake Balance",     value:`${brakeBal}% F`},
-      {key:"Brake Pressure",    value:`${brakePressure}%`},
-      {key:"Trail Brake Rating",value:`${trailRating}/10`},
-    ], tip: isWheel?"Trail brake: gradually release as you turn in — don't release all at once.":"Under ABS: hold threshold pressure and steer — the game manages lockup."},
+    Brake: {
+      values: [
+        row("Brake Balance", `${brakeBalC.value}% F`, brakeBalC.hit, brakeBalC.hit === "min" ? limits.brakeBal.min : limits.brakeBal.max, "%"),
+        row("Brake Pressure", `${brakePressureC.value}%`, brakePressureC.hit, brakePressureC.hit === "min" ? limits.brakePressure.min : limits.brakePressure.max, "%"),
+        { key: "Trail Brake Rating", value: `${trailRating}/10` },
+      ],
+      tip: isWheel
+        ? "Trail brake: gradually release as you turn in — don't release all at once."
+        : "Under ABS: hold threshold pressure and steer — the game manages lockup.",
+    },
 
-    Differential: { values: diffValues, tip: isDrift?"High rear accel keeps the slide going. Adjust decel for entry rotation.":isDrag&&isRWD&&isHighPower?"⚠ High power RWD drag: if wheelie tendency, raise front ARB 5 points and lower rear ride height 0.5 cm.":isDrag?"Launch tune: high rear accel for grip, low decel to avoid lockup on shifts.":isFWD?"Low front accel reduces torque steer. High rear diff rotates the car on entry.":"Rear accel controls exit traction. Center balance shifts torque character." },
+    Differential: {
+      values: diffValues,
+      tip: isDrift
+        ? "High rear accel keeps the slide going. Adjust decel for entry rotation."
+        : isDrag && isRWD && isHighPower
+          ? "⚠ High power RWD drag: if wheelie tendency, raise front ARB 5 points and lower rear ride height 0.5 cm."
+          : isDrag
+            ? "Launch tune: high rear accel for grip, low decel to avoid lockup on shifts."
+            : isFWD
+              ? "Low front accel reduces torque steer. High rear diff rotates the car on entry."
+              : "Rear accel controls exit traction. Center balance shifts torque character.",
+    },
 
-    Aero: hasAero ? { values:[
-      {key:"Front Downforce", value:units.weight==="lbs" ? `${Math.round(aeroF*2.205)} lbs` : `${aeroF} kg`},
-      {key:"Rear Downforce",  value:units.weight==="lbs" ? `${Math.round(aeroR*2.205)} lbs` : `${aeroR} kg`},
-      {key:"Drag Cd",         value:dragCd.toFixed(2)},
-      {key:"Aero Balance",    value:aeroF+aeroR>0?`${Math.round(aeroF/(aeroF+aeroR)*100)}% F / ${Math.round(aeroR/(aeroF+aeroR)*100)}% R`:"N/A"},
-    ], tip: isDrag?"Drag tune: minimise front downforce, run max rear for straight-line stability. Cd matters more than balance.":isWangan?"High speed: raise rear downforce first for stability, match front to taste.":"Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. Increase rear if fast corners feel loose." } : null,
+    Aero: hasAero
+      ? {
+          values: [
+            {
+              key: "Front Downforce",
+              value: units.weight === "lbs" ? `${Math.round(aeroF * 2.205)} lbs` : `${aeroF} kg`,
+            },
+            {
+              key: "Rear Downforce",
+              value: units.weight === "lbs" ? `${Math.round(aeroR * 2.205)} lbs` : `${aeroR} kg`,
+            },
+            { key: "Drag Cd", value: dragCd.toFixed(2) },
+            {
+              key: "Aero Balance",
+              value:
+                aeroF + aeroR > 0
+                  ? `${Math.round((aeroF / (aeroF + aeroR)) * 100)}% F / ${Math.round((aeroR / (aeroF + aeroR)) * 100)}% R`
+                  : "N/A",
+            },
+          ],
+          tip: isDrag
+            ? "Drag tune: minimise front downforce, run max rear for straight-line stability. Cd matters more than balance."
+            : isWangan
+              ? "High speed: raise rear downforce first for stability, match front to taste."
+              : "Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. Increase rear if fast corners feel loose. Keep DF at or below your car's in-game aero slider max.",
+        }
+      : null,
   };
 }

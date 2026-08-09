@@ -23,6 +23,12 @@ export function buildCalcInput(
     stockGears: config.gears,
   });
 
+  const hasSpringLimits =
+    config.springFrontMin != null ||
+    config.springFrontMax != null ||
+    config.springRearMin != null ||
+    config.springRearMax != null;
+
   return {
     tuneId: config.tuneId,
     driveType: config.driveType,
@@ -53,6 +59,15 @@ export function buildCalcInput(
     brakePressureDelta: brakes.pressureDelta,
     brakeBalDelta: brakes.balDelta,
     transFdMult: full ? trans.fdMult : 1,
+    springLimits: hasSpringLimits
+      ? {
+          unit: units.springs,
+          frontMin: config.springFrontMin,
+          frontMax: config.springFrontMax,
+          rearMin: config.springRearMin,
+          rearMax: config.springRearMax,
+        }
+      : null,
   };
 }
 

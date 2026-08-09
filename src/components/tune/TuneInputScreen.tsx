@@ -156,6 +156,12 @@ export interface TuneConfig {
   brakePackage?: BrakePackageId;
   aeroPackage?: AeroPackageId;
 
+  /** Optional in-game spring slider bounds (same unit as units.springs). */
+  springFrontMin?: number;
+  springFrontMax?: number;
+  springRearMin?: number;
+  springRearMax?: number;
+
   aspiration?: import("../../data/engineData").AspirationId;
 
   inputDevice?: import("../../data/engineData").InputDeviceId;
@@ -244,6 +250,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [engineBaseTorqueLbFt, setEngineBaseTorqueLbFt] = useState<number | null>(null);
   const [engineBaseRedline, setEngineBaseRedline] = useState(7800);
   const [engineBasePeak, setEngineBasePeak] = useState(5500);
+  const [springFrontMin, setSpringFrontMin] = useState<number | "">("");
+  const [springFrontMax, setSpringFrontMax] = useState<number | "">("");
+  const [springRearMin, setSpringRearMin] = useState<number | "">("");
+  const [springRearMax, setSpringRearMax] = useState<number | "">("");
 
   const [make, setMake] = useState(DEFAULT_CAR.make);
 
@@ -378,6 +388,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     if (initialDraft.aeroPackage) setAeroPackage(initialDraft.aeroPackage);
     if (initialDraft.carClass) setTargetClass(initialDraft.carClass);
     if (initialDraft.pi) setStockPi(initialDraft.pi);
+    if (initialDraft.springFrontMin != null) setSpringFrontMin(initialDraft.springFrontMin);
+    if (initialDraft.springFrontMax != null) setSpringFrontMax(initialDraft.springFrontMax);
+    if (initialDraft.springRearMin != null) setSpringRearMin(initialDraft.springRearMin);
+    if (initialDraft.springRearMax != null) setSpringRearMax(initialDraft.springRearMax);
   }, [initialDraft]);
 
   useEffect(() => {
@@ -755,6 +769,11 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
       aeroPackage,
 
+      springFrontMin: springFrontMin === "" ? undefined : springFrontMin,
+      springFrontMax: springFrontMax === "" ? undefined : springFrontMax,
+      springRearMin: springRearMin === "" ? undefined : springRearMin,
+      springRearMax: springRearMax === "" ? undefined : springRearMax,
+
       aspiration,
 
       inputDevice,
@@ -1011,6 +1030,55 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           </p>
         </Card>
       </div>
+      <Card className="space-y-3">
+        <Label>In-game spring min / max (optional)</Label>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          Open Tune → Springs in FH6 and copy the slider endpoints. Prevents recommending rates above your car&apos;s max.
+          Leave blank to use a weight-based estimate.
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div>
+            <Label>Front min</Label>
+            <input
+              type="number"
+              value={springFrontMin}
+              onChange={(e) => setSpringFrontMin(e.target.value === "" ? "" : +e.target.value)}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Front max</Label>
+            <input
+              type="number"
+              value={springFrontMax}
+              onChange={(e) => setSpringFrontMax(e.target.value === "" ? "" : +e.target.value)}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear min</Label>
+            <input
+              type="number"
+              value={springRearMin}
+              onChange={(e) => setSpringRearMin(e.target.value === "" ? "" : +e.target.value)}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear max</Label>
+            <input
+              type="number"
+              value={springRearMax}
+              onChange={(e) => setSpringRearMax(e.target.value === "" ? "" : +e.target.value)}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+        </div>
+      </Card>
         </>
       )}
 

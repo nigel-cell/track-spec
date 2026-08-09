@@ -266,6 +266,7 @@ Built in-house, no third-party dependencies:
 - [x] Drivetrain conversion (wiki per-car RWD/AWD → drive type, weight, front %)
 - [x] Upgrade packages — weight, chassis, power stages, tires/rims, transmission, brakes, aero
 - [x] PI / class builder (suggest + apply a stay-in-class build)
+- [x] Game min/max clamping (ARB, damping, alignment, springs, brakes, gearing) + optional in-game spring limits
 - [x] Build profiles per car (local)
 - [x] Tune library export/import + compare
 - [x] Metric / Imperial tuning units
