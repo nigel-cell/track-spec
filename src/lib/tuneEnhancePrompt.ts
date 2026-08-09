@@ -101,6 +101,7 @@ export function buildEnhancePrompt(
         ? `${config.drivetrainSwap} (stock ${config.stockDriveType ?? "unknown"} → ${dt})`
         : `Stock ${dt}`
     }`,
+    `Upgrades: weight ${config.weightPackage ?? "stock"} | chassis ${config.chassisPackage ?? "stock"} | power ${config.powerStage ?? "stock"} | tires ${config.tirePackage ?? "stock"} | trans ${config.transPackage ?? "stock"} | brakes ${config.brakePackage ?? "street"} | aero ${config.aeroPackage ?? "none"}`,
     `Engine: ~${Math.round(torqNm)} Nm | Peak ${config.peakTorqueRpm ?? "n/a"} rpm | Redline ${config.redlineRpm ?? "n/a"} | Top ${config.topspeed ?? "n/a"} ${topSpeedLabel}`,
     `Compound: ${compound} | Torque/weight: ${pwrWt.toFixed(2)} Nm/kg`,
     "",

@@ -7,6 +7,7 @@ import {
   IMPERIAL_UNITS,
   resolveTuneUnits,
 } from "./units";
+import { applyTransPackage, brakePackageBias } from "./upgradeApply";
 
 export function buildCalcInput(
   config: TuneConfig,
@@ -16,6 +17,11 @@ export function buildCalcInput(
 ): CalcTuneInput {
   const full = config.mode === "full";
   const units = resolveTuneUnits(config.units, appUnits);
+  const brakes = brakePackageBias(config.brakePackage ?? "street");
+  const trans = applyTransPackage({
+    packageId: config.transPackage ?? "race",
+    stockGears: config.gears,
+  });
 
   return {
     tuneId: config.tuneId,
@@ -30,8 +36,8 @@ export function buildCalcInput(
     peakTorqueRpm: full ? (config.peakTorqueRpm ?? 5500) : 0,
     maxTorque: full ? (config.maxTorque ?? defaultMaxTorque(units)) : defaultMaxTorque(units),
     topspeed: full ? (config.topspeed ?? defaultTopSpeed(units)) : defaultTopSpeed(units),
-    gears: full ? (config.gears ?? 6) : 6,
-    includeGearing: full && (config.includeGearing ?? true),
+    gears: full ? (config.gears ?? trans.gears) : 6,
+    includeGearing: full && (config.includeGearing ?? trans.includeGearing),
     tireWF: config.tireWF ?? "275/35R19",
     tireWR: config.tireWR ?? "285/35R19",
     compound: config.compound ?? "Sport",
@@ -44,6 +50,9 @@ export function buildCalcInput(
     feelBalance,
     feelAggression,
     units,
+    brakePressureDelta: brakes.pressureDelta,
+    brakeBalDelta: brakes.balDelta,
+    transFdMult: full ? trans.fdMult : 1,
   };
 }
 

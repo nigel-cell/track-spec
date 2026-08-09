@@ -64,6 +64,11 @@ export interface CalcTuneInput {
   stockGears?: number[] | null;
   includeGearing?: boolean;
   dragDist?: string;
+  /** Brake upgrade bias from Manual setup packages. */
+  brakePressureDelta?: number;
+  brakeBalDelta?: number;
+  /** Transmission package final-drive multiplier. */
+  transFdMult?: number;
 }
 
 export interface TuneRow { key: string; value: string; note?: string }
@@ -77,6 +82,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     topspeed, gears, tireWF, tireWR, compound,
     hasAero, aeroF, aeroR, dragCd, pi, carClass,
     units: rawUnits, feelBalance, feelAggression, stockFd, stockGears, includeGearing, dragDist,
+    brakePressureDelta, brakeBalDelta, transFdMult,
   } = s;
 
   const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits };
@@ -297,11 +303,13 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   if (isFWD)  brakeBal += 4;
   if (isRWD)  brakeBal -= 3;
   if (isWheel) brakeBal += 2;
+  brakeBal += brakeBalDelta ?? 0;
   brakeBal = Math.max(40, Math.min(65, brakeBal));
   // Brake pressure: never drop below 100 per FH6 guide — raise for faster response
   // Only drift goes below 100 for modulation control
   // FM engine brakes are stronger — 100 baseline still correct but drift can go lower
-  const brakePressure = isDrift ? 85 : isDrag ? 115 : isRain||isSnow ? 95 : isRally ? 95 : 100;
+  let brakePressure = isDrift ? 85 : isDrag ? 115 : isRain||isSnow ? 95 : isRally ? 95 : 100;
+  brakePressure = Math.max(50, Math.min(150, brakePressure + (brakePressureDelta ?? 0)));
   const trailRating   = isDrift ? 6 : isDrag ? 3 : isRain ? 7 : isRally ? 6 : isWheel ? 9 : 7;
 
   // ── DIFF
@@ -386,6 +394,9 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     finalDrive = +Math.max(2.20, Math.min(5.50,
       (effectiveRedline * 0.90 * circumference_m * 3.6) / (targetKmh * 60)
     )).toFixed(2);
+    if (transFdMult && transFdMult !== 1) {
+      finalDrive = +Math.max(2.20, Math.min(5.50, finalDrive * transFdMult)).toFixed(2);
+    }
 
     // ── RATIOV: pure math from FD ─────────────────────────────────
     const ratioN_raw = (effectiveRedline * 0.90 * circumference_m * 3.6) / (targetKmh * finalDrive * 60);

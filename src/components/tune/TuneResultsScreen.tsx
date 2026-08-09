@@ -344,6 +344,16 @@ export function TuneResultsScreen({
               },
               { label: "Mode", value: mode?.label ?? config.tuneId, accent: mode?.color },
               { label: "Weight", value: `${Math.round(config.weight)} ${weightLabel(effectiveUnits)}` },
+              {
+                label: "Build",
+                value: [
+                  config.powerStage && config.powerStage !== "stock" ? config.powerStage : null,
+                  config.tirePackage && config.tirePackage !== "stock" ? config.tirePackage : null,
+                  config.aeroPackage && config.aeroPackage !== "none" ? config.aeroPackage : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "stock",
+              },
             ]}
           />
         </div>

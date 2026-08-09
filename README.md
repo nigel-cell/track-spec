@@ -264,6 +264,8 @@ Built in-house, no third-party dependencies:
 - [x] Quick Tune + Manual setup from Garage & Live
 - [x] Engine swaps, aspiration, input device (Manual tune)
 - [x] Drivetrain conversion (wiki per-car RWD/AWD → drive type, weight, front %)
+- [x] Upgrade packages — weight, chassis, power stages, tires/rims, transmission, brakes, aero
+- [x] PI / class builder (suggest + apply a stay-in-class build)
 - [x] Build profiles per car (local)
 - [x] Tune library export/import + compare
 - [x] Metric / Imperial tuning units
