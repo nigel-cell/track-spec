@@ -71,6 +71,8 @@ export function buildAutoTuneConfig(
     stockFd: draft.stockFd ?? null,
     stockGears: draft.stockGears ?? null,
     engineSwap: draft.engineSwap ?? "None (Stock)",
+    drivetrainSwap: draft.drivetrainSwap ?? "None (Stock)",
+    stockDriveType: draft.stockDriveType ?? drive,
     aspiration: draft.aspiration ?? "na",
     inputDevice: draft.inputDevice ?? "controller",
     units,

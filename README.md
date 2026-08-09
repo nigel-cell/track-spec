@@ -263,6 +263,7 @@ Built in-house, no third-party dependencies:
 - [x] Share / Save tune presets
 - [x] Quick Tune + Manual setup from Garage & Live
 - [x] Engine swaps, aspiration, input device (Manual tune)
+- [x] Drivetrain conversion (wiki per-car RWD/AWD → drive type, weight, front %)
 - [x] Build profiles per car (local)
 - [x] Tune library export/import + compare
 - [x] Metric / Imperial tuning units

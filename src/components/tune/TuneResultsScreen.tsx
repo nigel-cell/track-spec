@@ -335,7 +335,13 @@ export function TuneResultsScreen({
             items={[
               { label: "Car", value: `${config.make} ${config.model}`.slice(0, 24) },
               { label: "PI", value: `${config.carClass} ${config.pi}` },
-              { label: "Drive", value: config.driveType },
+              {
+                label: "Drive",
+                value:
+                  config.drivetrainSwap && config.drivetrainSwap !== "None (Stock)"
+                    ? `${config.driveType}↑`
+                    : config.driveType,
+              },
               { label: "Mode", value: mode?.label ?? config.tuneId, accent: mode?.color },
               { label: "Weight", value: `${Math.round(config.weight)} ${weightLabel(effectiveUnits)}` },
             ]}

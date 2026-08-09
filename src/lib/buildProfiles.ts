@@ -13,6 +13,10 @@ export interface BuildProfile {
   pi?: number;
   carClass?: string;
   engineSwap: EngineSwapId | string;
+  drivetrainSwap?: string;
+  stockDriveType?: "FWD" | "RWD" | "AWD";
+  driveType?: "FWD" | "RWD" | "AWD";
+  weightDist?: number;
   aspiration: AspirationId;
   inputDevice: InputDeviceId;
   compound?: string;
@@ -73,6 +77,10 @@ export function deleteBuildProfile(id: number): void {
 export function buildProfileToDraft(profile: BuildProfile): Partial<TuneConfig> {
   return {
     engineSwap: profile.engineSwap,
+    drivetrainSwap: profile.drivetrainSwap,
+    stockDriveType: profile.stockDriveType,
+    driveType: profile.driveType,
+    weightDist: profile.weightDist,
     aspiration: profile.aspiration,
     inputDevice: profile.inputDevice,
     compound: profile.compound,
@@ -105,6 +113,10 @@ export function configToBuildProfile(
     pi: config.pi,
     carClass: config.carClass,
     engineSwap: config.engineSwap ?? "None (Stock)",
+    drivetrainSwap: config.drivetrainSwap ?? "None (Stock)",
+    stockDriveType: config.stockDriveType ?? config.driveType,
+    driveType: config.driveType,
+    weightDist: config.weightDist,
     aspiration: config.aspiration ?? "na",
     inputDevice: config.inputDevice ?? "controller",
     compound: config.compound,

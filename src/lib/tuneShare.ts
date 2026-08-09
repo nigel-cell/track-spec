@@ -37,6 +37,8 @@ const SHARE_FIELDS = [
   "stockGears",
   "includeGearing",
   "engineSwap",
+  "drivetrainSwap",
+  "stockDriveType",
   "aspiration",
   "inputDevice",
   "tuneId",
@@ -81,6 +83,8 @@ export function buildSharePayload(
     stockGears: config.stockGears ?? null,
     includeGearing: full && (config.includeGearing ?? true),
     engineSwap: config.engineSwap ?? "None (Stock)",
+    drivetrainSwap: config.drivetrainSwap ?? "None (Stock)",
+    stockDriveType: config.stockDriveType ?? config.driveType,
     aspiration: config.aspiration ?? "na",
     inputDevice: config.inputDevice ?? "controller",
     tuneId: config.tuneId,
@@ -148,6 +152,8 @@ export function sharePayloadToLoad(
     stockGears: (payload.stockGears as number[] | null | undefined) ?? null,
     includeGearing: payload.includeGearing as boolean | undefined,
     engineSwap: payload.engineSwap as string | undefined,
+    drivetrainSwap: payload.drivetrainSwap as string | undefined,
+    stockDriveType: payload.stockDriveType as TuneConfig["stockDriveType"] | undefined,
     aspiration: payload.aspiration as AspirationId | undefined,
     inputDevice: payload.inputDevice as InputDeviceId | undefined,
     tuneId: payload.tuneId as string | undefined,
@@ -188,7 +194,11 @@ export function formatTuneText(
   const mode = TUNE_MODES.find((t) => t.id === config.tuneId);
   const out = [
     `Track Spec — ${config.make} ${config.model}`,
-    `${mode?.label ?? config.tuneId} | ${config.carClass} ${config.pi}PI | ${config.driveType}`,
+    `${mode?.label ?? config.tuneId} | ${config.carClass} ${config.pi}PI | ${config.driveType}${
+      config.drivetrainSwap && config.drivetrainSwap !== "None (Stock)"
+        ? ` (${config.drivetrainSwap})`
+        : ""
+    }`,
     "─────────────────────────────",
   ];
 

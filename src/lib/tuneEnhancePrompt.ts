@@ -96,6 +96,11 @@ export function buildEnhancePrompt(
     "CAR:",
     `${config.make} ${config.model} | ${dt} | ${config.carClass} ${config.pi} PI`,
     `Weight: ${config.weight} ${weightLabel(units)} | ${config.weightDist}% front`,
+    `Drivetrain: ${
+      config.drivetrainSwap && config.drivetrainSwap !== "None (Stock)"
+        ? `${config.drivetrainSwap} (stock ${config.stockDriveType ?? "unknown"} → ${dt})`
+        : `Stock ${dt}`
+    }`,
     `Engine: ~${Math.round(torqNm)} Nm | Peak ${config.peakTorqueRpm ?? "n/a"} rpm | Redline ${config.redlineRpm ?? "n/a"} | Top ${config.topspeed ?? "n/a"} ${topSpeedLabel}`,
     `Compound: ${compound} | Torque/weight: ${pwrWt.toFixed(2)} Nm/kg`,
     "",

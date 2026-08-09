@@ -45,6 +45,13 @@ import { useCarPhoto } from "../../hooks/useCarPhoto";
 
 import { useWikiSwaps } from "../../hooks/useWikiSwaps";
 import { estimateSwap, parseSwapName } from "../../lib/wikiSwaps";
+import {
+  STOCK_DRIVETRAIN,
+  applyDrivetrainConversion,
+  drivetrainOptions,
+  labelForDrive,
+  type DriveType,
+} from "../../lib/drivetrainSwap";
 
 import { Button } from "../ui/Button";
 
@@ -114,6 +121,12 @@ export interface TuneConfig {
   stockGears?: number[] | null;
 
   engineSwap?: string;
+
+  /** Wiki / common drivetrain conversion label, or "None (Stock)". */
+  drivetrainSwap?: string;
+
+  /** OEM drive layout before conversion (for reverting / options). */
+  stockDriveType?: DriveType;
 
   aspiration?: import("../../data/engineData").AspirationId;
 
@@ -228,6 +241,9 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [dragCd, setDragCd] = useState(0.32);
 
   const [engineSwap, setEngineSwap] = useState("None (Stock)");
+  const [drivetrainSwap, setDrivetrainSwap] = useState(STOCK_DRIVETRAIN);
+  const [stockDriveType, setStockDriveType] = useState<DriveType>(DEFAULT_CAR.driveType);
+  const [stockWeightDist, setStockWeightDist] = useState<number | null>(DEFAULT_CAR.weightDist);
   const [aspiration, setAspiration] = useState<AspirationId>("turbo");
   const [inputDevice, setInputDevice] = useState<InputDeviceId>("controller");
   const [stockWeightLbs, setStockWeightLbs] = useState<number | null>(null);
@@ -300,6 +316,11 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     if (initialDraft.tireWF) setTireWF(initialDraft.tireWF);
     if (initialDraft.tireWR) setTireWR(initialDraft.tireWR);
     if (initialDraft.engineSwap) setEngineSwap(initialDraft.engineSwap);
+    if (initialDraft.drivetrainSwap) setDrivetrainSwap(initialDraft.drivetrainSwap);
+    if (initialDraft.stockDriveType) setStockDriveType(initialDraft.stockDriveType);
+    else if (initialDraft.driveType && (!initialDraft.drivetrainSwap || initialDraft.drivetrainSwap === STOCK_DRIVETRAIN)) {
+      setStockDriveType(initialDraft.driveType);
+    }
     if (initialDraft.aspiration) setAspiration(initialDraft.aspiration);
     if (initialDraft.inputDevice) setInputDevice(initialDraft.inputDevice);
     if (initialDraft.dragCd != null) setDragCd(initialDraft.dragCd);
@@ -346,11 +367,46 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const usingWikiSwaps = (wikiCar?.engineSwaps?.length ?? 0) > 0;
 
+  const dtOptions = useMemo(
+    () => drivetrainOptions(stockDriveType, wikiCar?.drivetrainSwaps),
+    [stockDriveType, wikiCar],
+  );
+
+  const usingWikiDrivetrain = (wikiCar?.drivetrainSwaps?.length ?? 0) > 0;
+
   useEffect(() => {
     if (engineSwap !== "None (Stock)" && !swapOptions.includes(engineSwap)) {
       setEngineSwap("None (Stock)");
     }
   }, [swapOptions, engineSwap]);
+
+  useEffect(() => {
+    if (!dtOptions.includes(drivetrainSwap)) {
+      // Keep the active layout; remaps "AWD Drivetrain" ↔ bare "AWD" when wiki loads.
+      setDrivetrainSwap(labelForDrive(driveType, stockDriveType, dtOptions));
+    }
+  }, [dtOptions, drivetrainSwap, driveType, stockDriveType]);
+
+  const weightLbsNow = units.weight === "lbs" ? weight : weight * 2.205;
+
+  const commitDrivetrain = (label: string) => {
+    const result = applyDrivetrainConversion({
+      label,
+      stockDrive: stockDriveType,
+      currentDrive: driveType,
+      currentWeightLbs: weightLbsNow,
+      stockWeightDist,
+    });
+    setDrivetrainSwap(result.label);
+    setDriveType(result.driveType);
+    setWeightDist(result.weightDist);
+    setWeight(units.weight === "lbs" ? result.weightLbs : Math.round(result.weightLbs / 2.205));
+  };
+
+  const handleDriveTypeChange = (next: DriveType) => {
+    if (next === driveType) return;
+    commitDrivetrain(labelForDrive(next, stockDriveType, dtOptions));
+  };
 
   const applyWikiSwap = (swap: string) => {
     const est = estimateSwap(parseSwapName(swap), {
@@ -451,6 +507,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
       engineSwap,
 
+      drivetrainSwap,
+
+      stockDriveType,
+
       aspiration,
 
       inputDevice,
@@ -489,6 +549,10 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           { label: "Car", value: `${make} ${model}` },
           { label: "Class", value: `${carClass} ${pi}` },
           { label: "Mode", value: activeMode?.label ?? tuneId, accent: activeMode?.color },
+          {
+            label: "Drive",
+            value: drivetrainSwap !== STOCK_DRIVETRAIN ? `${driveType}↑` : driveType,
+          },
           { label: "Weight", value: `${Math.round(weight)} ${weightLabel(units)}` },
         ]}
       />
@@ -514,8 +578,14 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             const merged = mergeGarageIntoDraft(patch, garage, cars, units);
             if (merged.make) setMake(merged.make);
             if (merged.model) setModel(merged.model);
-            if (merged.driveType) setDriveType(merged.driveType);
-            if (merged.weightDist != null) setWeightDist(merged.weightDist);
+            if (merged.driveType) {
+              setDriveType(merged.driveType);
+              setStockDriveType(merged.driveType);
+            }
+            if (merged.weightDist != null) {
+              setWeightDist(merged.weightDist);
+              setStockWeightDist(merged.weightDist);
+            }
             if (merged.weight) setWeight(merged.weight);
             if (merged.pi) setPi(merged.pi);
             if (merged.carClass) setCarClass(merged.carClass);
@@ -543,6 +613,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             if (garage?.tuneSpecs?.maxTorqueLbFt) setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
             setStockDisplacementCc(garage?.tuneSpecs?.displacementCc ?? null);
             setEngineSwap("None (Stock)");
+            setDrivetrainSwap(STOCK_DRIVETRAIN);
           };
           apply(slim);
           if (slim && !slim.tuneSpecs) {
@@ -567,9 +638,24 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         <Label>Tune mode</Label>
         <TuneModeGrid value={tuneId} onChange={handleModeChange} />
       </div>
-      <Card>
+      <Card className="space-y-3">
         <Label>Drive type</Label>
-        <SegmentedControl options={DRIVE_TYPES} value={driveType} onChange={setDriveType} />
+        <SegmentedControl options={DRIVE_TYPES} value={driveType} onChange={handleDriveTypeChange} />
+        <Label>Drivetrain conversion</Label>
+        <select
+          value={drivetrainSwap}
+          onChange={(e) => commitDrivetrain(e.target.value)}
+          className="min-h-11 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 text-sm"
+        >
+          {dtOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          {usingWikiDrivetrain
+            ? `Stock is ${stockDriveType}. Wiki lists ${dtOptions.length - 1} conversion${dtOptions.length === 2 ? "" : "s"} for this chassis — applies drive layout, weight, and front %.`
+            : `Stock is ${stockDriveType}. No wiki list for this car — showing common conversions. Updates drive layout, weight, and front %.`}
+        </p>
       </Card>
         </>
       )}
@@ -636,13 +722,16 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           </div>
           <input
             type="range"
-            min={40}
-            max={60}
+            min={35}
+            max={65}
             value={weightDist}
             onChange={(e) => setWeightDist(+e.target.value)}
             className="w-full"
           />
-          <p className="mt-2 text-[10px] text-[var(--ts-muted)]">{weightDist}F / {100 - weightDist}R</p>
+          <p className="mt-2 text-[10px] text-[var(--ts-muted)]">
+            {weightDist}F / {100 - weightDist}R
+            {drivetrainSwap !== STOCK_DRIVETRAIN ? ` · after ${drivetrainSwap}` : ""}
+          </p>
         </Card>
       </div>
         </>
@@ -666,11 +755,21 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             ? `${swapOptions.length - 1} conversions available for this car (Forza Wiki). Power and weight are estimated from displacement and induction.`
             : "No per-car conversion list for this car — showing common swaps."}
         </p>
-        {wikiCar?.drivetrainSwaps?.length ? (
-          <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
-            Drivetrain conversions: {wikiCar.drivetrainSwaps.join(", ")}
-          </p>
-        ) : null}
+        <Label>Drivetrain conversion</Label>
+        <select
+          value={drivetrainSwap}
+          onChange={(e) => commitDrivetrain(e.target.value)}
+          className="min-h-11 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 text-sm"
+        >
+          {dtOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          Active layout: {driveType}
+          {drivetrainSwap !== STOCK_DRIVETRAIN ? ` via ${drivetrainSwap}` : " (stock)"}.
+          Same control as Mode — changes weight and front balance for the tune math.
+        </p>
         <Label>Aspiration</Label>
         <div className="grid gap-2 sm:grid-cols-2">
           {ASPIRATIONS.map((a) => (
