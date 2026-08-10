@@ -3,6 +3,11 @@ compatibility_date = "2026-08-01"
 
 # Phone / Cloudflare build — use dist-cloud (thumbs, no full heros)
 # Local Live + desktop exe still use full `dist/` via server.js / Electron
+# Workers Builds / wrangler deploy: ensure dist-cloud exists even if the
+# dashboard build command is only `npm run build` (postbuild) or empty.
+[build]
+command = "npm run build:cloud"
+
 [assets]
 directory = "./dist-cloud"
 not_found_handling = "single-page-application"
