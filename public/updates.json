@@ -1,9 +1,19 @@
 {
-  "version": "1.2.4",
+  "version": "1.2.5",
   "updatedAt": "2026-08-10",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.2.5",
+      "date": "2026-08-10",
+      "title": "In-app desktop self-update",
+      "items": [
+        "Update button downloads and installs the new exe inside Track Spec",
+        "No browser / GitHub page required — restart applies the update",
+        "Progress bar while the new build downloads"
+      ]
+    },
     {
       "version": "1.2.4",
       "date": "2026-08-10",
@@ -14,6 +24,7 @@
         "Error dialog now includes the relay.log tail for diagnosis"
       ]
     },
+
     {
       "version": "1.2.3",
       "date": "2026-08-10",

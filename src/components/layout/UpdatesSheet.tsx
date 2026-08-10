@@ -7,6 +7,7 @@ import {
   type UpdateCheckResult,
   type UpdatesManifest,
 } from "../../lib/appUpdates";
+import { getDesktopBridge, hasDesktopUpdater } from "../../lib/desktopBridge";
 import { Button } from "../ui/Button";
 
 interface UpdatesSheetProps {
@@ -16,6 +17,8 @@ interface UpdatesSheetProps {
   refreshBusy?: boolean;
   onUpdateNow?: () => void;
 }
+
+type InstallPhase = "idle" | "downloading" | "ready" | "installing" | "error";
 
 export function UpdatesSheet({
   open,
@@ -28,6 +31,12 @@ export function UpdatesSheet({
   const [check, setCheck] = useState<UpdateCheckResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<InstallPhase>("idle");
+  const [progress, setProgress] = useState(0);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const electron = isElectronShell();
+  const desktopUpdater = hasDesktopUpdater();
 
   const runCheck = async () => {
     setChecking(true);
@@ -59,28 +68,91 @@ export function UpdatesSheet({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !desktopUpdater) return;
+    const bridge = getDesktopBridge();
+    if (!bridge) return;
+    return bridge.onUpdateProgress((p) => {
+      setProgress(p.percent || 0);
+    });
+  }, [open, desktopUpdater]);
+
   if (!open) return null;
 
-  const electron = isElectronShell();
   const remoteNewer = check?.status === "available";
   const downloadUrl = check?.remote?.downloadUrl || manifest?.downloadUrl;
   const canWebUpdate = !electron && !!onUpdateNow;
-  const canExeDownload = electron && !!downloadUrl;
 
-  const handlePrimaryUpdate = () => {
-    if (electron) {
-      if (downloadUrl) {
-        window.open(downloadUrl, "_blank", "noopener,noreferrer");
-      } else {
+  const handlePrimaryUpdate = async () => {
+    if (electron && desktopUpdater) {
+      const bridge = getDesktopBridge();
+      if (!bridge || !downloadUrl) {
         void runCheck();
+        return;
       }
+
+      if (phase === "ready") {
+        setPhase("installing");
+        setUpdateError(null);
+        const result = await bridge.installUpdate();
+        if (!result.ok) {
+          setPhase("error");
+          setUpdateError(result.error || "Could not install update");
+          return;
+        }
+        if (result.mode === "manual") {
+          setPhase("idle");
+          setUpdateError("Downloaded — open the new exe from the folder that just opened.");
+        }
+        // replace-portable quits the app
+        return;
+      }
+
+      setPhase("downloading");
+      setProgress(0);
+      setUpdateError(null);
+      const result = await bridge.downloadUpdate(downloadUrl);
+      if (!result.ok) {
+        setPhase("error");
+        setUpdateError(result.error || "Download failed");
+        return;
+      }
+      setPhase("ready");
+      setProgress(100);
       return;
     }
+
+    if (electron) {
+      // Older exe without preload bridge — fall back to browser download.
+      if (downloadUrl) window.open(downloadUrl, "_blank", "noopener,noreferrer");
+      else void runCheck();
+      return;
+    }
+
     if (onUpdateNow) {
       onUpdateNow();
       onClose();
     }
   };
+
+  const handleCancelDownload = () => {
+    const bridge = getDesktopBridge();
+    void bridge?.cancelUpdate();
+    setPhase("idle");
+    setProgress(0);
+  };
+
+  const primaryLabel = (() => {
+    if (!electron) {
+      return refreshBusy ? "Updating…" : "Update now";
+    }
+    if (phase === "downloading") return `Downloading… ${progress}%`;
+    if (phase === "ready") return "Restart & install";
+    if (phase === "installing") return "Installing…";
+    if (remoteNewer) return desktopUpdater ? "Download & install" : "Download latest exe";
+    if (checking) return "Checking…";
+    return desktopUpdater ? "Check / install update" : "Update / download latest";
+  })();
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/60" onClick={onClose}>
@@ -107,8 +179,10 @@ export function UpdatesSheet({
             <h3 className="text-sm font-semibold">Check for updates</h3>
             <p className="mt-1 text-xs leading-snug text-[var(--ts-muted)]">
               {electron
-                ? "Compares this exe to the latest GitHub release, then opens the download."
-                : "Compares this install to the latest Track Spec on GitHub, then refreshes the app."}
+                ? desktopUpdater
+                  ? "Downloads the new exe inside Track Spec, then restarts to install — no browser needed."
+                  : "Compares this exe to the latest release, then opens the download."
+                : "Compares this install to the latest Track Spec, then refreshes the app."}
             </p>
             {check && (
               <p
@@ -125,26 +199,50 @@ export function UpdatesSheet({
                 A new web build is ready on this device — tap Update now.
               </p>
             )}
+            {phase === "downloading" && (
+              <div className="mt-3">
+                <div className="h-2 overflow-hidden rounded-full bg-[var(--ts-border)]">
+                  <div
+                    className="h-full bg-[var(--ts-accent)] transition-[width] duration-200"
+                    style={{ width: `${Math.max(progress, 2)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-[var(--ts-muted)]">{progress}% downloaded</p>
+              </div>
+            )}
+            {phase === "ready" && (
+              <p className="mt-2 text-xs font-medium text-[var(--ts-accent)]">
+                Download complete — restart to install.
+              </p>
+            )}
+            {updateError && <p className="mt-2 text-xs text-[var(--ts-danger)]">{updateError}</p>}
             <div className="mt-3 flex flex-col gap-2">
-              {(canWebUpdate || canExeDownload || electron) && (
+              {(canWebUpdate || electron) && (
                 <Button
-                  variant={remoteNewer || updateReady ? "primary" : "cta"}
+                  variant={remoteNewer || updateReady || phase === "ready" ? "primary" : "cta"}
                   full
-                  disabled={refreshBusy || (electron && checking && !downloadUrl)}
-                  onClick={handlePrimaryUpdate}
+                  disabled={
+                    refreshBusy ||
+                    phase === "downloading" ||
+                    phase === "installing" ||
+                    (electron && checking && !downloadUrl && phase === "idle")
+                  }
+                  onClick={() => void handlePrimaryUpdate()}
                 >
-                  {electron
-                    ? remoteNewer
-                      ? "Download latest exe"
-                      : checking
-                        ? "Checking…"
-                        : "Update / download latest"
-                    : refreshBusy
-                      ? "Updating…"
-                      : "Update now"}
+                  {primaryLabel}
                 </Button>
               )}
-              <Button variant="outline" full disabled={checking} onClick={() => void runCheck()}>
+              {phase === "downloading" && desktopUpdater && (
+                <Button variant="outline" full onClick={handleCancelDownload}>
+                  Cancel download
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                full
+                disabled={checking || phase === "downloading" || phase === "installing"}
+                onClick={() => void runCheck()}
+              >
                 {checking ? "Checking…" : "Check again"}
               </Button>
             </div>
