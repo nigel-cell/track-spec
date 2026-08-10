@@ -22,6 +22,13 @@ const server = http.createServer(app);
 
 const wss = new WebSocket.Server({ server });
 
+// `ws` re-emits HTTP listen errors; without a listener Electron shows
+// "Uncaught Exception: EADDRINUSE" even when `server` handles the error.
+wss.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") return;
+  console.error(`[WS] ${err && err.message ? err.message : err}`);
+});
+
 
 
 const DIST_DIR = process.env.TRACK_SPEC_DIST
@@ -85,8 +92,8 @@ app.get("/api/records/cars", (_req, res) => {
 
 
 app.get("/ping", (req, res) => {
-  res.type("text").send("Track Spec OK — relay running on UDP 9999, WebSocket on 3000");
-
+  const port = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT) || Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
+  res.type("text").send(`Track Spec OK — relay running on UDP 9999, WebSocket on ${port}`);
 });
 
 
@@ -95,7 +102,8 @@ const udpSocket = dgram.createSocket("udp4");
 
 const FORZA_UDP_PORT = 9999;
 
-const HTTP_PORT = 3000;
+const PREFERRED_HTTP_PORT = Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
+const HTTP_PORT_TRIES = Math.max(1, Number(process.env.TRACK_SPEC_HTTP_PORT_TRIES) || 10);
 
 
 
@@ -674,23 +682,11 @@ udpSocket.on("listening", () => {
 
 
 udpSocket.on("error", (err) => {
-
-  console.error("[UDP] Error:", err.message);
-
-  if (err.code === "EADDRINUSE") {
-
-    console.error("Port 9999 is already in use. Close other telemetry tools first.");
-
-  }
-
-  if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
-
-});
-
-
-
-udpSocket.on("error", (err) => {
   console.error(`[UDP] ${err.message} — Live telemetry may be unavailable (is another Track Spec already running?)`);
+  if (err.code === "EADDRINUSE") {
+    console.error("[UDP] Port 9999 is already in use. Close other telemetry tools / Track Spec first.");
+  }
+  if (!process.env.TRACK_SPEC_ELECTRON && err.code !== "EADDRINUSE") process.exit(1);
 });
 
 try {
@@ -712,57 +708,60 @@ app.get("*", (req, res) => {
 });
 
 
-server.on("error", (err) => {
-  if (err && err.code === "EADDRINUSE") {
-    console.error(`[HTTP] Port ${HTTP_PORT} is already in use — another Track Spec / START.bat may be running.`);
-    console.error(`[HTTP] The desktop UI will try to connect to the existing server on ${HTTP_PORT}.`);
-    return;
-  }
-  console.error(`[HTTP] ${err && err.message ? err.message : err}`);
-});
-
-server.listen(HTTP_PORT, "0.0.0.0", () => {
-
+function printListenBanner(port) {
   const ips = [];
-
   for (const ifaces of Object.values(os.networkInterfaces())) {
-
     for (const iface of ifaces) {
-
       if (iface.family === "IPv4" && !iface.internal) ips.push(iface.address);
-
     }
-
   }
 
   console.log("\n  ╔══════════════════════════════════════════╗");
-
   console.log("  ║         Track Spec is running            ║");
-
   console.log("  ╚══════════════════════════════════════════╝\n");
-
-  console.log(`  PC browser:  http://localhost:${HTTP_PORT}`);
-
+  console.log(`  PC browser:  http://localhost:${port}`);
   if (ips.length) {
-
     for (const ip of ips) {
-
-      console.log(`  iPhone:      http://${ip}:${HTTP_PORT}`);
-
+      console.log(`  iPhone:      http://${ip}:${port}`);
     }
-
   }
-
   if (!process.env.TRACK_SPEC_ELECTRON) {
-
     console.log("\n  iPhone Tune/Garage: use your Cloudflare URL (recommended)");
-
-    console.log("  iPhone Live: same Wi-Fi → http://<PC-IP>:3000\n");
-
+    console.log(`  iPhone Live: same Wi-Fi → http://<PC-IP>:${port}\n`);
   }
-
   console.log("  Forza: Data Out ON | IP = this PC | Port 9999\n");
+}
 
-});
+function startHttpServer(port, triesLeft) {
+  const onError = (err) => {
+    server.off("listening", onListening);
+    if (err && err.code === "EADDRINUSE" && triesLeft > 1) {
+      console.error(`[HTTP] Port ${port} is already in use — trying ${port + 1}…`);
+      setImmediate(() => startHttpServer(port + 1, triesLeft - 1));
+      return;
+    }
+    if (err && err.code === "EADDRINUSE") {
+      console.error(`[HTTP] Ports ${PREFERRED_HTTP_PORT}–${port} are busy.`);
+      console.error("[HTTP] Close other Track Spec / START.bat / apps using those ports, then retry.");
+      // Electron shell will poll for an existing healthy relay instead of crashing.
+      if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
+      return;
+    }
+    console.error(`[HTTP] ${err && err.message ? err.message : err}`);
+    if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
+  };
+
+  const onListening = () => {
+    server.off("error", onError);
+    process.env.TRACK_SPEC_BOUND_HTTP_PORT = String(port);
+    printListenBanner(port);
+  };
+
+  server.once("error", onError);
+  server.once("listening", onListening);
+  server.listen(port, "0.0.0.0");
+}
+
+startHttpServer(PREFERRED_HTTP_PORT, HTTP_PORT_TRIES);
 
 
