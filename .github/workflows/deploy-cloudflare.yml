@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Workers
 
 on:
   push:
@@ -22,12 +22,11 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Build cloud pack (thumbs, no full heros)
-        run: npm run build:cloud
-
-      - name: Deploy to Cloudflare
+      # wrangler.toml [build] runs `npm run build:cloud` (thumbs + Vite + dist-cloud).
+      # Deploy the assets-only Worker; do not pass Pages-only flags like --commit-dirty.
+      - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --commit-dirty=true
+          command: deploy
