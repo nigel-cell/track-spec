@@ -3,6 +3,9 @@ import { LapTimer } from "./LapTimer";
 import { LiveTrackMap } from "./LiveTrackMap";
 import { LiveFineTuneBanner } from "./LiveFineTuneBanner";
 import { LiveDrivingHud } from "./LiveDrivingHud";
+import { SessionTimingSheet } from "./SessionTimingSheet";
+import { LivePbAlert } from "./LivePbAlert";
+import { TrackLabelEditor } from "./TrackLabelEditor";
 import { FineTuneFlow } from "../tune/FineTuneFlow";
 import { CarDetectBanner } from "../tune/CarDetectBanner";
 import { TuneActionButtons, TuneActionHint } from "../tune/TuneActionButtons";
@@ -12,6 +15,8 @@ import { Card, DataValue, Label } from "../ui/Card";
 import { Button } from "../ui/Button";
 
 import { useTelemetryContext } from "../../context/TelemetryContext";
+import { useUnits } from "../../hooks/useUnits";
+import { updateActiveSession } from "../../lib/sessions";
 
 import {
 
@@ -373,6 +378,7 @@ export function TelemetryScreen({
   const [showConnection, setShowConnection] = useState(false);
   const [showCarDetect, setShowCarDetect] = useState(false);
   const lastOrdinalRef = useRef(0);
+  const { units } = useUnits();
 
   const {
     serverIp,
@@ -387,7 +393,35 @@ export function TelemetryScreen({
     suggestedIp,
     liveBalance,
     dismissLiveBalance,
+    resolveHost,
   } = useTelemetryContext();
+
+  const host = serverIp.trim() || resolveHost();
+
+  // Attach the loaded tune to the active PC session whenever Live is timing.
+  useEffect(() => {
+    if (!loadedConfig || !telemetry?.sessionId || !telemetry.raceMode) return;
+    const tune = {
+      tuneId: loadedConfig.tuneId,
+      make: loadedConfig.make,
+      model: loadedConfig.model,
+      carClass: loadedConfig.carClass,
+      pi: loadedConfig.pi,
+      driveType: loadedConfig.driveType,
+      surface: loadedConfig.surface || "Road",
+    };
+    const key = `${telemetry.sessionId}:${tune.tuneId}:${tune.make}:${tune.model}:${tune.pi}`;
+    if ((window as unknown as { __tsTuneKey?: string }).__tsTuneKey === key) return;
+    (window as unknown as { __tsTuneKey?: string }).__tsTuneKey = key;
+    void updateActiveSession({ tune }, host).catch(() => {
+      /* relay may be offline / mock-only */
+    });
+  }, [
+    loadedConfig,
+    telemetry?.sessionId,
+    telemetry?.raceMode,
+    host,
+  ]);
 
   useEffect(() => {
     if (!telemetry?.carOrdinal) {
@@ -548,6 +582,7 @@ export function TelemetryScreen({
         )}
         <LiveDrivingHud
           telemetry={telemetry}
+          units={units}
           statusLabel={statusLabel}
           statusColor={statusColor}
           mockActive={mockActive}
@@ -555,6 +590,7 @@ export function TelemetryScreen({
           onQuickTune={onQuickTune}
           onManualTune={onManualTune}
           loadedConfig={loadedConfig}
+          serverHost={host}
         />
       </div>
 
@@ -680,9 +716,34 @@ export function TelemetryScreen({
 
 
 
-      <LapTimer telemetry={telemetry} />
+      <LivePbAlert alert={telemetry?.pbAlert ?? null} units={units} />
 
+      <LapTimer telemetry={telemetry} units={units} />
 
+      {telemetry?.sessionId && (
+        <TrackLabelEditor
+          trackLabel={telemetry.trackLabel}
+          trackTags={telemetry.trackTags}
+          onSave={async (trackLabel, trackTags) => {
+            await updateActiveSession({ trackLabel, trackTags }, host);
+          }}
+        />
+      )}
+
+      {(telemetry?.sessionLaps?.length ?? 0) > 0 && (
+        <SessionTimingSheet
+          laps={telemetry!.sessionLaps}
+          sessionBest={telemetry?.sessionBest}
+          units={units}
+          compact
+          title="Session timing sheet"
+          subtitle={
+            telemetry?.carName
+              ? `${telemetry.carName} · top speed per lap`
+              : "Top speed per lap"
+          }
+        />
+      )}
 
       <LiveTrackMap telemetry={telemetry} />
 

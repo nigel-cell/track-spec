@@ -101,6 +101,16 @@ export function speedFromMph(mph: number, units: TuneUnits): number {
   return units.speed === "kmh" ? Math.round(mph * 1.609) : Math.round(mph);
 }
 
+/** Convert telemetry km/h into the user's display units. */
+export function speedFromKmh(kmh: number, units: TuneUnits): number {
+  return units.speed === "kmh" ? Math.round(kmh) : Math.round(kmh / 1.609);
+}
+
+export function formatSpeedKmh(kmh: number | null | undefined, units: TuneUnits): string {
+  if (kmh == null || !Number.isFinite(kmh) || kmh <= 0) return "—";
+  return `${speedFromKmh(kmh, units)} ${speedLabel(units)}`;
+}
+
 export function torqueFromLbFt(lbFt: number, units: TuneUnits): number {
   return units.weight === "kg" ? Math.round(lbFt * 1.356) : Math.round(lbFt);
 }

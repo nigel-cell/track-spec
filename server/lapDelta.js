@@ -20,6 +20,7 @@ function createLapDeltaRecorder() {
     prevLastLap: null,
     prevCurrentLap: 0,
     hasBestTrace: false,
+    peakSpeedKmh: 0,
   };
 
   function reset() {
@@ -31,6 +32,7 @@ function createLapDeltaRecorder() {
     state.prevLastLap = null;
     state.prevCurrentLap = 0;
     state.hasBestTrace = false;
+    state.peakSpeedKmh = 0;
   }
 
   function resetLapSamples() {
@@ -38,6 +40,7 @@ function createLapDeltaRecorder() {
     state.lastSampleDist = null;
     state.pathMeters = 0;
     state.lastPos = null;
+    state.peakSpeedKmh = 0;
   }
 
   function tickPath(telemetry) {
@@ -66,26 +69,33 @@ function createLapDeltaRecorder() {
     }
   }
 
-  function lookupTime(dist) {
-    const trace = state.bestTrace;
-    if (!trace.length) return null;
-    if (dist <= trace[0].dist) return trace[0].time;
-    const end = trace[trace.length - 1];
+  function lookupTimeOnTrace(trace, dist) {
+    if (!Array.isArray(trace) || !trace.length) return null;
+    const pts = trace.map((p) => ({
+      dist: p.dist ?? p.d,
+      time: p.time ?? p.t,
+    }));
+    if (dist <= pts[0].dist) return pts[0].time;
+    const end = pts[pts.length - 1];
     if (dist >= end.dist) return end.time;
 
     let lo = 0;
-    let hi = trace.length - 1;
+    let hi = pts.length - 1;
     while (lo + 1 < hi) {
       const mid = (lo + hi) >> 1;
-      if (trace[mid].dist <= dist) lo = mid;
+      if (pts[mid].dist <= dist) lo = mid;
       else hi = mid;
     }
 
-    const a = trace[lo];
-    const b = trace[hi];
+    const a = pts[lo];
+    const b = pts[hi];
     const span = b.dist - a.dist;
     if (span <= 0) return a.time;
     return a.time + ((dist - a.dist) / span) * (b.time - a.time);
+  }
+
+  function lookupTime(dist) {
+    return lookupTimeOnTrace(state.bestTrace, dist);
   }
 
   function captureCompletedLap(time) {
@@ -94,7 +104,8 @@ function createLapDeltaRecorder() {
     if (trace.length < 8) return null;
     const last = trace[trace.length - 1];
     if (time > last.time) trace.push({ dist: last.dist + 0.001, time });
-    return { time, trace };
+    const topSpeedKmh = state.peakSpeedKmh > 0 ? Math.round(state.peakSpeedKmh * 10) / 10 : null;
+    return { time, trace, topSpeedKmh };
   }
 
   function setBestTrace(finishTime) {
@@ -112,16 +123,18 @@ function createLapDeltaRecorder() {
 
   /**
    * @param {object} telemetry
-   * @param {{ inTimedRun: boolean, sessionBest: number | null }} ctx
+   * @param {{ inTimedRun: boolean, sessionBest: number | null, ghostTrace?: Array|null }} ctx
    */
   function update(telemetry, ctx) {
     tickPath(telemetry);
     const dist = resolveDist(telemetry);
     const { currentLap, lastLap, speedKmh } = telemetry;
-    const { inTimedRun, sessionBest } = ctx;
+    const { inTimedRun, sessionBest, ghostTrace = null } = ctx;
 
     let lapDelta = null;
     let deltaAligned = false;
+    let ghostDelta = null;
+    let ghostAligned = false;
     let lapCompleted = null;
 
     if (isValidLapTime(lastLap) && lastLap !== state.prevLastLap) {
@@ -149,6 +162,7 @@ function createLapDeltaRecorder() {
 
     if (inTimedRun && isValidLapTime(currentLap) && (speedKmh ?? 0) > 8) {
       sample(dist, currentLap);
+      if ((speedKmh ?? 0) > state.peakSpeedKmh) state.peakSpeedKmh = speedKmh;
     }
 
     if (inTimedRun && isValidLapTime(currentLap) && state.hasBestTrace) {
@@ -159,7 +173,23 @@ function createLapDeltaRecorder() {
       }
     }
 
-    return { lapDelta, deltaAligned, bestTracePoints: state.bestTrace.length, lapCompleted };
+    if (inTimedRun && isValidLapTime(currentLap) && ghostTrace?.length) {
+      const ghostTime = lookupTimeOnTrace(ghostTrace, dist);
+      if (ghostTime != null) {
+        ghostDelta = currentLap - ghostTime;
+        ghostAligned = true;
+      }
+    }
+
+    return {
+      lapDelta,
+      deltaAligned,
+      ghostDelta,
+      ghostAligned,
+      bestTracePoints: state.bestTrace.length,
+      lapCompleted,
+      lapTopSpeedKmh: state.peakSpeedKmh > 0 ? Math.round(state.peakSpeedKmh * 10) / 10 : null,
+    };
   }
 
   return { update, reset };
