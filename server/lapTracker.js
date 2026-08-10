@@ -110,6 +110,8 @@ function createLapTracker() {
       sessionLapRecorded = true;
     }
 
+    const lapTopSpeedKmh = deltaResult.lapTopSpeedKmh ?? null;
+
     if (lapDelta == null && state.inTimedRun && lapElapsed != null && sessionBest != null) {
       lapDelta = lapElapsed - sessionBest;
       deltaAligned = false;
@@ -119,10 +121,18 @@ function createLapTracker() {
     const displayLapNum =
       typeof lapNumber === "number" && lapNumber >= 0 ? lapNumber + 1 : state.completedLaps + 1;
 
+    const classBest = sessionStore.getClassBest(telemetry.carClass);
+    const activeSession = sessionStore.getActiveSession();
+    const raceTime =
+      typeof telemetry.currentRaceTime === "number" && telemetry.currentRaceTime > 0
+        ? telemetry.currentRaceTime
+        : null;
+
     return {
       ...telemetry,
       raceMode: state.inTimedRun,
       sessionBest,
+      classBest,
       lastLap: displayLast,
       lapElapsed,
       lapDelta,
@@ -130,6 +140,11 @@ function createLapTracker() {
       lapNumber: state.inTimedRun ? displayLapNum : null,
       completedLaps: state.completedLaps,
       sessionLapRecorded,
+      raceTime,
+      lapTopSpeedKmh,
+      // Lightweight timing sheet for Live UI (no traces).
+      sessionLaps: activeSession?.laps ?? [],
+      sessionId: activeSession?.id ?? null,
     };
   }
 
@@ -138,6 +153,8 @@ function createLapTracker() {
     resetSession,
     listSessions: () => sessionStore.listSessions(),
     getSession: (id) => sessionStore.getSession(id),
+    getActiveSession: () => sessionStore.getActiveSession(),
+    listClassRecords: () => sessionStore.listClassRecords(),
     deleteSession: (id) => sessionStore.deleteSession(id),
   };
 }

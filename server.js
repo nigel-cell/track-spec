@@ -36,6 +36,12 @@ app.get("/api/sessions", (_req, res) => {
   res.json(lapTracker.listSessions());
 });
 
+app.get("/api/sessions/active", (_req, res) => {
+  const session = lapTracker.getActiveSession();
+  if (!session) return res.status(404).json({ error: "No active session" });
+  res.json(session);
+});
+
 app.get("/api/sessions/:id", (req, res) => {
   const session = lapTracker.getSession(req.params.id);
   if (!session) return res.status(404).json({ error: "Session not found" });
@@ -47,6 +53,10 @@ app.delete("/api/sessions/:id", (req, res) => {
     return res.status(404).json({ error: "Session not found" });
   }
   res.json({ ok: true });
+});
+
+app.get("/api/records", (_req, res) => {
+  res.json(lapTracker.listClassRecords());
 });
 
 

@@ -3,6 +3,7 @@ import { LapTimer } from "./LapTimer";
 import { LiveTrackMap } from "./LiveTrackMap";
 import { LiveFineTuneBanner } from "./LiveFineTuneBanner";
 import { LiveDrivingHud } from "./LiveDrivingHud";
+import { SessionTimingSheet } from "./SessionTimingSheet";
 import { FineTuneFlow } from "../tune/FineTuneFlow";
 import { CarDetectBanner } from "../tune/CarDetectBanner";
 import { TuneActionButtons, TuneActionHint } from "../tune/TuneActionButtons";
@@ -12,6 +13,7 @@ import { Card, DataValue, Label } from "../ui/Card";
 import { Button } from "../ui/Button";
 
 import { useTelemetryContext } from "../../context/TelemetryContext";
+import { useUnits } from "../../hooks/useUnits";
 
 import {
 
@@ -373,6 +375,7 @@ export function TelemetryScreen({
   const [showConnection, setShowConnection] = useState(false);
   const [showCarDetect, setShowCarDetect] = useState(false);
   const lastOrdinalRef = useRef(0);
+  const { units } = useUnits();
 
   const {
     serverIp,
@@ -548,6 +551,7 @@ export function TelemetryScreen({
         )}
         <LiveDrivingHud
           telemetry={telemetry}
+          units={units}
           statusLabel={statusLabel}
           statusColor={statusColor}
           mockActive={mockActive}
@@ -680,9 +684,22 @@ export function TelemetryScreen({
 
 
 
-      <LapTimer telemetry={telemetry} />
+      <LapTimer telemetry={telemetry} units={units} />
 
-
+      {(telemetry?.sessionLaps?.length ?? 0) > 0 && (
+        <SessionTimingSheet
+          laps={telemetry!.sessionLaps}
+          sessionBest={telemetry?.sessionBest}
+          units={units}
+          compact
+          title="Session timing sheet"
+          subtitle={
+            telemetry?.carName
+              ? `${telemetry.carName} · top speed per lap`
+              : "Top speed per lap"
+          }
+        />
+      )}
 
       <LiveTrackMap telemetry={telemetry} />
 

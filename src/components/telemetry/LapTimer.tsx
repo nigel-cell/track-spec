@@ -1,26 +1,32 @@
 import { Card, Label } from "../ui/Card";
 import { formatDelta, formatLapTime } from "../../lib/lapTime";
-import type { TelemetryFrame } from "../../lib/telemetry";
+import { formatSpeedKmh, type TuneUnits } from "../../lib/units";
+import { getClassLabel, type TelemetryFrame } from "../../lib/telemetry";
 
 interface LapTimerProps {
   telemetry: TelemetryFrame | null;
+  units: TuneUnits;
   variant?: "default" | "hud";
 }
 
-export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
+export function LapTimer({ telemetry, units, variant = "default" }: LapTimerProps) {
   const active = telemetry?.raceMode ?? false;
   const current = active ? telemetry?.lapElapsed : null;
   const delta = active ? telemetry?.lapDelta : null;
   const last = telemetry?.lastLap ?? null;
   const best = telemetry?.sessionBest ?? null;
+  const classBest = telemetry?.classBest ?? null;
+  const raceTime = active ? telemetry?.raceTime : null;
+  const lapTop = active ? telemetry?.lapTopSpeedKmh : null;
   const lapNum = telemetry?.lapNumber;
+  const classLabel = telemetry ? getClassLabel(telemetry.carClass) : "?";
 
   const deltaColor =
     delta == null ? "var(--ts-muted)" : delta >= 0 ? "var(--ts-warning)" : "var(--ts-success)";
 
   if (variant === "hud") {
     return (
-      <div className="grid grid-cols-4 gap-2 text-center">
+      <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-6">
         <div>
           <div className="text-[9px] tracking-wider text-[var(--ts-muted)]">
             {active ? `LAP ${lapNum ?? "—"}` : "CURRENT"}
@@ -56,6 +62,18 @@ export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
             {formatLapTime(best)}
           </div>
         </div>
+        <div>
+          <div className="text-[9px] tracking-wider text-[var(--ts-muted)]">CLASS {classLabel}</div>
+          <div className="font-[family-name:var(--ts-font-mono)] text-sm font-semibold tabular-nums text-[var(--ts-text)]">
+            {formatLapTime(classBest)}
+          </div>
+        </div>
+        <div>
+          <div className="text-[9px] tracking-wider text-[var(--ts-muted)]">TOP</div>
+          <div className="font-[family-name:var(--ts-font-mono)] text-sm font-semibold tabular-nums text-[var(--ts-text)]">
+            {formatSpeedKmh(lapTop, units)}
+          </div>
+        </div>
       </div>
     );
   }
@@ -64,7 +82,7 @@ export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
     <Card>
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Label>Lap timer</Label>
+          <Label>Live timing</Label>
           <span
             className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
             style={{
@@ -78,6 +96,7 @@ export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
         {active && lapNum != null && (
           <span className="font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
             Lap {lapNum}
+            {raceTime != null ? ` · Race ${formatLapTime(raceTime)}` : ""}
           </span>
         )}
       </div>
@@ -113,13 +132,36 @@ export function LapTimer({ telemetry, variant = "default" }: LapTimerProps) {
             </div>
           </div>
           <div>
-            <div className="mb-1 text-[10px] tracking-wider text-[var(--ts-muted)]">BEST</div>
+            <div className="mb-1 text-[10px] tracking-wider text-[var(--ts-muted)]">SESSION BEST</div>
             <div
               className="font-[family-name:var(--ts-font-mono)] text-lg font-semibold tabular-nums"
               style={{ color: "var(--ts-accent)" }}
             >
               {formatLapTime(best)}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--ts-border)] pt-3 sm:grid-cols-3">
+        <div>
+          <div className="mb-1 text-[10px] tracking-wider text-[var(--ts-muted)]">
+            CLASS {classLabel} BEST
+          </div>
+          <div className="font-[family-name:var(--ts-font-mono)] text-base font-semibold tabular-nums text-[var(--ts-text)]">
+            {formatLapTime(classBest)}
+          </div>
+        </div>
+        <div>
+          <div className="mb-1 text-[10px] tracking-wider text-[var(--ts-muted)]">LAP TOP SPEED</div>
+          <div className="font-[family-name:var(--ts-font-mono)] text-base font-semibold tabular-nums text-[var(--ts-text)]">
+            {formatSpeedKmh(lapTop, units)}
+          </div>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <div className="mb-1 text-[10px] tracking-wider text-[var(--ts-muted)]">RACE TIME</div>
+          <div className="font-[family-name:var(--ts-font-mono)] text-base font-semibold tabular-nums text-[var(--ts-text)]">
+            {formatLapTime(raceTime)}
           </div>
         </div>
       </div>

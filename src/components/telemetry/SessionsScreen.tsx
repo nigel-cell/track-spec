@@ -2,17 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { compareLapTraces } from "../../lib/lapCompare";
 import {
   deleteSession,
+  fetchClassRecords,
   fetchSession,
   fetchSessions,
   getClassLabel,
+  type ClassRecord,
   type SessionDetail,
   type SessionSummary,
   type StoredLap,
 } from "../../lib/sessions";
 import { Button } from "../ui/Button";
 import { Card, Label } from "../ui/Card";
+import { ClassRecordsBoard } from "./ClassRecordsBoard";
 import { LapCompareChart } from "./LapCompareChart";
+import { SessionTimingSheet } from "./SessionTimingSheet";
 import { useTelemetryContext } from "../../context/TelemetryContext";
+import { useUnits } from "../../hooks/useUnits";
 
 function carLabel(ordinal: number, lookup: (n: number) => string | null): string {
   if (ordinal <= 0) return "Unknown car";
@@ -34,9 +39,11 @@ function formatWhen(iso: string) {
 
 export function SessionsScreen() {
   const { serverIp, resolveHost, lookupCarOrdinal } = useTelemetryContext();
+  const { units } = useUnits();
   const host = serverIp.trim() || resolveHost();
 
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [records, setRecords] = useState<ClassRecord[]>([]);
   const [detail, setDetail] = useState<SessionDetail | null>(null);
   const [pickA, setPickA] = useState<string | null>(null);
   const [pickB, setPickB] = useState<string | null>(null);
@@ -47,7 +54,12 @@ export function SessionsScreen() {
     setLoading(true);
     setError(null);
     try {
-      setSessions(await fetchSessions(host));
+      const [nextSessions, nextRecords] = await Promise.all([
+        fetchSessions(host),
+        fetchClassRecords(host),
+      ]);
+      setSessions(nextSessions);
+      setRecords(nextRecords);
     } catch {
       setError("Could not reach Track Spec relay — run START.bat on your PC.");
     } finally {
@@ -74,6 +86,19 @@ export function SessionsScreen() {
     }
   };
 
+  const pickLap = (lapId: string) => {
+    if (!pickA || (pickA && pickB)) {
+      setPickA(lapId);
+      setPickB(null);
+      return;
+    }
+    if (pickA === lapId) {
+      setPickA(null);
+      return;
+    }
+    setPickB(lapId);
+  };
+
   const lapA = detail?.laps.find((l) => l.id === pickA);
   const lapB = detail?.laps.find((l) => l.id === pickB);
   const comparePoints =
@@ -86,6 +111,7 @@ export function SessionsScreen() {
   };
 
   if (detail) {
+    const usedCar = carLabel(detail.carOrdinal, lookupCarOrdinal);
     return (
       <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -93,53 +119,39 @@ export function SessionsScreen() {
             ← Sessions
           </Button>
           <h1 className="font-[family-name:var(--ts-font-heading)] text-xl font-semibold">
-            {carLabel(detail.carOrdinal, lookupCarOrdinal)}
+            {usedCar}
           </h1>
           <p className="w-full text-xs text-[var(--ts-muted)]">{formatWhen(detail.startedAt)}</p>
           <span className="rounded-md bg-[var(--ts-accent-soft)] px-2 py-1 text-xs font-semibold text-[var(--ts-accent)]">
             {getClassLabel(detail.carClass)} {detail.carPI}
           </span>
+          {detail.bestLapLabel && (
+            <span className="font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
+              Session best {detail.bestLapLabel}
+            </span>
+          )}
         </div>
 
         <Card>
-          <Label>Compare laps</Label>
-          <p className="mb-3 text-xs text-[var(--ts-muted)]">
-            Tap laps to set A (reference) and B. Chart shows where B gained or lost time.
+          <Label>Car used</Label>
+          <p className="mt-1 text-sm text-[var(--ts-text)]">{usedCar}</p>
+          <p className="mt-1 text-xs text-[var(--ts-muted)]">
+            Class {getClassLabel(detail.carClass)}
+            {detail.carPI > 0 ? ` · ${detail.carPI} PI` : ""}
+            {detail.carOrdinal > 0 ? ` · #${detail.carOrdinal}` : ""}
           </p>
-          <div className="space-y-2">
-            {detail.laps.map((lap) => {
-              const isA = pickA === lap.id;
-              const isB = pickB === lap.id;
-              return (
-                <button
-                  key={lap.id}
-                  type="button"
-                  onClick={() => {
-                    if (!pickA || (pickA && pickB)) {
-                      setPickA(lap.id);
-                      setPickB(null);
-                    } else if (pickA === lap.id) {
-                      setPickA(null);
-                    } else {
-                      setPickB(lap.id);
-                    }
-                  }}
-                  className={[
-                    "flex w-full items-center justify-between rounded-[var(--ts-radius-sm)] border px-3 py-2.5 text-left",
-                    isA || isB ? "border-[var(--ts-accent)] bg-[var(--ts-accent-soft)]" : "border-[var(--ts-border)]",
-                  ].join(" ")}
-                >
-                  <span className="text-sm">
-                    Lap {lap.lapNumber}
-                    {isA && " · A"}
-                    {isB && " · B"}
-                  </span>
-                  <span className="font-[family-name:var(--ts-font-mono)] text-sm">{lap.timeLabel}</span>
-                </button>
-              );
-            })}
-          </div>
         </Card>
+
+        <SessionTimingSheet
+          laps={detail.laps}
+          sessionBest={detail.bestLap}
+          units={units}
+          pickA={pickA}
+          pickB={pickB}
+          onPickLap={pickLap}
+          title="Session timing sheet"
+          subtitle="Tap laps to set A (reference) and B for the delta chart. TOP is peak speed that lap."
+        />
 
         <Card>
           <Label>Delta chart</Label>
@@ -161,11 +173,19 @@ export function SessionsScreen() {
     <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6">
       <h1 className="font-[family-name:var(--ts-font-heading)] text-2xl font-semibold">Sessions</h1>
       <p className="text-sm text-[var(--ts-muted)]">
-        Every completed lap is saved on your PC while the relay runs.
+        Live laps save on your PC while the relay runs. Class records keep your best time and every car you used.
       </p>
 
       {loading && <p className="text-sm text-[var(--ts-muted)]">Loading…</p>}
       {error && <Card className="text-sm text-[var(--ts-danger)]">{error}</Card>}
+
+      {!loading && !error && (
+        <ClassRecordsBoard
+          records={records}
+          lookupCar={lookupCarOrdinal}
+          onOpenSession={(id) => void openSession(id)}
+        />
+      )}
 
       {!loading && !error && sessions.length === 0 && (
         <Card className="text-sm text-[var(--ts-muted)]">
@@ -187,7 +207,7 @@ export function SessionsScreen() {
                 {getClassLabel(s.carClass)} {s.carPI}
               </span>
             </div>
-            <div className="mt-2 flex gap-4 font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
+            <div className="mt-2 flex flex-wrap gap-4 font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
               <span>{formatWhen(s.startedAt)}</span>
               <span>{s.lapCount} lap{s.lapCount !== 1 ? "s" : ""}</span>
               {s.bestLapLabel && <span>Best {s.bestLapLabel}</span>}

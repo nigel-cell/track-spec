@@ -20,6 +20,7 @@ function createLapDeltaRecorder() {
     prevLastLap: null,
     prevCurrentLap: 0,
     hasBestTrace: false,
+    peakSpeedKmh: 0,
   };
 
   function reset() {
@@ -31,6 +32,7 @@ function createLapDeltaRecorder() {
     state.prevLastLap = null;
     state.prevCurrentLap = 0;
     state.hasBestTrace = false;
+    state.peakSpeedKmh = 0;
   }
 
   function resetLapSamples() {
@@ -38,6 +40,7 @@ function createLapDeltaRecorder() {
     state.lastSampleDist = null;
     state.pathMeters = 0;
     state.lastPos = null;
+    state.peakSpeedKmh = 0;
   }
 
   function tickPath(telemetry) {
@@ -94,7 +97,8 @@ function createLapDeltaRecorder() {
     if (trace.length < 8) return null;
     const last = trace[trace.length - 1];
     if (time > last.time) trace.push({ dist: last.dist + 0.001, time });
-    return { time, trace };
+    const topSpeedKmh = state.peakSpeedKmh > 0 ? Math.round(state.peakSpeedKmh * 10) / 10 : null;
+    return { time, trace, topSpeedKmh };
   }
 
   function setBestTrace(finishTime) {
@@ -149,6 +153,7 @@ function createLapDeltaRecorder() {
 
     if (inTimedRun && isValidLapTime(currentLap) && (speedKmh ?? 0) > 8) {
       sample(dist, currentLap);
+      if ((speedKmh ?? 0) > state.peakSpeedKmh) state.peakSpeedKmh = speedKmh;
     }
 
     if (inTimedRun && isValidLapTime(currentLap) && state.hasBestTrace) {
@@ -159,7 +164,13 @@ function createLapDeltaRecorder() {
       }
     }
 
-    return { lapDelta, deltaAligned, bestTracePoints: state.bestTrace.length, lapCompleted };
+    return {
+      lapDelta,
+      deltaAligned,
+      bestTracePoints: state.bestTrace.length,
+      lapCompleted,
+      lapTopSpeedKmh: state.peakSpeedKmh > 0 ? Math.round(state.peakSpeedKmh * 10) / 10 : null,
+    };
   }
 
   return { update, reset };
