@@ -14,7 +14,7 @@ export interface UpdatesManifest {
 }
 
 /** Bundled at build time — “this install” version. */
-export const APP_VERSION = "1.2.4";
+export const APP_VERSION = "1.2.5";
 
 const REMOTE_MANIFEST =
   "https://raw.githubusercontent.com/nigel-cell/track-spec/main/public/updates.json";
@@ -59,9 +59,9 @@ export type UpdateCheckResult = {
 };
 
 /**
- * Compare this install to the latest updates.json on GitHub main.
- * Web/PWA: “Update” still uses service-worker refresh for the running host.
- * Desktop exe: points users at downloadUrl when a newer version is published.
+ * Compare this install to the latest published updates.json.
+ * Web/PWA: “Update” uses service-worker refresh for the running host.
+ * Desktop exe: in-app downloader installs downloadUrl (no browser).
  */
 export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
   const localVersion = APP_VERSION;

@@ -2,10 +2,11 @@
  * Track Spec desktop shell — starts the UDP/WebSocket relay + opens the UI.
  * Double-click the packaged .exe (or `npm run desktop`) for Live tuning.
  */
-const { app, BrowserWindow, shell, dialog } = require("electron");
+const { app, BrowserWindow, shell, dialog, ipcMain } = require("electron");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const updater = require("./updater.cjs");
 
 /** Prefer these first when starting our own relay (avoids common :3000 clashes / Win excluded ranges). */
 const ELECTRON_PORTS = Array.from({ length: 30 }, (_, i) => 39200 + i);
@@ -190,6 +191,51 @@ function hardQuit(reason = "quit") {
   app.exit(0);
 }
 
+function registerDesktopIpc() {
+  ipcMain.handle("desktop:getInfo", () => updater.getInfo());
+
+  ipcMain.handle("desktop:downloadUpdate", async (event, url) => {
+    appendLog(`Update download requested: ${url}`);
+    const wc = event.sender;
+    try {
+      const result = await updater.downloadUpdate(url, (progress) => {
+        try {
+          if (!wc.isDestroyed()) wc.send("desktop:updateProgress", progress);
+        } catch {
+          /* ignore */
+        }
+      });
+      appendLog(`Update downloaded (${result.bytes} bytes) → ${result.path}`);
+      return { ok: true, ...result };
+    } catch (err) {
+      const msg = err && err.message ? err.message : String(err);
+      appendLog(`Update download failed: ${msg}`);
+      return { ok: false, error: msg };
+    }
+  });
+
+  ipcMain.handle("desktop:cancelUpdate", () => {
+    appendLog("Update download cancelled");
+    return updater.cancelUpdate();
+  });
+
+  ipcMain.handle("desktop:installUpdate", () => {
+    try {
+      const result = updater.installUpdate();
+      appendLog(`Update install: ${JSON.stringify(result)}`);
+      if (result.mode === "replace-portable") {
+        // Give the helper script a moment to spawn, then quit hard.
+        setTimeout(() => hardQuit("install-update"), 300);
+      }
+      return result;
+    } catch (err) {
+      const msg = err && err.message ? err.message : String(err);
+      appendLog(`Update install failed: ${msg}`);
+      return { ok: false, error: msg };
+    }
+  });
+}
+
 function createWindow() {
   const { dist } = resolvePaths();
   mainWindow = new BrowserWindow({
@@ -202,6 +248,7 @@ function createWindow() {
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
       nodeIntegration: false,
       contextIsolation: true,
     },
@@ -329,6 +376,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    registerDesktopIpc();
     void bootUi();
   });
 
