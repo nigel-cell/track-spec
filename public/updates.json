@@ -13,9 +13,11 @@
         "Desktop shell prefers ports 39200+ to avoid clashes with :3000",
         "Writable session data + relay.log under AppData",
         "Open the app offline if the relay still cannot bind (Live disabled)",
-        "Fully exit on close (no leftover Track Spec process holding ports)"
+        "Fully exit on close (no leftover Track Spec process holding ports)",
+        "Fix build using stale App.jsx so Garage, Sessions, and Update appear"
       ]
     },
+
     {
       "version": "1.2.2",
       "date": "2026-08-10",
