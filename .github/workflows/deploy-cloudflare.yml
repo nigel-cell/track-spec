@@ -1,16 +1,17 @@
-name: Deploy to Cloudflare Workers
+name: Verify Cloudflare cloud pack
 
+# Production deploy is handled by Cloudflare Workers Builds (Git integration).
+# This workflow only verifies the cloud pack still builds on main.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      deployments: write
     steps:
       - uses: actions/checkout@v4
 
@@ -22,11 +23,12 @@ jobs:
       - name: Install
         run: npm ci
 
-      # wrangler.toml [build] runs `npm run build:cloud` (thumbs + Vite + dist-cloud).
-      # Deploy the assets-only Worker; do not pass Pages-only flags like --commit-dirty.
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+      - name: Build cloud pack (thumbs, no full heros)
+        run: npm run build:cloud
+
+      - name: Confirm dist-cloud assets
+        run: |
+          test -d dist-cloud
+          test -f dist-cloud/index.html
+          test ! -d dist-cloud/garage/heros
+          echo "dist-cloud ready ($(du -sh dist-cloud | cut -f1))"
