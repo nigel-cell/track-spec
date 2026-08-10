@@ -689,7 +689,15 @@ udpSocket.on("error", (err) => {
 
 
 
-udpSocket.bind(FORZA_UDP_PORT);
+udpSocket.on("error", (err) => {
+  console.error(`[UDP] ${err.message} — Live telemetry may be unavailable (is another Track Spec already running?)`);
+});
+
+try {
+  udpSocket.bind(FORZA_UDP_PORT);
+} catch (err) {
+  console.error(`[UDP] bind failed: ${err && err.message ? err.message : err}`);
+}
 
 
 
@@ -704,6 +712,14 @@ app.get("*", (req, res) => {
 });
 
 
+server.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
+    console.error(`[HTTP] Port ${HTTP_PORT} is already in use — another Track Spec / START.bat may be running.`);
+    console.error(`[HTTP] The desktop UI will try to connect to the existing server on ${HTTP_PORT}.`);
+    return;
+  }
+  console.error(`[HTTP] ${err && err.message ? err.message : err}`);
+});
 
 server.listen(HTTP_PORT, "0.0.0.0", () => {
 

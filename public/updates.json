@@ -1,9 +1,20 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "updatedAt": "2026-08-10",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.2.1",
+      "date": "2026-08-10",
+      "title": "Fix desktop exe black screen",
+      "items": [
+        "Wait for the local relay before opening the UI",
+        "Electron always opens the app (not the marketing page)",
+        "Disable service workers in the desktop shell",
+        "Clearer errors if port 3000 is already in use"
+      ]
+    },
     {
       "version": "1.2.0",
       "date": "2026-08-10",
