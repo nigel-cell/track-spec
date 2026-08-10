@@ -6,8 +6,6 @@ import {
 
   fromRelay,
 
-  TRACK_SPEC_HTTP_PORT,
-
   TRACK_SPEC_WS_PORT,
 
   type RelayFrame,
@@ -38,6 +36,18 @@ function defaultHost(): string {
 
   return "localhost";
 
+}
+
+/** When the UI is served by the relay, use the same HTTP port for WebSocket. */
+function resolveWsPort(): number {
+  const locPort = window.location.port;
+  if (locPort && /^\d+$/.test(locPort)) {
+    const h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1" || h.startsWith("192.168.") || h.startsWith("10.")) {
+      return Number(locPort);
+    }
+  }
+  return TRACK_SPEC_WS_PORT;
 }
 
 
@@ -170,7 +180,7 @@ export function useTelemetryWs() {
 
     const host = resolveHost();
 
-    const wsUrl = `ws://${host}:${TRACK_SPEC_WS_PORT}`;
+    const wsUrl = `ws://${host}:${resolveWsPort()}`;
 
 
 
@@ -296,7 +306,7 @@ export function useTelemetryWs() {
 
       try {
 
-        const res = await fetch(`http://${host}:${TRACK_SPEC_HTTP_PORT}/ping`);
+        const res = await fetch(`http://${host}:${resolveWsPort()}/ping`);
 
         if (cancelled) return;
 
