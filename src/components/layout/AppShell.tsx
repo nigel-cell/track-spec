@@ -15,6 +15,7 @@ interface AppShellProps {
   onTabChange: (tab: TabId) => void;
   onMenuOpen: () => void;
   onRefresh?: () => void;
+  onUpdates?: () => void;
   refreshBusy?: boolean;
   updateReady?: boolean;
   children: ReactNode;
@@ -27,6 +28,7 @@ export function AppShell({
   onTabChange,
   onMenuOpen,
   onRefresh,
+  onUpdates,
   refreshBusy,
   updateReady,
   children,
@@ -72,6 +74,23 @@ export function AppShell({
           ))}
         </nav>
         <div className={`mt-auto flex ${immersive ? "flex-col gap-1" : "flex-col gap-2"}`}>
+        {onUpdates && (
+          <button
+            type="button"
+            onClick={onUpdates}
+            title={updateReady ? "Update available" : "Check for updates"}
+            aria-label="Update"
+            className={[
+              "rounded-[var(--ts-radius-sm)] border font-[family-name:var(--ts-font-heading)]",
+              immersive ? "flex min-h-11 min-w-11 items-center justify-center text-lg" : "min-h-11 px-3 text-sm font-semibold",
+              updateReady
+                ? "border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
+                : "border-[var(--ts-border)] text-[var(--ts-text)]",
+            ].join(" ")}
+          >
+            {immersive ? "⬆" : "⬆ Update"}
+          </button>
+        )}
         <button
           type="button"
           onClick={onMenuOpen}
@@ -107,6 +126,23 @@ export function AppShell({
         <header className="safe-top relative z-40 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--ts-border)] bg-[var(--ts-bg)] px-4 py-3 md:hidden">
           <img src="/logo-banner.png" alt="Track Spec" className="h-8 shrink-0" />
           <div className="flex items-center gap-2">
+            {onUpdates && (
+              <button
+                type="button"
+                onClick={onUpdates}
+                title={updateReady ? "Update available" : "Update"}
+                aria-label="Update"
+                className={[
+                  "flex min-h-11 items-center justify-center gap-1 rounded-[var(--ts-radius-sm)] border px-2.5 text-sm font-semibold",
+                  updateReady
+                    ? "border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
+                    : "border-[var(--ts-border)] text-[var(--ts-text)]",
+                ].join(" ")}
+              >
+                <span aria-hidden>⬆</span>
+                Update
+              </button>
+            )}
             {onRefresh && (
               <button
                 type="button"

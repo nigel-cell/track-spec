@@ -299,6 +299,7 @@ function AppContent() {
         onTabChange={setTab}
         onMenuOpen={() => setMenuOpen(true)}
         onRefresh={refreshApp}
+        onUpdates={() => setUpdatesOpen(true)}
         refreshBusy={refreshing}
         updateReady={updateReady}
         lockMainScroll={tab === "telemetry"}
