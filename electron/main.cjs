@@ -29,6 +29,16 @@ function appendLog(line) {
   console.error(line);
 }
 
+function readLogTail(maxLines = 35) {
+  try {
+    if (!logFilePath || !fs.existsSync(logFilePath)) return "(no log yet)";
+    const lines = fs.readFileSync(logFilePath, "utf8").trim().split(/\r?\n/);
+    return lines.slice(-maxLines).join("\n");
+  } catch (err) {
+    return `(could not read log: ${err && err.message ? err.message : err})`;
+  }
+}
+
 /** Port-in-use must never show Electron's ugly "Uncaught Exception" dialog. */
 process.on("uncaughtException", (err) => {
   if (err && (err.code === "EADDRINUSE" || err.code === "EACCES" || /EADDRINUSE|EACCES/.test(String(err && err.message)))) {
@@ -57,7 +67,6 @@ function resolvePaths() {
   const root = packaged
     ? path.join(process.resourcesPath, "app.asar")
     : path.join(__dirname, "..");
-  // asarUnpack puts dist on disk; prefer the real folder when packaged.
   const distUnpacked = packaged
     ? path.join(process.resourcesPath, "app.asar.unpacked", "dist")
     : null;
@@ -66,7 +75,6 @@ function resolvePaths() {
       ? distUnpacked
       : path.join(root, "dist");
   const dataDir = path.join(app.getPath("userData"), "data");
-  // Keep server.js inside asar so node_modules (express/ws) resolve correctly.
   const serverJs = packaged
     ? path.join(process.resourcesPath, "app.asar", "server.js")
     : path.join(__dirname, "..", "server.js");
@@ -82,8 +90,7 @@ function pingRelay(port, timeoutMs = 500) {
         body += chunk;
       });
       res.on("end", () => {
-        const ok = res.statusCode === 200 && /Track Spec/i.test(body);
-        resolve(ok);
+        resolve(res.statusCode === 200 && /Track Spec/i.test(body));
       });
     });
     req.on("error", () => resolve(false));
@@ -95,26 +102,8 @@ function pingRelay(port, timeoutMs = 500) {
 }
 
 async function findHealthyRelayPort(ports = SCAN_PORTS) {
-  // Parallel scan — much faster than serial timeouts on Windows.
   const results = await Promise.all(ports.map(async (port) => ((await pingRelay(port)) ? port : null)));
   return results.find((port) => port != null) ?? null;
-}
-
-async function waitForBoundPort(attempts = 60, delayMs = 100) {
-  for (let i = 0; i < attempts; i++) {
-    const bound = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT);
-    if (bound > 0) {
-      if (await pingRelay(bound, 400)) return bound;
-    }
-    const scanned = await findHealthyRelayPort(SCAN_PORTS);
-    if (scanned != null) return scanned;
-    if (process.env.TRACK_SPEC_HTTP_BIND_ERROR) {
-      // Bind fully failed — no point waiting the full timeout.
-      return null;
-    }
-    await new Promise((r) => setTimeout(r, delayMs));
-  }
-  return null;
 }
 
 function startRelayIfNeeded(paths, existingPort) {
@@ -125,7 +114,7 @@ function startRelayIfNeeded(paths, existingPort) {
   process.env.TRACK_SPEC_ELECTRON = "1";
   process.env.TRACK_SPEC_DIST = paths.dist;
   process.env.TRACK_SPEC_DATA_DIR = paths.dataDir;
-  // Prefer high ports for the desktop shell; still scan legacy 3000 for reuse above.
+  process.env.TRACK_SPEC_HTTP_HOST = "127.0.0.1";
   process.env.TRACK_SPEC_HTTP_PORT = String(ELECTRON_PORTS[0]);
   process.env.TRACK_SPEC_HTTP_PORT_TRIES = String(ELECTRON_PORTS.length);
   try {
@@ -136,6 +125,7 @@ function startRelayIfNeeded(paths, existingPort) {
   try {
     appendLog(`Starting relay from ${paths.serverJs}`);
     appendLog(`DIST=${paths.dist}`);
+    appendLog(`exists(server)=${fs.existsSync(paths.serverJs)} exists(dist)=${fs.existsSync(paths.dist)}`);
     relayModule = require(paths.serverJs);
     relayStartedByUs = true;
     return { ok: true };
@@ -143,6 +133,37 @@ function startRelayIfNeeded(paths, existingPort) {
     const msg = String(err && err.stack ? err.stack : err);
     appendLog(`Failed to start relay: ${msg}`);
     return { ok: false, error: msg };
+  }
+}
+
+async function waitForOurRelay(timeoutMs = 15000) {
+  if (!relayModule || typeof relayModule.whenReady !== "function") {
+    // Older server.js fallback
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      const bound = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT);
+      if (bound > 0) return bound;
+      if (process.env.TRACK_SPEC_HTTP_BIND_ERROR) {
+        throw new Error(process.env.TRACK_SPEC_HTTP_BIND_ERROR);
+      }
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    throw new Error("Timed out waiting for relay to bind a port");
+  }
+
+  let timer;
+  try {
+    const port = await Promise.race([
+      relayModule.whenReady(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error("Timed out waiting for relay to bind a port"));
+        }, timeoutMs);
+      }),
+    ]);
+    return port;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -165,7 +186,6 @@ function hardQuit(reason = "quit") {
   } catch {
     /* ignore */
   }
-  // Force-kill the process so UDP/HTTP handles cannot keep a zombie Electron alive.
   setTimeout(() => app.exit(0), 50);
   app.exit(0);
 }
@@ -216,20 +236,36 @@ async function loadUi(port) {
     appendLog(`Loading UI ${uiUrl}`);
     try {
       await mainWindow.loadURL(uiUrl);
-      return;
+      return true;
     } catch (err) {
       appendLog(`loadURL failed: ${err}`);
     }
   }
-  // Offline / relay-down fallback so Tune + Garage still work.
   const { dist } = resolvePaths();
   const indexHtml = path.join(dist, "index.html");
   appendLog(`Falling back to file UI: ${indexHtml}`);
   try {
     await mainWindow.loadFile(indexHtml);
+    return false;
   } catch (err) {
     dialog.showErrorBox("Track Spec failed to load", String(err));
+    return false;
   }
+}
+
+function showRelayFailure(detail) {
+  appendLog(`Relay wait failed: ${detail}`);
+  const tail = readLogTail();
+  dialog.showErrorBox(
+    "Track Spec relay did not start",
+    `${detail}\n\n` +
+      "1. Close other Track Spec windows / START.bat\n" +
+      "2. In PowerShell: taskkill /F /IM TrackSpec-Live.exe\n" +
+      "3. Reopen this exe\n\n" +
+      `Log file:\n${logFilePath}\n\n` +
+      `--- log ---\n${tail}\n\n` +
+      "Opening the app offline (Live telemetry unavailable until the relay starts).",
+  );
 }
 
 async function bootUi() {
@@ -242,34 +278,37 @@ async function bootUi() {
   logFilePath = path.join(app.getPath("userData"), "relay.log");
   appendLog(`Track Spec desktop boot (packaged=${paths.packaged})`);
   appendLog(`userData=${app.getPath("userData")}`);
+  appendLog(`resourcesPath=${process.resourcesPath || "(none)"}`);
 
   const existing = await findHealthyRelayPort(SCAN_PORTS);
   const started = startRelayIfNeeded(paths, existing);
   if (!started.ok) {
-    dialog.showErrorBox(
-      "Track Spec relay failed to start",
-      `${started.error}\n\nLog: ${logFilePath}`,
-    );
+    showRelayFailure(started.error);
     await loadUi(null);
     return;
   }
 
-  const port = existing != null ? existing : await waitForBoundPort();
+  let port = existing;
   if (port == null) {
-    const bindErr = process.env.TRACK_SPEC_HTTP_BIND_ERROR || "No local Track Spec server responded.";
-    appendLog(`Relay wait failed: ${bindErr}`);
-    dialog.showErrorBox(
-      "Track Spec relay did not start",
-      `${bindErr}\n\n` +
-        "1. Close other Track Spec windows / START.bat\n" +
-        "2. In PowerShell:\n" +
-        "   netstat -ano | findstr \":3000 :39200\"\n" +
-        "3. End leftover PIDs, then reopen this exe\n\n" +
-        `Log file:\n${logFilePath}\n\n` +
-        "Opening the app offline (Live telemetry unavailable until the relay starts).",
-    );
-    await loadUi(null);
-    return;
+    try {
+      port = await waitForOurRelay(15000);
+      appendLog(`whenReady → port ${port}`);
+      // Prefer the bound port even if /ping is slow; still try a quick ping for confidence.
+      const pingOk = await pingRelay(port, 800);
+      appendLog(`ping :${port} → ${pingOk}`);
+    } catch (err) {
+      const bound = relayModule && typeof relayModule.getBoundPort === "function"
+        ? relayModule.getBoundPort()
+        : Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT) || null;
+      if (bound) {
+        appendLog(`Ready wait failed but bound=${bound}; loading UI anyway`);
+        port = bound;
+      } else {
+        showRelayFailure(err && err.message ? err.message : String(err));
+        await loadUi(null);
+        return;
+      }
+    }
   }
 
   if (relayStartedByUs) {

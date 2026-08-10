@@ -25,7 +25,7 @@ const wss = new WebSocket.Server({ server });
 // `ws` re-emits HTTP listen errors; without a listener Electron shows
 // "Uncaught Exception: EADDRINUSE" even when `server` handles the error.
 wss.on("error", (err) => {
-  if (err && err.code === "EADDRINUSE") return;
+  if (err && (err.code === "EADDRINUSE" || err.code === "EACCES")) return;
   console.error(`[WS] ${err && err.message ? err.message : err}`);
 });
 
@@ -34,6 +34,15 @@ wss.on("error", (err) => {
 const DIST_DIR = process.env.TRACK_SPEC_DIST
   ? path.resolve(process.env.TRACK_SPEC_DIST)
   : path.join(__dirname, "dist");
+
+const IS_ELECTRON = !!process.env.TRACK_SPEC_ELECTRON;
+const LISTEN_HOST = process.env.TRACK_SPEC_HTTP_HOST || (IS_ELECTRON ? "127.0.0.1" : "0.0.0.0");
+
+// Health check before static — must never be shadowed by a dist file.
+app.get("/ping", (_req, res) => {
+  const port = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT) || Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
+  res.type("text").send(`Track Spec OK — relay running on UDP 9999, WebSocket on ${port}`);
+});
 
 app.use(express.static(DIST_DIR));
 
@@ -87,13 +96,6 @@ app.get("/api/records", (_req, res) => {
 
 app.get("/api/records/cars", (_req, res) => {
   res.json(lapTracker.listCarRecords());
-});
-
-
-
-app.get("/ping", (req, res) => {
-  const port = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT) || Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
-  res.type("text").send(`Track Spec OK — relay running on UDP 9999, WebSocket on ${port}`);
 });
 
 
@@ -708,31 +710,59 @@ app.get("*", (req, res) => {
 });
 
 
-function printListenBanner(port) {
+function printListenBanner(port, host) {
   const ips = [];
-  for (const ifaces of Object.values(os.networkInterfaces())) {
-    for (const iface of ifaces) {
-      if (iface.family === "IPv4" && !iface.internal) ips.push(iface.address);
+  try {
+    for (const ifaces of Object.values(os.networkInterfaces() || {})) {
+      if (!ifaces) continue;
+      for (const iface of ifaces) {
+        if (iface.family === "IPv4" && !iface.internal) ips.push(iface.address);
+      }
     }
+  } catch {
+    /* ignore */
   }
 
   console.log("\n  ╔══════════════════════════════════════════╗");
   console.log("  ║         Track Spec is running            ║");
   console.log("  ╚══════════════════════════════════════════╝\n");
-  console.log(`  PC browser:  http://localhost:${port}`);
-  if (ips.length) {
+  console.log(`  PC browser:  http://127.0.0.1:${port}`);
+  console.log(`  Bound:       ${host}:${port}`);
+  if (host !== "127.0.0.1" && ips.length) {
     for (const ip of ips) {
       console.log(`  iPhone:      http://${ip}:${port}`);
     }
   }
-  if (!process.env.TRACK_SPEC_ELECTRON) {
+  if (!IS_ELECTRON) {
     console.log("\n  iPhone Tune/Garage: use your Cloudflare URL (recommended)");
     console.log(`  iPhone Live: same Wi-Fi → http://<PC-IP>:${port}\n`);
   }
   console.log("  Forza: Data Out ON | IP = this PC | Port 9999\n");
 }
 
-function startHttpServer(port, triesLeft) {
+let resolveReady;
+let rejectReady;
+let readySettled = false;
+const readyPromise = new Promise((resolve, reject) => {
+  resolveReady = resolve;
+  rejectReady = reject;
+});
+
+function settleReadyOk(port) {
+  if (readySettled) return;
+  readySettled = true;
+  resolveReady(port);
+}
+
+function settleReadyErr(err) {
+  if (readySettled) return;
+  readySettled = true;
+  rejectReady(err instanceof Error ? err : new Error(String(err)));
+}
+
+function startHttpServer(port, triesLeft, allowEphemeral) {
+  const host = port === 0 ? "127.0.0.1" : LISTEN_HOST;
+
   const onError = (err) => {
     server.off("listening", onListening);
     const code = err && err.code ? err.code : "ERROR";
@@ -740,31 +770,44 @@ function startHttpServer(port, triesLeft) {
     const retryable = code === "EADDRINUSE" || code === "EACCES";
     if (retryable && triesLeft > 1) {
       console.error(`[HTTP] Port ${port} unavailable (${code}) — trying ${port + 1}…`);
-      setImmediate(() => startHttpServer(port + 1, triesLeft - 1));
+      setImmediate(() => startHttpServer(port + 1, triesLeft - 1, allowEphemeral));
+      return;
+    }
+    // Last resort for the desktop shell: let the OS pick a free localhost port.
+    if (retryable && allowEphemeral && IS_ELECTRON) {
+      console.error("[HTTP] Preferred ports unavailable — binding ephemeral 127.0.0.1:0");
+      setImmediate(() => startHttpServer(0, 1, false));
       return;
     }
     const msg = retryable
-      ? `Ports ${PREFERRED_HTTP_PORT}–${port} unavailable (${code}). Close other Track Spec / START.bat / apps using those ports, then retry.`
+      ? `Ports ${PREFERRED_HTTP_PORT}+ unavailable (${code}). Close other Track Spec / START.bat / apps using those ports, then retry.`
       : String(err && err.message ? err.message : err);
     console.error(`[HTTP] ${msg}`);
     process.env.TRACK_SPEC_HTTP_BIND_ERROR = msg;
-    // Electron shell will surface this and may fall back to a file:// UI.
-    if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
+    settleReadyErr(msg);
+    if (!IS_ELECTRON) process.exit(1);
   };
 
   const onListening = () => {
     server.off("error", onError);
-    process.env.TRACK_SPEC_BOUND_HTTP_PORT = String(port);
+    const addr = server.address();
+    const boundPort = addr && typeof addr === "object" ? addr.port : port;
+    process.env.TRACK_SPEC_BOUND_HTTP_PORT = String(boundPort);
     delete process.env.TRACK_SPEC_HTTP_BIND_ERROR;
-    printListenBanner(port);
+    printListenBanner(boundPort, host);
+    settleReadyOk(boundPort);
   };
 
   server.once("error", onError);
   server.once("listening", onListening);
-  server.listen(port, "0.0.0.0");
+  try {
+    server.listen(port, host);
+  } catch (err) {
+    onError(err);
+  }
 }
 
-startHttpServer(PREFERRED_HTTP_PORT, HTTP_PORT_TRIES);
+startHttpServer(PREFERRED_HTTP_PORT, HTTP_PORT_TRIES, IS_ELECTRON);
 
 /** Tear down HTTP/WS/UDP + timers so Electron can fully exit on Windows. */
 function shutdownRelay() {
@@ -807,5 +850,14 @@ function shutdownRelay() {
   delete process.env.TRACK_SPEC_BOUND_HTTP_PORT;
 }
 
-module.exports = { shutdownRelay };
+function whenReady() {
+  return readyPromise;
+}
+
+function getBoundPort() {
+  const n = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT);
+  return n > 0 ? n : null;
+}
+
+module.exports = { shutdownRelay, whenReady, getBoundPort };
 
