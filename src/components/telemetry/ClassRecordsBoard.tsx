@@ -69,6 +69,7 @@ export function ClassRecordsBoard({ records, lookupCar, onOpenSession }: ClassRe
                   <p className="mt-1 truncate text-sm text-[var(--ts-text)]">
                     PB car · {pbCar}
                     {rec.carPI > 0 ? ` · ${rec.carPI} PI` : ""}
+                    {rec.trackLabel ? ` · ${rec.trackLabel}` : ""}
                   </p>
                 </div>
               </div>

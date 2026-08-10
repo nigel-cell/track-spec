@@ -32,8 +32,24 @@ export interface TelemetryFrame {
   sessionBest: number | null;
   /** All-time best lap for this car class (across sessions on the PC). */
   classBest: number | null;
+  /** All-time best lap for this car ordinal. */
+  carBest: number | null;
   lapDelta: number | null;
   deltaAligned: boolean;
+  /** Distance-aligned delta vs class PB ghost. */
+  ghostDelta: number | null;
+  ghostAligned: boolean;
+  beatingSession: boolean;
+  beatingClass: boolean;
+  beatingCar: boolean;
+  pbAlert: {
+    id: string;
+    kinds: string[];
+    live?: boolean;
+    time: number | null;
+    timeLabel: string | null;
+    topSpeedKmh?: number | null;
+  } | null;
   lapNumber: number | null;
   completedLaps: number;
   /** Cumulative race/session clock from Forza when available. */
@@ -49,6 +65,17 @@ export interface TelemetryFrame {
     topSpeedKmh?: number | null;
   }>;
   sessionId: string | null;
+  trackLabel: string | null;
+  trackTags: string[];
+  sessionTune: {
+    tuneId: string;
+    make: string;
+    model: string;
+    carClass: string;
+    pi: number;
+    driveType: string;
+    surface: string;
+  } | null;
   balance: BalanceState;
   positionX: number;
   positionY: number;
@@ -91,8 +118,15 @@ export interface RelayFrame {
   lapElapsed?: number | null;
   sessionBest?: number | null;
   classBest?: number | null;
+  carBest?: number | null;
   lapDelta?: number | null;
   deltaAligned?: boolean;
+  ghostDelta?: number | null;
+  ghostAligned?: boolean;
+  beatingSession?: boolean;
+  beatingClass?: boolean;
+  beatingCar?: boolean;
+  pbAlert?: TelemetryFrame["pbAlert"];
   completedLaps?: number;
   currentRaceTime?: number;
   raceTime?: number | null;
@@ -105,6 +139,9 @@ export interface RelayFrame {
     topSpeedKmh?: number | null;
   }>;
   sessionId?: string | null;
+  trackLabel?: string | null;
+  trackTags?: string[];
+  sessionTune?: TelemetryFrame["sessionTune"];
   distanceTraveled?: number;
   positionX?: number;
   positionY?: number;
@@ -173,14 +210,24 @@ export function fromRelay(f: RelayFrame, carName?: string): TelemetryFrame {
     lastLap: f.lastLap ?? null,
     sessionBest: f.sessionBest ?? null,
     classBest: f.classBest ?? null,
+    carBest: f.carBest ?? null,
     lapDelta: f.lapDelta ?? null,
     deltaAligned: !!f.deltaAligned,
+    ghostDelta: f.ghostDelta ?? null,
+    ghostAligned: !!f.ghostAligned,
+    beatingSession: !!f.beatingSession,
+    beatingClass: !!f.beatingClass,
+    beatingCar: !!f.beatingCar,
+    pbAlert: f.pbAlert ?? null,
     lapNumber: f.lapNumber ?? null,
     completedLaps: f.completedLaps ?? 0,
     raceTime: f.raceTime ?? (typeof f.currentRaceTime === "number" && f.currentRaceTime > 0 ? f.currentRaceTime : null),
     lapTopSpeedKmh: f.lapTopSpeedKmh ?? null,
     sessionLaps: Array.isArray(f.sessionLaps) ? f.sessionLaps : [],
     sessionId: f.sessionId ?? null,
+    trackLabel: f.trackLabel ?? null,
+    trackTags: Array.isArray(f.trackTags) ? f.trackTags : [],
+    sessionTune: f.sessionTune ?? null,
     balance: detectBalance(slipAngles),
     positionX: f.positionX ?? 0,
     positionY: f.positionY ?? 0,
@@ -245,9 +292,25 @@ export function createMockFrame(t: number): TelemetryFrame {
     lapElapsed,
     lastLap,
     sessionBest,
-    classBest: sessionBest,
+    classBest: sessionBest != null ? sessionBest + 0.35 : null,
+    carBest: sessionBest,
     lapDelta,
     deltaAligned,
+    ghostDelta: lapDelta != null ? lapDelta + 0.12 : null,
+    ghostAligned: deltaAligned,
+    beatingSession: lapDelta != null && lapDelta < 0,
+    beatingClass: lapDelta != null && lapDelta < -0.1,
+    beatingCar: false,
+    pbAlert:
+      completed > 0 && Math.floor(t) % MOCK_LAP_LENGTH === 2
+        ? {
+            id: `mock-pb-${completed}`,
+            kinds: ["session", "car"],
+            time: sessionBest,
+            timeLabel: formatLapTime(sessionBest),
+            topSpeedKmh: 182,
+          }
+        : null,
     lapNumber: completed + 1,
     completedLaps: completed,
     raceTime: completed * MOCK_LAP_LENGTH + lapElapsed,
@@ -264,6 +327,17 @@ export function createMockFrame(t: number): TelemetryFrame {
       };
     }).reverse(),
     sessionId: "mock-session",
+    trackLabel: "Mock Circuit",
+    trackTags: ["test"],
+    sessionTune: {
+      tuneId: "Race",
+      make: "Nissan",
+      model: "GT-R",
+      carClass: "S1",
+      pi: 850,
+      driveType: "AWD",
+      surface: "Road",
+    },
     balance: steer > 0.25 ? "understeer" : steer < -0.25 ? "oversteer" : "neutral",
     positionX: 200 * Math.cos(trackAngle),
     positionY: 0,

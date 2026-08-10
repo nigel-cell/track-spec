@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { compareLapTraces } from "../../lib/lapCompare";
+import { exportTimingSheetImage } from "../../lib/exportTimingSheet";
 import {
   deleteSession,
+  downloadTextFile,
+  fetchCarRecords,
   fetchClassRecords,
   fetchSession,
   fetchSessions,
   getClassLabel,
+  sessionToCsv,
+  updateSessionMeta,
+  type CarRecord,
   type ClassRecord,
   type SessionDetail,
   type SessionSummary,
@@ -13,9 +19,12 @@ import {
 } from "../../lib/sessions";
 import { Button } from "../ui/Button";
 import { Card, Label } from "../ui/Card";
+import { CarRecordsBoard } from "./CarRecordsBoard";
 import { ClassRecordsBoard } from "./ClassRecordsBoard";
 import { LapCompareChart } from "./LapCompareChart";
 import { SessionTimingSheet } from "./SessionTimingSheet";
+import { StintSummaryCard } from "./StintSummaryCard";
+import { TrackLabelEditor } from "./TrackLabelEditor";
 import { useTelemetryContext } from "../../context/TelemetryContext";
 import { useUnits } from "../../hooks/useUnits";
 
@@ -44,6 +53,7 @@ export function SessionsScreen() {
 
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [records, setRecords] = useState<ClassRecord[]>([]);
+  const [carRecords, setCarRecords] = useState<CarRecord[]>([]);
   const [detail, setDetail] = useState<SessionDetail | null>(null);
   const [pickA, setPickA] = useState<string | null>(null);
   const [pickB, setPickB] = useState<string | null>(null);
@@ -54,12 +64,14 @@ export function SessionsScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [nextSessions, nextRecords] = await Promise.all([
+      const [nextSessions, nextRecords, nextCars] = await Promise.all([
         fetchSessions(host),
         fetchClassRecords(host),
+        fetchCarRecords(host),
       ]);
       setSessions(nextSessions);
       setRecords(nextRecords);
+      setCarRecords(nextCars);
     } catch {
       setError("Could not reach Track Spec relay — run START.bat on your PC.");
     } finally {
@@ -112,6 +124,10 @@ export function SessionsScreen() {
 
   if (detail) {
     const usedCar = carLabel(detail.carOrdinal, lookupCarOrdinal);
+    const tuneLabel = detail.tune
+      ? `${detail.tune.tuneId} · ${detail.tune.make} ${detail.tune.model}`.trim()
+      : null;
+
     return (
       <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -125,6 +141,11 @@ export function SessionsScreen() {
           <span className="rounded-md bg-[var(--ts-accent-soft)] px-2 py-1 text-xs font-semibold text-[var(--ts-accent)]">
             {getClassLabel(detail.carClass)} {detail.carPI}
           </span>
+          {detail.trackLabel && (
+            <span className="rounded-md border border-[var(--ts-border)] px-2 py-1 text-xs text-[var(--ts-text)]">
+              {detail.trackLabel}
+            </span>
+          )}
           {detail.bestLapLabel && (
             <span className="font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
               Session best {detail.bestLapLabel}
@@ -140,7 +161,59 @@ export function SessionsScreen() {
             {detail.carPI > 0 ? ` · ${detail.carPI} PI` : ""}
             {detail.carOrdinal > 0 ? ` · #${detail.carOrdinal}` : ""}
           </p>
+          {tuneLabel && (
+            <p className="mt-2 text-xs text-[var(--ts-muted)]">
+              Linked tune · <span className="text-[var(--ts-text)]">{tuneLabel}</span>
+            </p>
+          )}
         </Card>
+
+        <TrackLabelEditor
+          trackLabel={detail.trackLabel}
+          trackTags={detail.trackTags}
+          onSave={async (trackLabel, trackTags) => {
+            const next = await updateSessionMeta(detail.id, { trackLabel, trackTags }, host);
+            setDetail(next);
+            await reload();
+          }}
+        />
+
+        {detail.stint && (
+          <StintSummaryCard
+            stint={detail.stint}
+            units={units}
+            lookupCar={lookupCarOrdinal}
+            trackLabel={detail.trackLabel}
+            tuneLabel={tuneLabel}
+          />
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const csv = sessionToCsv(detail, units, usedCar);
+              downloadTextFile(
+                `track-spec-${(detail.trackLabel || "session").replace(/\s+/g, "-").toLowerCase()}.csv`,
+                csv,
+              );
+            }}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              void exportTimingSheetImage({
+                detail,
+                units,
+                carName: usedCar,
+              })
+            }
+          >
+            Share image
+          </Button>
+        </div>
 
         <SessionTimingSheet
           laps={detail.laps}
@@ -173,18 +246,26 @@ export function SessionsScreen() {
     <div className="mx-auto max-w-[900px] space-y-[var(--ts-section-gap)] px-4 py-5 pb-8 sm:px-6">
       <h1 className="font-[family-name:var(--ts-font-heading)] text-2xl font-semibold">Sessions</h1>
       <p className="text-sm text-[var(--ts-muted)]">
-        Live laps save on your PC while the relay runs. Class records keep your best time and every car you used.
+        Live laps save on your PC. Class/car records, track labels, stint summaries, and exports live here.
       </p>
 
       {loading && <p className="text-sm text-[var(--ts-muted)]">Loading…</p>}
       {error && <Card className="text-sm text-[var(--ts-danger)]">{error}</Card>}
 
       {!loading && !error && (
-        <ClassRecordsBoard
-          records={records}
-          lookupCar={lookupCarOrdinal}
-          onOpenSession={(id) => void openSession(id)}
-        />
+        <>
+          <ClassRecordsBoard
+            records={records}
+            lookupCar={lookupCarOrdinal}
+            onOpenSession={(id) => void openSession(id)}
+          />
+          <CarRecordsBoard
+            records={carRecords}
+            units={units}
+            lookupCar={lookupCarOrdinal}
+            onOpenSession={(id) => void openSession(id)}
+          />
+        </>
       )}
 
       {!loading && !error && sessions.length === 0 && (
@@ -207,10 +288,12 @@ export function SessionsScreen() {
                 {getClassLabel(s.carClass)} {s.carPI}
               </span>
             </div>
-            <div className="mt-2 flex flex-wrap gap-4 font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
+            <div className="mt-2 flex flex-wrap gap-3 font-[family-name:var(--ts-font-mono)] text-xs text-[var(--ts-muted)]">
               <span>{formatWhen(s.startedAt)}</span>
               <span>{s.lapCount} lap{s.lapCount !== 1 ? "s" : ""}</span>
               {s.bestLapLabel && <span>Best {s.bestLapLabel}</span>}
+              {s.trackLabel && <span>{s.trackLabel}</span>}
+              {s.tune && <span>{s.tune.tuneId} tune</span>}
             </div>
           </button>
         ))}

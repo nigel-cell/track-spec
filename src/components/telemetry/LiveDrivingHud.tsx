@@ -11,6 +11,9 @@ import { formatSpeedKmh, type TuneUnits } from "../../lib/units";
 import type { BalanceState, TelemetryFrame } from "../../lib/telemetry";
 import { getClassLabel, getGearLabel } from "../../lib/telemetry";
 import { SessionTimingSheet } from "./SessionTimingSheet";
+import { LivePbAlert } from "./LivePbAlert";
+import { TrackLabelEditor } from "./TrackLabelEditor";
+import { updateActiveSession } from "../../lib/sessions";
 
 const C = {
   cold: "#737373",
@@ -173,14 +176,16 @@ function LapStrip({
   const active = telemetry?.raceMode ?? false;
   const current = active ? telemetry?.lapElapsed : null;
   const delta = active ? telemetry?.lapDelta : null;
-  const last = telemetry?.lastLap ?? null;
   const best = telemetry?.sessionBest ?? null;
   const classBest = telemetry?.classBest ?? null;
+  const ghost = active ? telemetry?.ghostDelta : null;
   const lapTop = active ? telemetry?.lapTopSpeedKmh : null;
   const lapNum = telemetry?.lapNumber;
   const classLabel = telemetry ? getClassLabel(telemetry.carClass) : "?";
   const deltaColor =
     delta == null ? "var(--ts-muted)" : delta >= 0 ? "var(--ts-warning)" : "var(--ts-success)";
+  const ghostColor =
+    ghost == null ? "var(--ts-muted)" : ghost >= 0 ? "var(--ts-warning)" : "var(--ts-accent)";
 
   const cells = [
     {
@@ -190,9 +195,9 @@ function LapStrip({
       large: true,
     },
     { label: "DELTA", value: formatDelta(delta), accent: false, color: deltaColor },
-    { label: "LAST", value: formatLapTime(last), accent: false },
+    { label: "GHOST", value: formatDelta(ghost), accent: false, color: ghostColor },
     { label: "BEST", value: formatLapTime(best), accent: true },
-    { label: `CLASS ${classLabel}`, value: formatLapTime(classBest), accent: false },
+    { label: `CLS ${classLabel}`, value: formatLapTime(classBest), accent: false },
     { label: "TOP", value: formatSpeedKmh(lapTop, units), accent: false },
   ];
 
@@ -229,6 +234,7 @@ export interface LiveDrivingHudProps {
   onQuickTune?: () => void;
   onManualTune?: () => void;
   loadedConfig?: TuneConfig | null;
+  serverHost?: string;
 }
 
 function LoadedTuneStrip({ config }: { config: TuneConfig }) {
@@ -267,6 +273,7 @@ export function LiveDrivingHud({
   onQuickTune,
   onManualTune,
   loadedConfig,
+  serverHost = "",
 }: LiveDrivingHudProps) {
   const speed = telemetry ? Math.round(telemetry.speedKmh) : 0;
   const rpm = telemetry ? Math.round(telemetry.currentEngineRpm) : 0;
@@ -274,7 +281,8 @@ export function LiveDrivingHud({
   const steerPct = telemetry ? Math.round(telemetry.steer * 100) : 0;
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_auto_auto_1fr] bg-[var(--ts-bg)]">
+    <div className="relative grid h-full min-h-0 grid-rows-[auto_auto_auto_1fr] bg-[var(--ts-bg)]">
+      <LivePbAlert alert={telemetry?.pbAlert ?? null} units={units} />
       {/* Status */}
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--ts-border)] px-4 py-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -295,6 +303,11 @@ export function LiveDrivingHud({
                 {telemetry.carName ||
                   (telemetry.carOrdinal > 0 ? `Car #${telemetry.carOrdinal}` : "Waiting for car…")}
               </span>
+              {telemetry.trackLabel && (
+                <span className="hidden truncate text-xs text-[var(--ts-muted)] xl:inline">
+                  · {telemetry.trackLabel}
+                </span>
+              )}
               {telemetry.carOrdinal > 0 && (
                 <span className="hidden shrink-0 rounded bg-[var(--ts-accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--ts-accent)] lg:inline">
                   {getClassLabel(telemetry.carClass)} {telemetry.carPerformanceIndex}
@@ -408,8 +421,21 @@ export function LiveDrivingHud({
             </div>
           </div>
 
+          {telemetry?.sessionId && (
+            <div className="max-h-[180px] shrink-0 overflow-auto">
+              <TrackLabelEditor
+                compact
+                trackLabel={telemetry.trackLabel}
+                trackTags={telemetry.trackTags}
+                onSave={async (trackLabel, trackTags) => {
+                  await updateActiveSession({ trackLabel, trackTags }, serverHost);
+                }}
+              />
+            </div>
+          )}
+
           {(telemetry?.sessionLaps?.length ?? 0) > 0 && (
-            <div className="min-h-0 max-h-[220px] shrink-0 overflow-auto">
+            <div className="min-h-0 max-h-[200px] shrink-0 overflow-auto">
               <SessionTimingSheet
                 laps={telemetry!.sessionLaps}
                 sessionBest={telemetry?.sessionBest}

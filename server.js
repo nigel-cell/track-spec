@@ -42,8 +42,27 @@ app.get("/api/sessions/active", (_req, res) => {
   res.json(session);
 });
 
+app.patch("/api/sessions/active", (req, res) => {
+  const { trackLabel, trackTags, tune } = req.body || {};
+  let session = null;
+  if (trackLabel !== undefined || trackTags !== undefined) {
+    session = lapTracker.setActiveTrack(trackLabel, trackTags);
+  }
+  if (tune !== undefined) {
+    session = lapTracker.setActiveTune(tune) || session;
+  }
+  if (!session) return res.status(404).json({ error: "No active session" });
+  res.json(session);
+});
+
 app.get("/api/sessions/:id", (req, res) => {
   const session = lapTracker.getSession(req.params.id);
+  if (!session) return res.status(404).json({ error: "Session not found" });
+  res.json(session);
+});
+
+app.patch("/api/sessions/:id", (req, res) => {
+  const session = lapTracker.updateSessionMeta(req.params.id, req.body || {});
   if (!session) return res.status(404).json({ error: "Session not found" });
   res.json(session);
 });
@@ -57,6 +76,10 @@ app.delete("/api/sessions/:id", (req, res) => {
 
 app.get("/api/records", (_req, res) => {
   res.json(lapTracker.listClassRecords());
+});
+
+app.get("/api/records/cars", (_req, res) => {
+  res.json(lapTracker.listCarRecords());
 });
 
 
