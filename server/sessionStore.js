@@ -6,7 +6,10 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const DATA_DIR = path.join(__dirname, "..", "data");
+// Electron packages server code inside asar (read-only). Prefer an explicit data dir.
+const DATA_DIR = process.env.TRACK_SPEC_DATA_DIR
+  ? path.resolve(process.env.TRACK_SPEC_DATA_DIR)
+  : path.join(__dirname, "..", "data");
 const DATA_FILE = path.join(DATA_DIR, "sessions.json");
 const SESSION_GAP_MS = 30 * 60 * 1000;
 const MAX_SESSIONS = 80;

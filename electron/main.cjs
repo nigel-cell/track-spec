@@ -4,25 +4,36 @@
  */
 const { app, BrowserWindow, shell, dialog } = require("electron");
 const http = require("http");
+const fs = require("fs");
 const path = require("path");
 
-const ROOT = path.join(__dirname, "..");
-const DIST = path.join(ROOT, "dist");
-const RELAY_PORTS = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009];
-
-process.env.TRACK_SPEC_ELECTRON = "1";
-process.env.TRACK_SPEC_DIST = DIST;
+/** Prefer these first when starting our own relay (avoids common :3000 clashes / Win excluded ranges). */
+const ELECTRON_PORTS = Array.from({ length: 30 }, (_, i) => 39200 + i);
+/** Also accept an already-running START.bat / older relay on the classic range. */
+const LEGACY_PORTS = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009];
+const SCAN_PORTS = [...LEGACY_PORTS, ...ELECTRON_PORTS];
 
 let mainWindow = null;
 let relayStartedByUs = false;
+let logFilePath = null;
+
+function appendLog(line) {
+  const text = `[${new Date().toISOString()}] ${line}\n`;
+  try {
+    if (logFilePath) fs.appendFileSync(logFilePath, text);
+  } catch {
+    /* ignore */
+  }
+  console.error(line);
+}
 
 /** Port-in-use must never show Electron's ugly "Uncaught Exception" dialog. */
 process.on("uncaughtException", (err) => {
-  if (err && (err.code === "EADDRINUSE" || /EADDRINUSE/.test(String(err && err.message)))) {
-    console.error("[Track Spec] Port already in use — will reuse an existing relay if it responds.");
+  if (err && (err.code === "EADDRINUSE" || err.code === "EACCES" || /EADDRINUSE|EACCES/.test(String(err && err.message)))) {
+    appendLog(`Port unavailable — continuing (${err.code || err.message})`);
     return;
   }
-  console.error("[Track Spec] Uncaught exception:", err);
+  appendLog(`Uncaught exception: ${err && err.stack ? err.stack : err}`);
   try {
     dialog.showErrorBox("Track Spec error", String(err && err.stack ? err.stack : err));
   } catch {
@@ -32,14 +43,35 @@ process.on("uncaughtException", (err) => {
 
 process.on("unhandledRejection", (reason) => {
   const msg = reason && reason.message ? reason.message : String(reason);
-  if (/EADDRINUSE/.test(msg)) {
-    console.error("[Track Spec] Port already in use (promise) — continuing.");
+  if (/EADDRINUSE|EACCES/.test(msg)) {
+    appendLog(`Port unavailable (promise) — continuing.`);
     return;
   }
-  console.error("[Track Spec] Unhandled rejection:", reason);
+  appendLog(`Unhandled rejection: ${msg}`);
 });
 
-function pingRelay(port, timeoutMs = 800) {
+function resolvePaths() {
+  const packaged = app.isPackaged;
+  const root = packaged
+    ? path.join(process.resourcesPath, "app.asar")
+    : path.join(__dirname, "..");
+  // asarUnpack puts dist on disk; prefer the real folder when packaged.
+  const distUnpacked = packaged
+    ? path.join(process.resourcesPath, "app.asar.unpacked", "dist")
+    : null;
+  const dist =
+    distUnpacked && fs.existsSync(path.join(distUnpacked, "index.html"))
+      ? distUnpacked
+      : path.join(root, "dist");
+  const dataDir = path.join(app.getPath("userData"), "data");
+  // Keep server.js inside asar so node_modules (express/ws) resolve correctly.
+  const serverJs = packaged
+    ? path.join(process.resourcesPath, "app.asar", "server.js")
+    : path.join(__dirname, "..", "server.js");
+  return { root, dist, dataDir, serverJs, packaged };
+}
+
+function pingRelay(port, timeoutMs = 500) {
   return new Promise((resolve) => {
     const req = http.get(`http://127.0.0.1:${port}/ping`, { timeout: timeoutMs }, (res) => {
       let body = "";
@@ -60,34 +92,60 @@ function pingRelay(port, timeoutMs = 800) {
   });
 }
 
-async function findHealthyRelayPort() {
-  for (const port of RELAY_PORTS) {
-    if (await pingRelay(port)) return port;
-  }
-  return null;
+async function findHealthyRelayPort(ports = SCAN_PORTS) {
+  // Parallel scan — much faster than serial timeouts on Windows.
+  const results = await Promise.all(ports.map(async (port) => ((await pingRelay(port)) ? port : null)));
+  return results.find((port) => port != null) ?? null;
 }
 
-async function waitForRelay(attempts = 40, delayMs = 250) {
+async function waitForBoundPort(attempts = 60, delayMs = 100) {
   for (let i = 0; i < attempts; i++) {
-    const port = await findHealthyRelayPort();
-    if (port != null) return port;
+    const bound = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT);
+    if (bound > 0) {
+      if (await pingRelay(bound, 400)) return bound;
+    }
+    const scanned = await findHealthyRelayPort(SCAN_PORTS);
+    if (scanned != null) return scanned;
+    if (process.env.TRACK_SPEC_HTTP_BIND_ERROR) {
+      // Bind fully failed — no point waiting the full timeout.
+      return null;
+    }
     await new Promise((r) => setTimeout(r, delayMs));
   }
   return null;
 }
 
-function startRelayIfNeeded(existingPort) {
+function startRelayIfNeeded(paths, existingPort) {
   if (existingPort != null) {
-    console.log(`[Track Spec] Reusing healthy relay on port ${existingPort}`);
-    return;
+    appendLog(`Reusing healthy relay on port ${existingPort}`);
+    return { ok: true };
   }
-  process.env.TRACK_SPEC_HTTP_PORT = String(RELAY_PORTS[0]);
-  process.env.TRACK_SPEC_HTTP_PORT_TRIES = String(RELAY_PORTS.length);
-  require(path.join(ROOT, "server.js"));
-  relayStartedByUs = true;
+  process.env.TRACK_SPEC_ELECTRON = "1";
+  process.env.TRACK_SPEC_DIST = paths.dist;
+  process.env.TRACK_SPEC_DATA_DIR = paths.dataDir;
+  // Prefer high ports for the desktop shell; still scan legacy 3000 for reuse above.
+  process.env.TRACK_SPEC_HTTP_PORT = String(ELECTRON_PORTS[0]);
+  process.env.TRACK_SPEC_HTTP_PORT_TRIES = String(ELECTRON_PORTS.length);
+  try {
+    fs.mkdirSync(paths.dataDir, { recursive: true });
+  } catch (err) {
+    appendLog(`Could not create data dir: ${err && err.message ? err.message : err}`);
+  }
+  try {
+    appendLog(`Starting relay from ${paths.serverJs}`);
+    appendLog(`DIST=${paths.dist}`);
+    require(paths.serverJs);
+    relayStartedByUs = true;
+    return { ok: true };
+  } catch (err) {
+    const msg = String(err && err.stack ? err.stack : err);
+    appendLog(`Failed to start relay: ${msg}`);
+    return { ok: false, error: msg };
+  }
 }
 
-function createWindow(port) {
+function createWindow() {
+  const { dist } = resolvePaths();
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -101,30 +159,19 @@ function createWindow(port) {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    // Packaged builds include icons under dist/ (public/ is not copied into the exe).
-    icon: path.join(DIST, "icon-512.png"),
+    icon: path.join(dist, "icon-512.png"),
   });
-
-  const uiUrl = `http://127.0.0.1:${port}/`;
 
   mainWindow.webContents.on("did-fail-load", (_e, errorCode, errorDescription, validatedURL) => {
     dialog.showErrorBox(
       "Track Spec failed to load",
-      `Could not open the UI (${errorCode}: ${errorDescription}).\n\nURL: ${validatedURL}\n\nClose other Track Spec / START.bat windows, free port ${port}, then reopen the exe.`,
+      `Could not open the UI (${errorCode}: ${errorDescription}).\n\nURL: ${validatedURL}`,
     );
   });
 
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
-
-  void (async () => {
-    try {
-      await mainWindow.loadURL(uiUrl);
-    } catch (err) {
-      dialog.showErrorBox("Track Spec failed to load", String(err));
-    }
-  })();
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -136,30 +183,73 @@ function createWindow(port) {
   });
 }
 
-async function bootUi() {
-  const existing = await findHealthyRelayPort();
-  startRelayIfNeeded(existing);
+async function loadUi(port) {
+  if (!mainWindow) createWindow();
+  if (port != null) {
+    const uiUrl = `http://127.0.0.1:${port}/`;
+    appendLog(`Loading UI ${uiUrl}`);
+    try {
+      await mainWindow.loadURL(uiUrl);
+      return;
+    } catch (err) {
+      appendLog(`loadURL failed: ${err}`);
+    }
+  }
+  // Offline / relay-down fallback so Tune + Garage still work.
+  const { dist } = resolvePaths();
+  const indexHtml = path.join(dist, "index.html");
+  appendLog(`Falling back to file UI: ${indexHtml}`);
+  try {
+    await mainWindow.loadFile(indexHtml);
+  } catch (err) {
+    dialog.showErrorBox("Track Spec failed to load", String(err));
+  }
+}
 
-  const port = existing != null ? existing : await waitForRelay();
-  if (port == null) {
+async function bootUi() {
+  const paths = resolvePaths();
+  try {
+    fs.mkdirSync(app.getPath("userData"), { recursive: true });
+  } catch {
+    /* ignore */
+  }
+  logFilePath = path.join(app.getPath("userData"), "relay.log");
+  appendLog(`Track Spec desktop boot (packaged=${paths.packaged})`);
+  appendLog(`userData=${app.getPath("userData")}`);
+
+  const existing = await findHealthyRelayPort(SCAN_PORTS);
+  const started = startRelayIfNeeded(paths, existing);
+  if (!started.ok) {
     dialog.showErrorBox(
-      "Track Spec relay did not start",
-      "No local Track Spec server responded on ports 3000–3009.\n\n" +
-        "1. Close any other Track Spec window or START.bat\n" +
-        "2. In PowerShell: netstat -ano | findstr :3000\n" +
-        "3. End the leftover process, then reopen this exe\n\n" +
-        "Or run START.bat and open http://127.0.0.1:3000 in your browser.",
+      "Track Spec relay failed to start",
+      `${started.error}\n\nLog: ${logFilePath}`,
     );
-    // Still try default — better than a blank forever window.
-    createWindow(3000);
+    await loadUi(null);
     return;
   }
 
-  if (relayStartedByUs && port !== RELAY_PORTS[0]) {
-    console.log(`[Track Spec] Relay bound on alternate port ${port}`);
+  const port = existing != null ? existing : await waitForBoundPort();
+  if (port == null) {
+    const bindErr = process.env.TRACK_SPEC_HTTP_BIND_ERROR || "No local Track Spec server responded.";
+    appendLog(`Relay wait failed: ${bindErr}`);
+    dialog.showErrorBox(
+      "Track Spec relay did not start",
+      `${bindErr}\n\n` +
+        "1. Close other Track Spec windows / START.bat\n" +
+        "2. In PowerShell:\n" +
+        "   netstat -ano | findstr \":3000 :39200\"\n" +
+        "3. End leftover PIDs, then reopen this exe\n\n" +
+        `Log file:\n${logFilePath}\n\n` +
+        "Opening the app offline (Live telemetry unavailable until the relay starts).",
+    );
+    await loadUi(null);
+    return;
   }
 
-  createWindow(port);
+  if (relayStartedByUs) {
+    appendLog(`Relay ready on port ${port}`);
+  }
+  await loadUi(port);
 }
 
 const gotLock = app.requestSingleInstanceLock();

@@ -735,25 +735,27 @@ function printListenBanner(port) {
 function startHttpServer(port, triesLeft) {
   const onError = (err) => {
     server.off("listening", onListening);
-    if (err && err.code === "EADDRINUSE" && triesLeft > 1) {
-      console.error(`[HTTP] Port ${port} is already in use — trying ${port + 1}…`);
+    const code = err && err.code ? err.code : "ERROR";
+    // Windows Hyper-V / excluded port ranges often return EACCES, not EADDRINUSE.
+    const retryable = code === "EADDRINUSE" || code === "EACCES";
+    if (retryable && triesLeft > 1) {
+      console.error(`[HTTP] Port ${port} unavailable (${code}) — trying ${port + 1}…`);
       setImmediate(() => startHttpServer(port + 1, triesLeft - 1));
       return;
     }
-    if (err && err.code === "EADDRINUSE") {
-      console.error(`[HTTP] Ports ${PREFERRED_HTTP_PORT}–${port} are busy.`);
-      console.error("[HTTP] Close other Track Spec / START.bat / apps using those ports, then retry.");
-      // Electron shell will poll for an existing healthy relay instead of crashing.
-      if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
-      return;
-    }
-    console.error(`[HTTP] ${err && err.message ? err.message : err}`);
+    const msg = retryable
+      ? `Ports ${PREFERRED_HTTP_PORT}–${port} unavailable (${code}). Close other Track Spec / START.bat / apps using those ports, then retry.`
+      : String(err && err.message ? err.message : err);
+    console.error(`[HTTP] ${msg}`);
+    process.env.TRACK_SPEC_HTTP_BIND_ERROR = msg;
+    // Electron shell will surface this and may fall back to a file:// UI.
     if (!process.env.TRACK_SPEC_ELECTRON) process.exit(1);
   };
 
   const onListening = () => {
     server.off("error", onError);
     process.env.TRACK_SPEC_BOUND_HTTP_PORT = String(port);
+    delete process.env.TRACK_SPEC_HTTP_BIND_ERROR;
     printListenBanner(port);
   };
 

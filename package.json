@@ -1,6 +1,6 @@
 {
   "name": "track-spec",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "Forza Horizon tuning calculator + live telemetry PWA",
   "main": "electron/main.cjs",
