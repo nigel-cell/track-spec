@@ -1,9 +1,19 @@
 {
-  "version": "1.2.3",
+  "version": "1.2.4",
   "updatedAt": "2026-08-10",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.2.4",
+      "date": "2026-08-10",
+      "title": "Hardened desktop relay bind on Windows",
+      "items": [
+        "Desktop relay binds 127.0.0.1 and falls back to an OS-picked free port",
+        "Electron waits on a real listen promise instead of only /ping polling",
+        "Error dialog now includes the relay.log tail for diagnosis"
+      ]
+    },
     {
       "version": "1.2.3",
       "date": "2026-08-10",

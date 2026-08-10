@@ -14,7 +14,7 @@ export interface UpdatesManifest {
 }
 
 /** Bundled at build time — “this install” version. */
-export const APP_VERSION = "1.2.3";
+export const APP_VERSION = "1.2.4";
 
 const REMOTE_MANIFEST =
   "https://raw.githubusercontent.com/nigel-cell/track-spec/main/public/updates.json";
