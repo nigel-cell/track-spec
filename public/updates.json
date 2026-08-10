@@ -1,9 +1,22 @@
 {
-  "version": "1.1.0",
-  "updatedAt": "2026-08-07",
+  "version": "1.2.0",
+  "updatedAt": "2026-08-10",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.2.0",
+      "date": "2026-08-10",
+      "title": "Live timing suite + Update button",
+      "items": [
+        "Dedicated Update button in the sidebar and mobile header",
+        "Live timing sheet with top speed per lap",
+        "Best times by class and by car (with cars used)",
+        "Track labels, stint summary, CSV/PNG export",
+        "Class ghost delta and live PB alerts",
+        "Loaded tune linked to the active session"
+      ]
+    },
     {
       "version": "1.1.0",
       "date": "2026-08-07",

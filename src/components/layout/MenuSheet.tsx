@@ -143,9 +143,10 @@ export function MenuSheet({
               onClose();
             }}
           >
-            {updateReady ? "⬆ Update available" : "⬆ Updates & changelog"}
+            {updateReady ? "⬆ Update available" : "⬆ Update"}
           </Button>
         )}
+
         {onRefresh && (
           <div className="mb-3 rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-3">
             <h3 className="text-sm font-semibold text-[var(--ts-text)]">Quick refresh</h3>
