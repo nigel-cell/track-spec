@@ -15,7 +15,9 @@ const SCAN_PORTS = [...LEGACY_PORTS, ...ELECTRON_PORTS];
 
 let mainWindow = null;
 let relayStartedByUs = false;
+let relayModule = null;
 let logFilePath = null;
+let isShuttingDown = false;
 
 function appendLog(line) {
   const text = `[${new Date().toISOString()}] ${line}\n`;
@@ -134,7 +136,7 @@ function startRelayIfNeeded(paths, existingPort) {
   try {
     appendLog(`Starting relay from ${paths.serverJs}`);
     appendLog(`DIST=${paths.dist}`);
-    require(paths.serverJs);
+    relayModule = require(paths.serverJs);
     relayStartedByUs = true;
     return { ok: true };
   } catch (err) {
@@ -142,6 +144,30 @@ function startRelayIfNeeded(paths, existingPort) {
     appendLog(`Failed to start relay: ${msg}`);
     return { ok: false, error: msg };
   }
+}
+
+/** Close sockets/timers, then force-exit — Windows otherwise leaves the exe running in Task Manager. */
+function hardQuit(reason = "quit") {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  appendLog(`Shutting down (${reason})`);
+  try {
+    if (relayStartedByUs && relayModule && typeof relayModule.shutdownRelay === "function") {
+      relayModule.shutdownRelay();
+    }
+  } catch (err) {
+    appendLog(`Relay shutdown error: ${err && err.message ? err.message : err}`);
+  }
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.destroy();
+    }
+  } catch {
+    /* ignore */
+  }
+  // Force-kill the process so UDP/HTTP handles cannot keep a zombie Electron alive.
+  setTimeout(() => app.exit(0), 50);
+  app.exit(0);
 }
 
 function createWindow() {
@@ -268,6 +294,10 @@ if (!gotLock) {
   });
 
   app.on("window-all-closed", () => {
-    app.quit();
+    hardQuit("window-all-closed");
+  });
+
+  app.on("before-quit", () => {
+    hardQuit("before-quit");
   });
 }

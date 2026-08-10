@@ -766,4 +766,46 @@ function startHttpServer(port, triesLeft) {
 
 startHttpServer(PREFERRED_HTTP_PORT, HTTP_PORT_TRIES);
 
+/** Tear down HTTP/WS/UDP + timers so Electron can fully exit on Windows. */
+function shutdownRelay() {
+  try {
+    if (simulationInterval) {
+      clearInterval(simulationInterval);
+      simulationInterval = null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  for (const client of [...activeWsClients]) {
+    try {
+      client.terminate();
+    } catch {
+      /* ignore */
+    }
+  }
+  activeWsClients.clear();
+
+  try {
+    wss.close();
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    server.close();
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    udpSocket.close();
+  } catch {
+    /* ignore */
+  }
+
+  delete process.env.TRACK_SPEC_BOUND_HTTP_PORT;
+}
+
+module.exports = { shutdownRelay };
 
