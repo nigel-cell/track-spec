@@ -1,9 +1,23 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.3",
   "updatedAt": "2026-08-10",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.2.3",
+      "date": "2026-08-10",
+      "title": "Fix desktop exe relay not starting",
+      "items": [
+        "Retry ports on Windows EACCES (excluded port ranges), not only EADDRINUSE",
+        "Desktop shell prefers ports 39200+ to avoid clashes with :3000",
+        "Writable session data + relay.log under AppData",
+        "Open the app offline if the relay still cannot bind (Live disabled)",
+        "Fully exit on close (no leftover Track Spec process holding ports)",
+        "Fix build using stale App.jsx so Garage, Sessions, and Update appear"
+      ]
+    },
+
     {
       "version": "1.2.2",
       "date": "2026-08-10",
@@ -15,6 +29,7 @@
         "WebSocket follows the UI port when the relay serves the app"
       ]
     },
+
     {
       "version": "1.2.1",
       "date": "2026-08-10",
