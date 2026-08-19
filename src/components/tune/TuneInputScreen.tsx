@@ -1032,23 +1032,35 @@ export function TuneInputScreen({
       saveFavoriteDraft(activeFavoriteSlug, cfg);
     }
 
-    if (
-      sliderLimitsSource === "user" &&
-      make &&
-      model &&
-      springFrontMin !== "" &&
-      springFrontMax !== "" &&
-      springRearMin !== "" &&
-      springRearMax !== ""
-    ) {
+    if (sliderLimitsSource === "user" && make && model) {
+      const springsComplete =
+        springFrontMin !== "" &&
+        springFrontMax !== "" &&
+        springRearMin !== "" &&
+        springRearMax !== "";
+      const rideComplete =
+        rideFrontMin !== "" &&
+        rideFrontMax !== "" &&
+        rideRearMin !== "" &&
+        rideRearMax !== "";
       saveUserSliderLimits(make, model, {
-        springs: {
-          unit: units.springs,
-          frontMin: springFrontMin,
-          frontMax: springFrontMax,
-          rearMin: springRearMin,
-          rearMax: springRearMax,
-        },
+        springs: springsComplete
+          ? {
+              unit: units.springs,
+              frontMin: springFrontMin,
+              frontMax: springFrontMax,
+              rearMin: springRearMin,
+              rearMax: springRearMax,
+            }
+          : undefined,
+        ride: rideComplete
+          ? {
+              frontMin: rideFrontMin,
+              frontMax: rideFrontMax,
+              rearMin: rideRearMin,
+              rearMax: rideRearMax,
+            }
+          : undefined,
         aero:
           aeroFrontMax !== "" || aeroRearMax !== ""
             ? {
@@ -1369,6 +1381,71 @@ export function TuneInputScreen({
               value={springRearMax}
               onChange={(e) => {
                 setSpringRearMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+        </div>
+      </Card>
+      <Card className="space-y-3">
+        <Label>In-game ride height min / max (cm)</Label>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          Soft / High ends from Tune → Alignment &amp; Ride Height. Measured for GR86 and 430
+          Scuderia; other cars use the FH6 envelope until you type the in-game numbers.
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div>
+            <Label>Front min</Label>
+            <input
+              type="number"
+              step={0.1}
+              value={rideFrontMin}
+              onChange={(e) => {
+                setRideFrontMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Front max</Label>
+            <input
+              type="number"
+              step={0.1}
+              value={rideFrontMax}
+              onChange={(e) => {
+                setRideFrontMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear min</Label>
+            <input
+              type="number"
+              step={0.1}
+              value={rideRearMin}
+              onChange={(e) => {
+                setRideRearMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear max</Label>
+            <input
+              type="number"
+              step={0.1}
+              value={rideRearMax}
+              onChange={(e) => {
+                setRideRearMax(e.target.value === "" ? "" : +e.target.value);
                 setSliderLimitsSource("user");
               }}
               placeholder="auto"

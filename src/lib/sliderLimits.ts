@@ -107,12 +107,13 @@ function writeOverrides(map: Record<string, Partial<CarSliderLimits>>) {
   }
 }
 
-/** Persist user-entered spring (and optional aero) limits for a car. */
+/** Persist user-entered spring / ride / aero limits for a car. */
 export function saveUserSliderLimits(
   make: string,
   model: string,
   patch: {
     springs?: Partial<SpringLimits>;
+    ride?: Partial<RideLimits>;
     aero?: Partial<AeroLimits> | null;
   },
 ): void {
@@ -127,6 +128,9 @@ export function saveUserSliderLimits(
     springs: patch.springs
       ? ({ ...(prev.springs as SpringLimits | undefined), ...patch.springs } as SpringLimits)
       : prev.springs,
+    ride: patch.ride
+      ? ({ ...(prev.ride as RideLimits | undefined), ...patch.ride } as RideLimits)
+      : prev.ride,
     aero:
       patch.aero === undefined
         ? prev.aero
@@ -183,6 +187,7 @@ export function findSliderLimits(
         rearMin: user!.springs?.rearMin ?? 0,
         rearMax: user!.springs?.rearMax ?? 0,
       },
+      ride: (user!.ride as RideLimits | undefined) ?? undefined,
       aero: (user!.aero as AeroLimits | null | undefined) ?? null,
     };
   }
@@ -204,8 +209,11 @@ export function findSliderLimits(
 
   return {
     ...base,
-    source: user?.springs ? "user" : base.source,
+    source: user?.springs || user?.ride ? "user" : base.source,
     springs,
+    ride: user?.ride
+      ? ({ ...(base.ride ?? {}), ...user.ride } as RideLimits)
+      : base.ride,
     aero: user?.aero !== undefined ? (user.aero as AeroLimits | null) : base.aero,
   };
 }

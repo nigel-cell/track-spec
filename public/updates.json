@@ -1,9 +1,22 @@
 {
-  "version": "1.2.5",
-  "updatedAt": "2026-08-10",
+  "version": "1.3.0",
+  "updatedAt": "2026-08-19",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.0",
+      "date": "2026-08-19",
+      "title": "Manual upgrades, game limits, favorites",
+      "items": [
+        "Drivetrain conversion, upgrade packages, and stay-in-class PI builder on Manual",
+        "Tune values clamp to FH6 slider min/max; results show slider %",
+        "Favorite cars (GR86 + 430 Scuderia) keep full Specs + measured Soft/Stiff ends",
+        "Garage stock ratings and saved tunes on the Manual Car tab",
+        "Ride height min/max on Specs, saved with your spring overrides",
+        "Ships on top of the current Live exe (self-update, relay bind, timing suite)"
+      ]
+    },
     {
       "version": "1.2.5",
       "date": "2026-08-10",
