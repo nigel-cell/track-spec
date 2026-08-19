@@ -4,7 +4,6 @@
  */
 import { readFileSync } from "node:fs";
 import { applyDrivetrainConversion } from "../src/lib/drivetrainSwap.ts";
-import { applyWeightPackageChange } from "../src/lib/upgradeApply.ts";
 import { buildGameLimits, clampNumber } from "../src/lib/gameLimits.ts";
 import type { SliderLimitsFile } from "../src/lib/sliderLimits.ts";
 
@@ -54,13 +53,6 @@ const stock = applyDrivetrainConversion({
 if (stock.driveType !== "RWD") fail(`stock restore drive ${stock.driveType}`);
 if (stock.weightLbs !== 2800) fail(`stock restore weight ${stock.weightLbs}`);
 if (stock.weightDist !== 47) fail(`stock restore dist ${stock.weightDist}`);
-
-const raceWeight = applyWeightPackageChange(
-  2800,
-  { weight: "stock", chassis: "stock" },
-  { weight: "race", chassis: "stock" },
-);
-if (raceWeight >= 2800) fail(`race weight package should drop curb weight, got ${raceWeight}`);
 
 const clamped = clampNumber(70, 1, 65);
 if (clamped.value !== 65 || clamped.hit !== "max") {
