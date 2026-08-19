@@ -68,6 +68,8 @@ Latest portable build (always current):
 
 https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe
 
+The exe checks for a newer build on launch (⬆ Update). It downloads `TrackSpec-Live.exe` inside the app and replaces itself on restart — no GitHub page.
+
 
 
 Publish a new build:

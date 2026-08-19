@@ -26,7 +26,7 @@
     "build:slider-limits": "node scripts/build-slider-limits.cjs",
     "extract:gamedb": "node scripts/extract-gamedb-slider-limits.cjs",
     "extract:gamedb:fixture": "node scripts/create-gamedb-fixture.cjs && node scripts/extract-gamedb-slider-limits.cjs --db scripts/fixtures/gamedb-sample.slt --out /tmp/carSliderLimits-fixture.json",
-    "test": "node --experimental-strip-types scripts/check-tune-invariants.mts && node scripts/check-garage-merge.cjs && npm run extract:gamedb:fixture",
+    "test": "node --experimental-strip-types scripts/check-tune-invariants.mts && node scripts/check-garage-merge.cjs && node scripts/check-desktop-updater.cjs && npm run extract:gamedb:fixture",
     "deploy:cf": "npm run build:cloud && wrangler deploy"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   APP_VERSION,
   checkForAppUpdate,
@@ -15,6 +15,7 @@ interface UpdatesSheetProps {
   onClose: () => void;
   updateReady?: boolean;
   refreshBusy?: boolean;
+  autoStartDownload?: boolean;
   onUpdateNow?: () => void;
 }
 
@@ -25,6 +26,7 @@ export function UpdatesSheet({
   onClose,
   updateReady,
   refreshBusy,
+  autoStartDownload,
   onUpdateNow,
 }: UpdatesSheetProps) {
   const [manifest, setManifest] = useState<UpdatesManifest | null>(null);
@@ -34,6 +36,7 @@ export function UpdatesSheet({
   const [phase, setPhase] = useState<InstallPhase>("idle");
   const [progress, setProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const autoStarted = useRef(false);
 
   const electron = isElectronShell();
   const desktopUpdater = hasDesktopUpdater();
@@ -76,6 +79,45 @@ export function UpdatesSheet({
       setProgress(p.percent || 0);
     });
   }, [open, desktopUpdater]);
+
+  useEffect(() => {
+    if (!open) {
+      autoStarted.current = false;
+      return;
+    }
+    if (!autoStartDownload || !electron || !desktopUpdater) return;
+    if (checking || phase !== "idle") return;
+    if (check?.status !== "available") return;
+    const url = check.remote?.downloadUrl || manifest?.downloadUrl;
+    if (!url || autoStarted.current) return;
+    autoStarted.current = true;
+    const bridge = getDesktopBridge();
+    if (!bridge) {
+      autoStarted.current = false;
+      return;
+    }
+    setPhase("downloading");
+    setProgress(0);
+    setUpdateError(null);
+    void bridge.downloadUpdate(url).then((result) => {
+      if (!result.ok) {
+        setPhase("error");
+        setUpdateError(result.error || "Download failed");
+        return;
+      }
+      setPhase("ready");
+      setProgress(100);
+    });
+  }, [
+    open,
+    autoStartDownload,
+    electron,
+    desktopUpdater,
+    checking,
+    phase,
+    check,
+    manifest,
+  ]);
 
   if (!open) return null;
 
@@ -180,7 +222,7 @@ export function UpdatesSheet({
             <p className="mt-1 text-xs leading-snug text-[var(--ts-muted)]">
               {electron
                 ? desktopUpdater
-                  ? "Downloads the new exe inside Track Spec, then restarts to install — no browser needed."
+                  ? "On launch this exe checks GitHub for a newer TrackSpec-Live.exe, downloads it here, then restarts to replace itself."
                   : "Compares this exe to the latest release, then opens the download."
                 : "Compares this install to the latest Track Spec, then refreshes the app."}
             </p>

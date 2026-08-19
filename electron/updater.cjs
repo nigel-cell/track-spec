@@ -8,13 +8,10 @@ const http = require("http");
 const https = require("https");
 const path = require("path");
 const { spawn } = require("child_process");
+const { getPortableExePath } = require("./portablePath.cjs");
 
 let activeReq = null;
 let downloadedPath = null;
-
-function getPortableExePath() {
-  return process.env.PORTABLE_EXECUTABLE_FILE || null;
-}
 
 function getInfo() {
   const portablePath = getPortableExePath();
@@ -40,7 +37,7 @@ function downloadFile(url, dest, onProgress, redirectCount = 0) {
       {
         headers: {
           "User-Agent": "TrackSpec-Desktop-Updater",
-          Accept: "*/*",
+          Accept: "application/octet-stream, */*",
         },
       },
       (res) => {
@@ -204,6 +201,7 @@ function installUpdate() {
 
 module.exports = {
   getInfo,
+  getPortableExePath,
   downloadUpdate,
   cancelUpdate,
   installUpdate,

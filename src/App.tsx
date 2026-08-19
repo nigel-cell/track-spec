@@ -40,6 +40,8 @@ import type { ForzaGarageCar } from "./lib/forzaGarage";
 import { ThemeProvider } from "./themes/ThemeProvider";
 import { useUnits } from "./hooks/useUnits";
 import { useAppRefresh } from "./hooks/useAppRefresh";
+import { useDesktopAutoUpdate } from "./hooks/useDesktopAutoUpdate";
+import { isElectronShell } from "./lib/appUpdates";
 import { convertValuesForUnits, resolveTuneUnits } from "./lib/units";
 
 import { TuneInputScreen, type TuneConfig } from "./components/tune/TuneInputScreen";
@@ -119,7 +121,13 @@ function AppContent() {
 
   const { units, setUnits } = useUnits();
   const { updateReady, refreshing, refreshApp } = useAppRefresh();
+  const desktopUpdate = useDesktopAutoUpdate();
+  const showUpdateReady = updateReady || desktopUpdate.available;
   const prevUnitsRef = useRef(units);
+
+  useEffect(() => {
+    if (desktopUpdate.promptOpen) setUpdatesOpen(true);
+  }, [desktopUpdate.promptOpen]);
 
   useEffect(() => {
     if (tab === "garage") setGarageVisited(true);
@@ -308,7 +316,7 @@ function AppContent() {
         onRefresh={refreshApp}
         onUpdates={() => setUpdatesOpen(true)}
         refreshBusy={refreshing}
-        updateReady={updateReady}
+        updateReady={showUpdateReady}
         lockMainScroll={tab === "telemetry"}
       >
 
@@ -425,13 +433,18 @@ function AppContent() {
 
 
 
-      {updateReady && (
+      {showUpdateReady && (
         <button
           type="button"
-          onClick={() => void refreshApp()}
+          onClick={() => {
+            if (isElectronShell()) setUpdatesOpen(true);
+            else void refreshApp();
+          }}
           className="fixed left-3 right-3 top-[env(safe-area-inset-top,0px)] z-[60] mt-2 rounded-[var(--ts-radius-md)] border border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] px-4 py-2.5 text-center text-xs font-semibold text-[var(--ts-accent)] shadow-lg md:left-auto md:right-4 md:max-w-sm"
         >
-          Update ready — tap to refresh
+          {isElectronShell()
+            ? `Version ${desktopUpdate.check?.remoteVersion ?? "new"} is available — tap to update`
+            : "Update ready — tap to refresh"}
         </button>
       )}
 
@@ -458,14 +471,18 @@ function AppContent() {
         onUnitsChange={setUnits}
         onRefresh={refreshApp}
         refreshBusy={refreshing}
-        updateReady={updateReady}
+        updateReady={showUpdateReady}
       />
 
       <UpdatesSheet
         open={updatesOpen}
-        onClose={() => setUpdatesOpen(false)}
-        updateReady={updateReady}
+        onClose={() => {
+          setUpdatesOpen(false);
+          desktopUpdate.dismissPrompt();
+        }}
+        updateReady={showUpdateReady}
         refreshBusy={refreshing}
+        autoStartDownload={desktopUpdate.available}
         onUpdateNow={() => void refreshApp()}
       />
 

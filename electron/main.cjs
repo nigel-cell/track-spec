@@ -325,6 +325,7 @@ async function bootUi() {
   logFilePath = path.join(app.getPath("userData"), "relay.log");
   appendLog(`Track Spec desktop boot (packaged=${paths.packaged})`);
   appendLog(`userData=${app.getPath("userData")}`);
+  appendLog(`portableExe=${updater.getPortableExePath() || "(not portable)"}`);
   appendLog(`resourcesPath=${process.resourcesPath || "(none)"}`);
 
   const existing = await findHealthyRelayPort(SCAN_PORTS);
