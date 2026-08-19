@@ -82,6 +82,10 @@ async function main() {
   for (const code of codes) {
     const dest = path.join(LOGO_DIR, `${code}.webp`);
     try {
+      if (fs.existsSync(dest) && fs.statSync(dest).size > 0) {
+        ok++;
+        continue;
+      }
       const buf = await fetchBuffer(`${LOGO_BASE}/${code}.webp`);
       fs.writeFileSync(dest, buf);
       ok++;

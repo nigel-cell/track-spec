@@ -144,7 +144,7 @@ npm run import:garage
 
 
 
-Writes `public/forzaGarage.json` and downloads hero images to `public/garage/heros/` (~50 MB). Rebuild/restart the server after importing.
+Writes `public/forzaGarage.json` (merge: keeps existing tuneSpecs, mastery, and local photos) and downloads hero images to `public/garage/heros/` (~50 MB). Rebuild/restart the server after importing.
 
 
 

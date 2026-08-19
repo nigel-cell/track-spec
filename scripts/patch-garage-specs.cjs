@@ -8,6 +8,7 @@ const path = require("path");
 const https = require("https");
 
 const JSON_PATH = path.join(__dirname, "..", "public", "forzaGarage.json");
+const missingOnly = process.argv.includes("--missing");
 const WEIGHT_DIST = { FWD: 63, RWD: 47, AWD: 53 };
 
 function fetchText(url) {
@@ -151,14 +152,25 @@ async function sleep(ms) {
 async function main() {
   const data = JSON.parse(fs.readFileSync(JSON_PATH, "utf8"));
   const cars = data.cars ?? [];
+  const queue = missingOnly
+    ? cars
+        .map((car, i) => ({ car, i }))
+        .filter(
+          ({ car }) => !(car.tuneSpecs && (car.tuneSpecs.redlineRpm || car.tuneSpecs.tireFront)),
+        )
+    : cars.map((car, i) => ({ car, i }));
   let idx = 0;
   let done = 0;
-  let ok = 0;
+  let ok = cars.filter((c) => c.tuneSpecs).length;
+
+  if (queue.length === 0) {
+    console.log("Tune specs: nothing missing");
+    return;
+  }
 
   async function worker() {
-    while (idx < cars.length) {
-      const i = idx++;
-      const car = cars[i];
+    while (idx < queue.length) {
+      const { car } = queue[idx++];
       try {
         const html = await fetchText(car.url);
         car.tuneSpecs = parseTuneSpecs(html, car);
@@ -167,12 +179,14 @@ async function main() {
         car.tuneSpecsError = String(e.message || e);
       }
       done++;
-      if (done % 50 === 0) console.log(`  ${done}/${cars.length}`);
+      if (done % 50 === 0) console.log(`  ${done}/${queue.length}`);
       await sleep(100);
     }
   }
 
-  console.log(`Patching tune specs for ${cars.length} cars…`);
+  console.log(
+    `Patching tune specs for ${queue.length} cars${missingOnly ? " (missing only)" : ""}…`,
+  );
   await Promise.all(Array.from({ length: 6 }, () => worker()));
 
   data.tuneSpecsPatchedAt = new Date().toISOString();

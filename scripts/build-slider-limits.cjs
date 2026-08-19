@@ -12,6 +12,7 @@ const path = require("path");
 
 const GARAGE = path.join(__dirname, "..", "public", "forzaGarage.json");
 const OUT = path.join(__dirname, "..", "public", "carSliderLimits.json");
+const keepMeasured = process.argv.includes("--keep-measured");
 
 const WEIGHT_DIST = { FWD: 63, RWD: 47, AWD: 53 };
 
@@ -98,6 +99,19 @@ function main() {
         : null,
     };
     out.count++;
+  }
+
+  if (keepMeasured && fs.existsSync(OUT)) {
+    const prev = JSON.parse(fs.readFileSync(OUT, "utf8"));
+    let kept = 0;
+    for (const [key, car] of Object.entries(prev.cars || {})) {
+      if (car?.source === "measured") {
+        out.cars[key] = car;
+        kept++;
+      }
+    }
+    out.count = Object.keys(out.cars).length;
+    if (kept) console.log(`Kept ${kept} measured slider cars`);
   }
 
   fs.writeFileSync(OUT, JSON.stringify(out));

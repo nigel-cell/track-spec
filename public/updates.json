@@ -14,6 +14,7 @@
         "Favorite cars (GR86 + 430 Scuderia) keep full Specs + measured Soft/Stiff ends",
         "Garage stock ratings and saved tunes on the Manual Car tab",
         "Ride height min/max on Specs, saved with your spring overrides",
+        "Garage refresh from forzagarage.com merges into existing data (622 cars — specs, mastery, photos kept)",
         "Ships on top of the current Live exe (self-update, relay bind, timing suite)"
       ]
     },

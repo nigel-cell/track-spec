@@ -13,6 +13,8 @@ const BASE = "https://forzagarage.com";
 
 const args = process.argv.slice(2);
 const withDetails = args.includes("--details");
+const detailsAll = args.includes("--details-all");
+const withMerge = args.includes("--merge");
 const withLocalImages = args.includes("--local-images");
 const outArg = args.find((a) => a.startsWith("--out="));
 const outPath = outArg
@@ -188,6 +190,82 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+const LIST_FIELDS = [
+  "url",
+  "year",
+  "make",
+  "model",
+  "name",
+  "cost",
+  "rarity",
+  "class",
+  "pi",
+  "drive",
+  "powerHp",
+  "topSpeedMph",
+  "weightLbs",
+  "heroCode",
+];
+
+const DETAIL_FIELDS = [
+  "description",
+  "torqueLbFt",
+  "displacementCc",
+  "driveConfig",
+  "costNote",
+  "acquisition",
+  "mediaName",
+  "mastery",
+];
+
+function isLocalImage(image) {
+  return typeof image === "string" && image.startsWith("/garage/");
+}
+
+function needsDetails(car) {
+  if (!car) return true;
+  const masteryOk = car.mastery && Array.isArray(car.mastery.cells) && car.mastery.cells.length > 0;
+  const specsOk = car.tuneSpecs && (car.tuneSpecs.redlineRpm || car.tuneSpecs.tireFront);
+  return !masteryOk || !specsOk;
+}
+
+/** Overlay a fresh list/detail scrape onto a previous garage record. */
+function mergeCar(prev, scraped) {
+  if (!prev) return scraped;
+  const out = { ...prev };
+  for (const key of LIST_FIELDS) {
+    const next = scraped[key];
+    if (next == null || next === "") continue;
+    // List page uses 0 when speed/power is unknown — don't wipe a real value.
+    if (
+      typeof next === "number" &&
+      next === 0 &&
+      (key === "topSpeedMph" || key === "powerHp" || key === "weightLbs") &&
+      prev[key]
+    ) {
+      continue;
+    }
+    out[key] = next;
+  }
+  if (scraped.stats && Object.keys(scraped.stats).length) out.stats = scraped.stats;
+  for (const key of DETAIL_FIELDS) {
+    if (scraped[key] != null) out[key] = scraped[key];
+  }
+  if (isLocalImage(prev.image)) out.image = prev.image;
+  else if (scraped.image) out.image = scraped.image;
+  if (prev.logoCode && !out.logoCode) out.logoCode = prev.logoCode;
+  if (prev.tuneSpecs && !scraped.tuneSpecs) out.tuneSpecs = prev.tuneSpecs;
+  return out;
+}
+
+function mergeGarage(existing, scrapedCars) {
+  const prevBySlug = new Map((existing?.cars ?? []).map((c) => [c.slug, c]));
+  const merged = scrapedCars.map((scraped) => mergeCar(prevBySlug.get(scraped.slug), scraped));
+  const added = merged.filter((c) => !prevBySlug.has(c.slug)).length;
+  const dropped = (existing?.cars ?? []).filter((c) => !scrapedCars.some((s) => s.slug === c.slug));
+  return { cars: merged, added, dropped: dropped.length, kept: merged.length - added };
+}
+
 async function enrichDetails(cars, concurrency = 6) {
   let idx = 0;
   let done = 0;
@@ -212,28 +290,69 @@ async function enrichDetails(cars, concurrency = 6) {
 }
 
 async function main() {
+  let existing = null;
+  if (withMerge && fs.existsSync(outPath)) {
+    existing = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    console.log(`Merge into existing garage (${existing.count ?? existing.cars?.length ?? 0} cars)`);
+  }
+
   console.log("Fetching car list…");
   const html = await fetchText(LIST_URL);
-  const cars = parseListPage(html);
+  let cars = parseListPage(html);
   console.log(`Parsed ${cars.length} cars from list page`);
 
-  if (withDetails) {
-    console.log("Fetching detail pages (mastery + specs)…");
-    await enrichDetails(cars);
+  if (withDetails || detailsAll) {
+    const prevBySlug = new Map((existing?.cars ?? []).map((c) => [c.slug, c]));
+    const targets = detailsAll
+      ? cars
+      : cars.filter((c) => needsDetails(prevBySlug.get(c.slug)));
+    if (targets.length === 0) {
+      console.log("Detail pages: all cars already have mastery + tuneSpecs — skip");
+    } else {
+      console.log(
+        `Fetching detail pages for ${targets.length}/${cars.length} cars (${detailsAll ? "all" : "new/incomplete"})…`,
+      );
+      await enrichDetails(targets);
+    }
+  }
+
+  let added = cars.filter((c) => !(existing?.cars ?? []).some((p) => p.slug === c.slug)).length;
+  let dropped = 0;
+  let kept = cars.length - added;
+  if (withMerge && existing) {
+    const merged = mergeGarage(existing, cars);
+    cars = merged.cars;
+    added = merged.added;
+    dropped = merged.dropped;
+    kept = merged.kept;
+    console.log(`Merged: ${kept} updated, ${added} new, ${dropped} dropped`);
   }
 
   const payload = {
-    version: 1,
+    version: existing?.version ?? 1,
     importedAt: new Date().toISOString(),
     source: "https://forzagarage.com/",
     assetBase: ASSET_BASE,
     count: cars.length,
     cars,
   };
+  if (existing) {
+    for (const key of [
+      "imagesLocal",
+      "imagesDir",
+      "imagesDownloadedAt",
+      "tuneSpecsPatchedAt",
+      "masteryPatchedAt",
+      "perkIconsLocal",
+      "perkIconsDir",
+    ]) {
+      if (existing[key] != null) payload[key] = existing[key];
+    }
+  }
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(payload));
-  console.log(`Wrote ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(2)} MB)`);
+  console.log(`Wrote ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(2)} MB, ${cars.length} cars)`);
 
   if (withLocalImages) {
     const { main: downloadImages } = require("./download-garage-images.cjs");
@@ -248,4 +367,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseListPage, parseDetailPage, parseFaceStats };
+module.exports = { parseListPage, parseDetailPage, parseFaceStats, mergeCar, mergeGarage, needsDetails };

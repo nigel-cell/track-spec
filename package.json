@@ -16,7 +16,7 @@
     "start": "npm run build && node server.js",
     "desktop": "npm run build && electron .",
     "desktop:pack": "npm run build && electron-builder --win portable",
-    "import:garage": "node scripts/scrape-forzagarage.cjs --details --local-images && npm run build:thumbs",
+    "import:garage": "node scripts/scrape-forzagarage.cjs --details --merge --local-images && node scripts/patch-garage-specs.cjs --missing && node scripts/patch-garage-mastery.cjs --missing && node scripts/download-perk-icons.cjs && npm run import:garage:brands && npm run build:thumbs && node scripts/build-slider-limits.cjs --keep-measured",
     "import:garage:images": "node scripts/download-garage-images.cjs",
     "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs && node scripts/build-garage-list.cjs",
     "import:garage:specs": "node scripts/patch-garage-specs.cjs && node scripts/build-garage-list.cjs",
@@ -26,7 +26,7 @@
     "build:slider-limits": "node scripts/build-slider-limits.cjs",
     "extract:gamedb": "node scripts/extract-gamedb-slider-limits.cjs",
     "extract:gamedb:fixture": "node scripts/create-gamedb-fixture.cjs && node scripts/extract-gamedb-slider-limits.cjs --db scripts/fixtures/gamedb-sample.slt --out /tmp/carSliderLimits-fixture.json",
-    "test": "node --experimental-strip-types scripts/check-tune-invariants.mts && npm run extract:gamedb:fixture",
+    "test": "node --experimental-strip-types scripts/check-tune-invariants.mts && node scripts/check-garage-merge.cjs && npm run extract:gamedb:fixture",
     "deploy:cf": "npm run build:cloud && wrangler deploy"
   },
   "dependencies": {

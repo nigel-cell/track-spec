@@ -8,6 +8,7 @@ const path = require("path");
 const https = require("https");
 
 const JSON_PATH = path.join(__dirname, "..", "public", "forzaGarage.json");
+const missingOnly = process.argv.includes("--missing");
 
 function fetchText(url) {
   return new Promise((resolve, reject) => {
@@ -66,14 +67,23 @@ async function sleep(ms) {
 async function main() {
   const data = JSON.parse(fs.readFileSync(JSON_PATH, "utf8"));
   const cars = data.cars ?? [];
+  const queue = missingOnly
+    ? cars.filter(
+        (car) => !(car.mastery && Array.isArray(car.mastery.cells) && car.mastery.cells.length > 0),
+      )
+    : cars;
   let idx = 0;
   let done = 0;
-  let ok = 0;
+  let ok = cars.filter((c) => c.mastery?.cells?.length).length;
+
+  if (queue.length === 0) {
+    console.log("Mastery: nothing missing");
+    return;
+  }
 
   async function worker() {
-    while (idx < cars.length) {
-      const i = idx++;
-      const car = cars[i];
+    while (idx < queue.length) {
+      const car = queue[idx++];
       try {
         const html = await fetchText(car.url);
         const mastery = parseMastery(html);
@@ -85,12 +95,14 @@ async function main() {
         car.masteryError = String(e.message || e);
       }
       done++;
-      if (done % 50 === 0) console.log(`  ${done}/${cars.length}`);
+      if (done % 50 === 0) console.log(`  ${done}/${queue.length}`);
       await sleep(100);
     }
   }
 
-  console.log(`Patching mastery for ${cars.length} cars…`);
+  console.log(
+    `Patching mastery for ${queue.length} cars${missingOnly ? " (missing only)" : ""}…`,
+  );
   await Promise.all(Array.from({ length: 6 }, () => worker()));
 
   data.masteryPatchedAt = new Date().toISOString();
