@@ -45,6 +45,43 @@ import { useCarPhoto } from "../../hooks/useCarPhoto";
 
 import { useWikiSwaps } from "../../hooks/useWikiSwaps";
 import { estimateSwap, parseSwapName } from "../../lib/wikiSwaps";
+import {
+  STOCK_DRIVETRAIN,
+  applyDrivetrainConversion,
+  drivetrainOptions,
+  labelForDrive,
+  type DriveType,
+} from "../../lib/drivetrainSwap";
+import {
+  applyAeroPackage,
+  applyPowerStage,
+  applyTirePackage,
+  applyTransPackage,
+  applyWeightPackageChange,
+  classForEstimatedPi,
+  estimatePi,
+  planForClass,
+} from "../../lib/upgradeApply";
+import type {
+  AeroPackageId,
+  BrakePackageId,
+  ChassisPackageId,
+  PowerStageId,
+  TirePackageId,
+  TransPackageId,
+  WeightPackageId,
+} from "../../data/upgradePackages";
+import { convertSpringValue } from "../../lib/gameLimits";
+import {
+  findSliderLimits,
+  loadSliderLimitsFile,
+  saveUserSliderLimits,
+  type CarSliderLimits,
+  type SliderLimitsFile,
+} from "../../lib/sliderLimits";
+import { saveFavoriteDraft } from "../../lib/carFavorites";
+import { ensureFavoriteProfile, hydrateFavoriteProfiles } from "../../lib/favoriteProfiles";
+import type { SavedTune } from "../../lib/tuneSaves";
 
 import { Button } from "../ui/Button";
 
@@ -55,9 +92,11 @@ import { SegmentedControl } from "../ui/SegmentedControl";
 import { CarPhotoHero } from "./CarPhotoHero";
 
 import { CarPicker } from "./CarPicker";
+import { ManualGaragePanel } from "./ManualGaragePanel";
 
 import { TuneModeGrid } from "./TuneModeGrid";
 import { TuneSectionNav, TuneSummaryChips } from "./TuneSectionNav";
+import { UpgradePackagesCard } from "./UpgradePackagesCard";
 
 
 
@@ -115,6 +154,41 @@ export interface TuneConfig {
 
   engineSwap?: string;
 
+  /** Wiki / common drivetrain conversion label, or "None (Stock)". */
+  drivetrainSwap?: string;
+
+  /** OEM drive layout before conversion (for reverting / options). */
+  stockDriveType?: DriveType;
+
+  weightPackage?: WeightPackageId;
+  chassisPackage?: ChassisPackageId;
+  powerStage?: PowerStageId;
+  tirePackage?: TirePackageId;
+  transPackage?: TransPackageId;
+  brakePackage?: BrakePackageId;
+  aeroPackage?: AeroPackageId;
+
+  /** Optional in-game spring slider bounds (same unit as units.springs). */
+  springFrontMin?: number;
+  springFrontMax?: number;
+  springRearMin?: number;
+  springRearMax?: number;
+
+  /** Optional aero DF slider bounds (kg). */
+  aeroFrontMin?: number;
+  aeroFrontMax?: number | null;
+  aeroRearMin?: number;
+  aeroRearMax?: number | null;
+
+  /** Optional ride height slider bounds (cm). */
+  rideFrontMin?: number;
+  rideFrontMax?: number;
+  rideRearMin?: number;
+  rideRearMax?: number;
+
+  /** estimated | measured | user — from carSliderLimits.json / overrides. */
+  sliderLimitsSource?: "estimated" | "measured" | "user";
+
   aspiration?: import("../../data/engineData").AspirationId;
 
   inputDevice?: import("../../data/engineData").InputDeviceId;
@@ -130,6 +204,8 @@ interface TuneInputScreenProps {
   onDeploy: (config: TuneConfig) => void;
 
   onMyTunes?: () => void;
+
+  onLoadSaved?: (entry: SavedTune) => void;
 
   initialDraft?: Partial<TuneConfig> | null;
 
@@ -183,11 +259,48 @@ const SURFACE_BY_MODE: Record<string, string> = {
 
 
 
-export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: TuneInputScreenProps) {
+export function TuneInputScreen({
+  onDeploy,
+  onMyTunes,
+  onLoadSaved,
+  initialDraft,
+  units,
+}: TuneInputScreenProps) {
 
   type InputSection = "car" | "tune" | "specs" | "engine";
   const [section, setSection] = useState<InputSection>("car");
   const [mode, setMode] = useState<"quick" | "full">("quick");
+  const [weightPackage, setWeightPackage] = useState<WeightPackageId>("stock");
+  const [chassisPackage, setChassisPackage] = useState<ChassisPackageId>("stock");
+  const [powerStage, setPowerStage] = useState<PowerStageId>("stock");
+  const [tirePackage, setTirePackage] = useState<TirePackageId>("semi");
+  const [transPackage, setTransPackage] = useState<TransPackageId>("race");
+  const [brakePackage, setBrakePackage] = useState<BrakePackageId>("sport");
+  const [aeroPackage, setAeroPackage] = useState<AeroPackageId>("none");
+  const [stockTireWF, setStockTireWF] = useState("275/35R19");
+  const [stockTireWR, setStockTireWR] = useState("285/35R19");
+  const [stockPi, setStockPi] = useState(DEFAULT_CAR.pi);
+  const [targetClass, setTargetClass] = useState<string>(DEFAULT_CAR.carClass);
+  const [classPlanNote, setClassPlanNote] = useState("");
+  const [engineBaseTorqueLbFt, setEngineBaseTorqueLbFt] = useState<number | null>(null);
+  const [engineBaseRedline, setEngineBaseRedline] = useState(7800);
+  const [engineBasePeak, setEngineBasePeak] = useState(5500);
+  const [springFrontMin, setSpringFrontMin] = useState<number | "">("");
+  const [springFrontMax, setSpringFrontMax] = useState<number | "">("");
+  const [springRearMin, setSpringRearMin] = useState<number | "">("");
+  const [springRearMax, setSpringRearMax] = useState<number | "">("");
+  const [aeroFrontMin, setAeroFrontMin] = useState<number | "">("");
+  const [aeroFrontMax, setAeroFrontMax] = useState<number | "">("");
+  const [aeroRearMin, setAeroRearMin] = useState<number | "">("");
+  const [aeroRearMax, setAeroRearMax] = useState<number | "">("");
+  const [rideFrontMin, setRideFrontMin] = useState<number | "">("");
+  const [rideFrontMax, setRideFrontMax] = useState<number | "">("");
+  const [rideRearMin, setRideRearMin] = useState<number | "">("");
+  const [rideRearMax, setRideRearMax] = useState<number | "">("");
+  const [sliderLimitsSource, setSliderLimitsSource] = useState<
+    "estimated" | "measured" | "user" | undefined
+  >(undefined);
+  const [sliderLimitsFile, setSliderLimitsFile] = useState<SliderLimitsFile | null>(null);
 
   const [make, setMake] = useState(DEFAULT_CAR.make);
 
@@ -228,6 +341,9 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
   const [dragCd, setDragCd] = useState(0.32);
 
   const [engineSwap, setEngineSwap] = useState("None (Stock)");
+  const [drivetrainSwap, setDrivetrainSwap] = useState(STOCK_DRIVETRAIN);
+  const [stockDriveType, setStockDriveType] = useState<DriveType>(DEFAULT_CAR.driveType);
+  const [stockWeightDist, setStockWeightDist] = useState<number | null>(DEFAULT_CAR.weightDist);
   const [aspiration, setAspiration] = useState<AspirationId>("turbo");
   const [inputDevice, setInputDevice] = useState<InputDeviceId>("controller");
   const [stockWeightLbs, setStockWeightLbs] = useState<number | null>(null);
@@ -248,7 +364,49 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const { cars, makes, count: carCount, loading: carsLoading } = useCarDatabase();
 
-  const { lookup: lookupGarage, enrich: enrichGarage } = useForzaGarage();
+  const {
+    cars: garageCars,
+    lookup: lookupGarage,
+    enrich: enrichGarage,
+    favorites,
+    ensureLoaded: ensureGarageLoaded,
+  } = useForzaGarage();
+
+  useEffect(() => {
+    ensureGarageLoaded();
+  }, [ensureGarageLoaded]);
+
+  const favoriteCars = useMemo(
+    () => garageCars.filter((c) => favorites.has(c.slug)),
+    [garageCars, favorites],
+  );
+
+  const activeGarageCar = useMemo(() => {
+    const hit = lookupGarage(make, model.split(" '")[0]);
+    if (hit) return hit;
+    return (
+      favoriteCars.find(
+        (c) =>
+          c.make === make &&
+          (model === c.model || model.startsWith(c.model) || model.includes(c.model)),
+      ) ?? null
+    );
+  }, [make, model, lookupGarage, favoriteCars]);
+
+  const measuredSlugs = useMemo(() => {
+    const set = new Set<string>();
+    if (!sliderLimitsFile?.cars) return set;
+    for (const [slug, car] of Object.entries(sliderLimitsFile.cars)) {
+      if (car.source === "measured") set.add(slug);
+    }
+    return set;
+  }, [sliderLimitsFile]);
+
+  // Seed/refresh favorite profiles with garage weight, speed, torque + measured springs.
+  useEffect(() => {
+    if (!garageCars.length || !favorites.size) return;
+    hydrateFavoriteProfiles(favorites, garageCars, cars, units, sliderLimitsFile);
+  }, [garageCars, favorites, cars, units, sliderLimitsFile]);
 
   const { lookup: lookupWiki } = useWikiSwaps();
 
@@ -260,7 +418,7 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     { id: "car", label: "Car" },
     { id: "tune", label: "Mode" },
     { id: "specs", label: "Specs" },
-    { id: "engine", label: "Engine", disabled: mode !== "full" },
+    { id: "engine", label: "Build", disabled: mode !== "full" },
   ];
 
   const sectionOrder = sections.filter((s) => !s.disabled).map((s) => s.id);
@@ -276,43 +434,173 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
     if (mode === "quick" && section === "engine") setSection("specs");
   }, [mode, section]);
 
+  const applyTuneDraft = (draft: Partial<TuneConfig>) => {
+    if (draft.make) setMake(draft.make);
+    if (draft.model) setModel(draft.model);
+    if (draft.driveType) setDriveType(draft.driveType);
+    if (draft.weight) setWeight(draft.weight);
+    if (draft.weightDist) {
+      setWeightDist(draft.weightDist);
+      setStockWeightDist(draft.weightDist);
+    }
+    if (draft.pi) setPi(draft.pi);
+    if (draft.carClass) setCarClass(draft.carClass);
+    if (draft.tuneId) setTuneId(draft.tuneId);
+    if (draft.mode) setMode(draft.mode);
+    if (draft.compound) setCompound(draft.compound);
+    if (draft.surface) setSurface(draft.surface);
+    if (draft.redlineRpm) setRedlineRpm(draft.redlineRpm);
+    if (draft.peakTorqueRpm) setPeakTorqueRpm(draft.peakTorqueRpm);
+    if (draft.maxTorque) setMaxTorque(draft.maxTorque);
+    if (draft.topspeed) setTopspeed(draft.topspeed);
+    if (draft.gears) setGears(draft.gears);
+    if (draft.hasAero !== undefined) setHasAero(draft.hasAero);
+    if (draft.aeroF != null) setAeroF(draft.aeroF);
+    if (draft.aeroR != null) setAeroR(draft.aeroR);
+    if (draft.tireWF) {
+      setTireWF(draft.tireWF);
+      setStockTireWF(draft.tireWF);
+    }
+    if (draft.tireWR) {
+      setTireWR(draft.tireWR);
+      setStockTireWR(draft.tireWR);
+    }
+    if (draft.engineSwap) setEngineSwap(draft.engineSwap);
+    if (draft.drivetrainSwap) setDrivetrainSwap(draft.drivetrainSwap);
+    if (draft.stockDriveType) setStockDriveType(draft.stockDriveType);
+    else if (draft.driveType && (!draft.drivetrainSwap || draft.drivetrainSwap === STOCK_DRIVETRAIN)) {
+      setStockDriveType(draft.driveType);
+    }
+    if (draft.aspiration) setAspiration(draft.aspiration);
+    if (draft.inputDevice) setInputDevice(draft.inputDevice);
+    if (draft.dragCd != null) setDragCd(draft.dragCd);
+    if (draft.stockFd !== undefined) setStockFd(draft.stockFd);
+    if (draft.stockGears !== undefined) setStockGears(draft.stockGears);
+    if (draft.weightPackage) setWeightPackage(draft.weightPackage);
+    if (draft.chassisPackage) setChassisPackage(draft.chassisPackage);
+    if (draft.powerStage) setPowerStage(draft.powerStage);
+    if (draft.tirePackage) setTirePackage(draft.tirePackage);
+    if (draft.transPackage) setTransPackage(draft.transPackage);
+    if (draft.brakePackage) setBrakePackage(draft.brakePackage);
+    if (draft.aeroPackage) setAeroPackage(draft.aeroPackage);
+    if (draft.carClass) setTargetClass(draft.carClass);
+    if (draft.pi) setStockPi(draft.pi);
+    if (draft.weight) {
+      const lbs = units.weight === "lbs" ? draft.weight : draft.weight * 2.205;
+      setStockWeightLbs(Math.round(lbs));
+    }
+    if (draft.maxTorque) {
+      const lbft =
+        units.weight === "lbs" ? draft.maxTorque : Math.round(draft.maxTorque / 1.356);
+      setStockTorqueLbFt(Math.round(lbft));
+      setEngineBaseTorqueLbFt(Math.round(lbft));
+    }
+    if (draft.redlineRpm) setEngineBaseRedline(draft.redlineRpm);
+    if (draft.peakTorqueRpm) setEngineBasePeak(draft.peakTorqueRpm);
+    if (draft.springFrontMin != null) setSpringFrontMin(draft.springFrontMin);
+    if (draft.springFrontMax != null) setSpringFrontMax(draft.springFrontMax);
+    if (draft.springRearMin != null) setSpringRearMin(draft.springRearMin);
+    if (draft.springRearMax != null) setSpringRearMax(draft.springRearMax);
+    if (draft.aeroFrontMin != null) setAeroFrontMin(draft.aeroFrontMin);
+    if (draft.aeroFrontMax != null) setAeroFrontMax(draft.aeroFrontMax);
+    if (draft.aeroRearMin != null) setAeroRearMin(draft.aeroRearMin);
+    if (draft.aeroRearMax != null) setAeroRearMax(draft.aeroRearMax);
+    if (draft.rideFrontMin != null) setRideFrontMin(draft.rideFrontMin);
+    if (draft.rideFrontMax != null) setRideFrontMax(draft.rideFrontMax);
+    if (draft.rideRearMin != null) setRideRearMin(draft.rideRearMin);
+    if (draft.rideRearMax != null) setRideRearMax(draft.rideRearMax);
+    if (draft.sliderLimitsSource) setSliderLimitsSource(draft.sliderLimitsSource);
+  };
+
   useEffect(() => {
     if (!initialDraft) return;
-    if (initialDraft.make) setMake(initialDraft.make);
-    if (initialDraft.model) setModel(initialDraft.model);
-    if (initialDraft.driveType) setDriveType(initialDraft.driveType);
-    if (initialDraft.weight) setWeight(initialDraft.weight);
-    if (initialDraft.weightDist) setWeightDist(initialDraft.weightDist);
-    if (initialDraft.pi) setPi(initialDraft.pi);
-    if (initialDraft.carClass) setCarClass(initialDraft.carClass);
-    if (initialDraft.tuneId) setTuneId(initialDraft.tuneId);
-    if (initialDraft.mode) setMode(initialDraft.mode);
-    if (initialDraft.compound) setCompound(initialDraft.compound);
-    if (initialDraft.surface) setSurface(initialDraft.surface);
-    if (initialDraft.redlineRpm) setRedlineRpm(initialDraft.redlineRpm);
-    if (initialDraft.peakTorqueRpm) setPeakTorqueRpm(initialDraft.peakTorqueRpm);
-    if (initialDraft.maxTorque) setMaxTorque(initialDraft.maxTorque);
-    if (initialDraft.topspeed) setTopspeed(initialDraft.topspeed);
-    if (initialDraft.gears) setGears(initialDraft.gears);
-    if (initialDraft.hasAero !== undefined) setHasAero(initialDraft.hasAero);
-    if (initialDraft.aeroF != null) setAeroF(initialDraft.aeroF);
-    if (initialDraft.aeroR != null) setAeroR(initialDraft.aeroR);
-    if (initialDraft.tireWF) setTireWF(initialDraft.tireWF);
-    if (initialDraft.tireWR) setTireWR(initialDraft.tireWR);
-    if (initialDraft.engineSwap) setEngineSwap(initialDraft.engineSwap);
-    if (initialDraft.aspiration) setAspiration(initialDraft.aspiration);
-    if (initialDraft.inputDevice) setInputDevice(initialDraft.inputDevice);
-    if (initialDraft.dragCd != null) setDragCd(initialDraft.dragCd);
-    if (initialDraft.stockFd !== undefined) setStockFd(initialDraft.stockFd);
-    if (initialDraft.stockGears !== undefined) setStockGears(initialDraft.stockGears);
+    applyTuneDraft(initialDraft);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once per remount/draft identity
   }, [initialDraft]);
 
   useEffect(() => {
+    void loadSliderLimitsFile().then(setSliderLimitsFile);
+  }, []);
+
+  const applySliderLimits = (limits: CarSliderLimits | null, springUnit: TuneUnits["springs"]) => {
+    if (!limits) {
+      setSpringFrontMin("");
+      setSpringFrontMax("");
+      setSpringRearMin("");
+      setSpringRearMax("");
+      setAeroFrontMin("");
+      setAeroFrontMax("");
+      setAeroRearMin("");
+      setAeroRearMax("");
+      setRideFrontMin("");
+      setRideFrontMax("");
+      setRideRearMin("");
+      setRideRearMax("");
+      setSliderLimitsSource(undefined);
+      return;
+    }
+    if (limits.springs) {
+      const srcUnit = limits.springs.unit ?? "lbs/in";
+      const round = (v: number) =>
+        springUnit === "kgf/mm" ? +convertSpringValue(v, srcUnit, springUnit).toFixed(2)
+          : +convertSpringValue(v, srcUnit, springUnit).toFixed(1);
+      setSpringFrontMin(round(limits.springs.frontMin));
+      setSpringFrontMax(round(limits.springs.frontMax));
+      setSpringRearMin(round(limits.springs.rearMin));
+      setSpringRearMax(round(limits.springs.rearMax));
+    }
+    if (limits.aero) {
+      setAeroFrontMin(limits.aero.frontMin ?? 0);
+      setAeroFrontMax(limits.aero.frontMax ?? "");
+      setAeroRearMin(limits.aero.rearMin ?? 0);
+      setAeroRearMax(limits.aero.rearMax ?? "");
+    } else {
+      setAeroFrontMin("");
+      setAeroFrontMax("");
+      setAeroRearMin("");
+      setAeroRearMax("");
+    }
+    if (limits.ride) {
+      setRideFrontMin(limits.ride.frontMin);
+      setRideFrontMax(limits.ride.frontMax);
+      setRideRearMin(limits.ride.rearMin);
+      setRideRearMax(limits.ride.rearMax);
+    } else {
+      setRideFrontMin("");
+      setRideFrontMax("");
+      setRideRearMin("");
+      setRideRearMax("");
+    }
+    setSliderLimitsSource(limits.source);
+  };
+
+  useEffect(() => {
+    if (!sliderLimitsFile || !make || !model) return;
+    // Don't clobber values restored from a draft that already set springs.
+    if (initialDraft?.springFrontMin != null || initialDraft?.springFrontMax != null) return;
+    const limits = findSliderLimits(sliderLimitsFile, make, model);
+    if (limits) applySliderLimits(limits, units.springs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only auto-fill when file/car identity changes
+  }, [sliderLimitsFile, make, model]);
+
+  useEffect(() => {
     const prev = prevUnitsRef.current;
-    if (prev.weight === units.weight && prev.speed === units.speed) return;
+    if (prev.weight === units.weight && prev.speed === units.speed && prev.springs === units.springs) {
+      return;
+    }
     setWeight((w) => convertWeight(w, prev.weight, units.weight));
     setTopspeed((s) => convertSpeed(s, prev.speed, units.speed));
     setMaxTorque((t) => convertTorque(t, prev.weight, units.weight));
+    if (prev.springs !== units.springs) {
+      const conv = (v: number | "") =>
+        v === "" ? "" : +convertSpringValue(v, prev.springs, units.springs).toFixed(
+          units.springs === "kgf/mm" ? 2 : 1,
+        );
+      setSpringFrontMin((v) => conv(v));
+      setSpringFrontMax((v) => conv(v));
+      setSpringRearMin((v) => conv(v));
+      setSpringRearMax((v) => conv(v));
+    }
     prevUnitsRef.current = units;
   }, [units]);
 
@@ -346,26 +634,78 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
 
   const usingWikiSwaps = (wikiCar?.engineSwaps?.length ?? 0) > 0;
 
+  const dtOptions = useMemo(
+    () => drivetrainOptions(stockDriveType, wikiCar?.drivetrainSwaps),
+    [stockDriveType, wikiCar],
+  );
+
+  const usingWikiDrivetrain = (wikiCar?.drivetrainSwaps?.length ?? 0) > 0;
+
   useEffect(() => {
     if (engineSwap !== "None (Stock)" && !swapOptions.includes(engineSwap)) {
       setEngineSwap("None (Stock)");
     }
   }, [swapOptions, engineSwap]);
 
+  useEffect(() => {
+    if (!dtOptions.includes(drivetrainSwap)) {
+      // Keep the active layout; remaps "AWD Drivetrain" ↔ bare "AWD" when wiki loads.
+      setDrivetrainSwap(labelForDrive(driveType, stockDriveType, dtOptions));
+    }
+  }, [dtOptions, drivetrainSwap, driveType, stockDriveType]);
+
+  const weightLbsNow = units.weight === "lbs" ? weight : weight * 2.205;
+
+  const commitDrivetrain = (label: string) => {
+    const result = applyDrivetrainConversion({
+      label,
+      stockDrive: stockDriveType,
+      currentDrive: driveType,
+      currentWeightLbs: weightLbsNow,
+      stockWeightDist,
+    });
+    setDrivetrainSwap(result.label);
+    setDriveType(result.driveType);
+    setWeightDist(result.weightDist);
+    setWeight(units.weight === "lbs" ? result.weightLbs : Math.round(result.weightLbs / 2.205));
+  };
+
+  const handleDriveTypeChange = (next: DriveType) => {
+    if (next === driveType) return;
+    commitDrivetrain(labelForDrive(next, stockDriveType, dtOptions));
+  };
+
+  const setWeightLbs = (lbs: number) => {
+    setWeight(units.weight === "lbs" ? Math.round(lbs) : Math.round(lbs / 2.205));
+  };
+
+  const setTorqueLbFt = (lbFt: number) => {
+    setMaxTorque(units.weight === "lbs" ? Math.round(lbFt) : Math.round(lbFt * 1.356));
+  };
+
+  const packageWeightOnBase = (baseLbs: number) =>
+    applyWeightPackageChange(baseLbs, { weight: "stock", chassis: "stock" }, { weight: weightPackage, chassis: chassisPackage });
+
   const applyWikiSwap = (swap: string) => {
     const est = estimateSwap(parseSwapName(swap), {
       weightLbs: stockWeightLbs,
       displacementCc: stockDisplacementCc,
     });
-    if (est.weightLbs != null) {
-      setWeight(units.weight === "lbs" ? est.weightLbs : Math.round(est.weightLbs / 2.205));
-    }
+    if (est.weightLbs != null) setWeightLbs(packageWeightOnBase(est.weightLbs));
     if (est.maxTorqueLbFt != null) {
-      setMaxTorque(units.weight === "lbs" ? est.maxTorqueLbFt : Math.round(est.maxTorqueLbFt * 1.356));
+      setTorqueLbFt(est.maxTorqueLbFt);
+      setEngineBaseTorqueLbFt(est.maxTorqueLbFt);
     }
-    if (est.redlineRpm != null) setRedlineRpm(est.redlineRpm);
-    if (est.peakTorqueRpm != null) setPeakTorqueRpm(est.peakTorqueRpm);
+    if (est.redlineRpm != null) {
+      setRedlineRpm(est.redlineRpm);
+      setEngineBaseRedline(est.redlineRpm);
+    }
+    if (est.peakTorqueRpm != null) {
+      setPeakTorqueRpm(est.peakTorqueRpm);
+      setEngineBasePeak(est.peakTorqueRpm);
+    }
     setAspiration(est.aspiration);
+    setPowerStage("stock");
   };
 
   const handleSwapChange = (swap: string) => {
@@ -375,7 +715,22 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       return;
     }
     if (swap === "None (Stock)") {
-      if (stockWeightLbs != null) setWeight(units.weight === "lbs" ? stockWeightLbs : Math.round(stockWeightLbs / 2.205));
+      const base = stockWeightLbs ?? weightLbsNow;
+      setWeightLbs(packageWeightOnBase(base));
+      const baseTorque = stockTorqueLbFt ?? engineBaseTorqueLbFt ?? (units.weight === "lbs" ? maxTorque : maxTorque / 1.356);
+      setEngineBaseTorqueLbFt(baseTorque);
+      setEngineBaseRedline(7800);
+      setEngineBasePeak(5500);
+      const powered = applyPowerStage({
+        stage: powerStage,
+        stockTorqueLbFt: baseTorque,
+        stockRedline: 7800,
+        stockPeak: 5500,
+        engineSwap: swap,
+      });
+      setTorqueLbFt(powered.maxTorqueLbFt);
+      setRedlineRpm(powered.redlineRpm);
+      setPeakTorqueRpm(powered.peakTorqueRpm);
       return;
     }
     const patched = applyEngineSwapToConfig(
@@ -385,81 +740,328 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
       stockWeightLbs ?? undefined,
       stockTorqueLbFt ?? undefined,
     );
-    if (patched.weight != null) setWeight(patched.weight);
-    if (patched.maxTorque != null) setMaxTorque(patched.maxTorque);
+    if (patched.weight != null) {
+      const lbs = units.weight === "lbs" ? patched.weight : patched.weight * 2.205;
+      setWeightLbs(packageWeightOnBase(lbs));
+    }
+    if (patched.maxTorque != null) {
+      setMaxTorque(patched.maxTorque);
+      const lbFt = units.weight === "lbs" ? patched.maxTorque : patched.maxTorque / 1.356;
+      setEngineBaseTorqueLbFt(lbFt);
+    }
     if (patched.weightDist != null) setWeightDist(patched.weightDist);
-    if (patched.redlineRpm != null) setRedlineRpm(patched.redlineRpm);
-    if (patched.peakTorqueRpm != null) setPeakTorqueRpm(patched.peakTorqueRpm);
+    if (patched.redlineRpm != null) {
+      setRedlineRpm(patched.redlineRpm);
+      setEngineBaseRedline(patched.redlineRpm);
+    }
+    if (patched.peakTorqueRpm != null) {
+      setPeakTorqueRpm(patched.peakTorqueRpm);
+      setEngineBasePeak(patched.peakTorqueRpm);
+    }
     if (patched.aspiration) setAspiration(patched.aspiration);
+    setPowerStage("stock");
+  };
+
+  const handleWeightPackage = (id: WeightPackageId) => {
+    const nextLbs = applyWeightPackageChange(
+      weightLbsNow,
+      { weight: weightPackage, chassis: chassisPackage },
+      { weight: id, chassis: chassisPackage },
+    );
+    setWeightPackage(id);
+    setWeightLbs(nextLbs);
+  };
+
+  const handleChassisPackage = (id: ChassisPackageId) => {
+    const nextLbs = applyWeightPackageChange(
+      weightLbsNow,
+      { weight: weightPackage, chassis: chassisPackage },
+      { weight: weightPackage, chassis: id },
+    );
+    setChassisPackage(id);
+    setWeightLbs(nextLbs);
+  };
+
+  const handlePowerStage = (id: PowerStageId) => {
+    setPowerStage(id);
+    const baseTorque =
+      engineBaseTorqueLbFt ??
+      stockTorqueLbFt ??
+      (units.weight === "lbs" ? maxTorque : maxTorque / 1.356);
+    const powered = applyPowerStage({
+      stage: id,
+      stockTorqueLbFt: baseTorque,
+      stockRedline: engineBaseRedline,
+      stockPeak: engineBasePeak,
+      engineSwap,
+    });
+    setTorqueLbFt(powered.maxTorqueLbFt);
+    setRedlineRpm(powered.redlineRpm);
+    setPeakTorqueRpm(powered.peakTorqueRpm);
+  };
+
+  const handleTirePackage = (id: TirePackageId) => {
+    setTirePackage(id);
+    const tires = applyTirePackage({
+      packageId: id,
+      stockFront: stockTireWF,
+      stockRear: stockTireWR,
+    });
+    setCompound(tires.compound);
+    setTireWF(tires.tireWF);
+    setTireWR(tires.tireWR);
+  };
+
+  const handleTransPackage = (id: TransPackageId) => {
+    setTransPackage(id);
+    const t = applyTransPackage({ packageId: id, stockGears: gears });
+    setGears(t.gears);
+  };
+
+  const handleAeroPackage = (id: AeroPackageId) => {
+    setAeroPackage(id);
+    const a = applyAeroPackage(id);
+    setHasAero(a.hasAero);
+    setAeroF(a.aeroF);
+    setAeroR(a.aeroR);
+    setDragCd(a.dragCd);
+  };
+
+  const estimatedPi = useMemo(() => {
+    const torqueLbFt = units.weight === "lbs" ? maxTorque : maxTorque / 1.356;
+    const stockT = stockTorqueLbFt ?? engineBaseTorqueLbFt ?? torqueLbFt;
+    const stockW = stockWeightLbs ?? weightLbsNow;
+    return estimatePi({
+      stockPi,
+      stockWeightLbs: stockW,
+      currentWeightLbs: weightLbsNow,
+      stockTorqueLbFt: stockT,
+      currentTorqueLbFt: torqueLbFt,
+      tirePackage,
+      aeroPackage,
+      drivetrainSwap,
+      driveType,
+      stockDrive: stockDriveType,
+      powerStage,
+      engineSwap,
+    });
+  }, [
+    stockPi,
+    stockWeightLbs,
+    weightLbsNow,
+    stockTorqueLbFt,
+    engineBaseTorqueLbFt,
+    maxTorque,
+    units.weight,
+    tirePackage,
+    aeroPackage,
+    drivetrainSwap,
+    driveType,
+    stockDriveType,
+    powerStage,
+    engineSwap,
+  ]);
+
+  const applyClassPlan = () => {
+    const stockT =
+      stockTorqueLbFt ??
+      engineBaseTorqueLbFt ??
+      (units.weight === "lbs" ? maxTorque : maxTorque / 1.356);
+    const stockW = stockWeightLbs ?? weightLbsNow;
+    const plan = planForClass({
+      targetClass,
+      stockPi,
+      stockWeightLbs: stockW,
+      stockTorqueLbFt: stockT,
+      engineSwap,
+      drivetrainSwap,
+      driveType,
+      stockDrive: stockDriveType,
+    });
+    const nextLbs = applyWeightPackageChange(
+      weightLbsNow,
+      { weight: weightPackage, chassis: chassisPackage },
+      { weight: plan.weightPackage, chassis: plan.chassisPackage },
+    );
+    setWeightPackage(plan.weightPackage);
+    setChassisPackage(plan.chassisPackage);
+    setWeightLbs(nextLbs);
+    handlePowerStage(plan.powerStage);
+    handleTirePackage(plan.tirePackage);
+    handleAeroPackage(plan.aeroPackage);
+    setCarClass(plan.targetClass);
+    setPi(plan.estimatedPi);
+    setClassPlanNote(plan.note);
   };
 
 
 
-  const deploy = () =>
+  const snapshotDraft = (): Partial<TuneConfig> => ({
+    make,
+    model,
+    driveType,
+    weight,
+    weightDist,
+    pi,
+    carClass,
+    tuneId,
+    mode,
+    surface,
+    compound,
+    redlineRpm,
+    peakTorqueRpm,
+    maxTorque,
+    topspeed,
+    gears,
+    includeGearing:
+      mode === "full" &&
+      applyTransPackage({ packageId: transPackage, stockGears: gears }).includeGearing,
+    hasAero,
+    aeroF,
+    aeroR,
+    dragCd,
+    tireWF,
+    tireWR,
+    stockFd,
+    stockGears,
+    engineSwap,
+    drivetrainSwap,
+    stockDriveType,
+    weightPackage,
+    chassisPackage,
+    powerStage,
+    tirePackage,
+    transPackage,
+    brakePackage,
+    aeroPackage,
+    springFrontMin: springFrontMin === "" ? undefined : springFrontMin,
+    springFrontMax: springFrontMax === "" ? undefined : springFrontMax,
+    springRearMin: springRearMin === "" ? undefined : springRearMin,
+    springRearMax: springRearMax === "" ? undefined : springRearMax,
+    aeroFrontMin: aeroFrontMin === "" ? undefined : aeroFrontMin,
+    aeroFrontMax: aeroFrontMax === "" ? undefined : aeroFrontMax,
+    aeroRearMin: aeroRearMin === "" ? undefined : aeroRearMin,
+    aeroRearMax: aeroRearMax === "" ? undefined : aeroRearMax,
+    rideFrontMin: rideFrontMin === "" ? undefined : rideFrontMin,
+    rideFrontMax: rideFrontMax === "" ? undefined : rideFrontMax,
+    rideRearMin: rideRearMin === "" ? undefined : rideRearMin,
+    rideRearMax: rideRearMax === "" ? undefined : rideRearMax,
+    sliderLimitsSource,
+    aspiration,
+    inputDevice,
+    units,
+  });
 
-    onDeploy({
+  const activeFavoriteSlug = useMemo(() => {
+    const hit = lookupGarage(make, model.split(" '")[0]);
+    if (hit && favorites.has(hit.slug)) return hit.slug;
+    return favoriteCars.find(
+      (c) =>
+        c.make === make &&
+        (model === c.model || model.startsWith(c.model) || model.includes(c.model)),
+    )?.slug;
+  }, [make, model, favorites, favoriteCars, lookupGarage]);
 
-      make,
+  // Autosave weight, speed, torque, springs, packages, etc. for the active favorite.
+  useEffect(() => {
+    if (!activeFavoriteSlug) return;
+    const t = window.setTimeout(() => {
+      saveFavoriteDraft(activeFavoriteSlug, snapshotDraft());
+    }, 400);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot fields listed below
+  }, [
+    activeFavoriteSlug,
+    make,
+    model,
+    driveType,
+    weight,
+    weightDist,
+    pi,
+    carClass,
+    tuneId,
+    mode,
+    surface,
+    compound,
+    redlineRpm,
+    peakTorqueRpm,
+    maxTorque,
+    topspeed,
+    gears,
+    hasAero,
+    aeroF,
+    aeroR,
+    dragCd,
+    tireWF,
+    tireWR,
+    stockFd,
+    stockGears,
+    engineSwap,
+    drivetrainSwap,
+    stockDriveType,
+    weightPackage,
+    chassisPackage,
+    powerStage,
+    tirePackage,
+    transPackage,
+    brakePackage,
+    aeroPackage,
+    springFrontMin,
+    springFrontMax,
+    springRearMin,
+    springRearMax,
+    aeroFrontMin,
+    aeroFrontMax,
+    aeroRearMin,
+    aeroRearMax,
+    rideFrontMin,
+    rideFrontMax,
+    rideRearMin,
+    rideRearMax,
+    sliderLimitsSource,
+    aspiration,
+    inputDevice,
+    units,
+  ]);
 
-      model,
+  const deploy = () => {
+    const cfg = snapshotDraft() as TuneConfig;
+    onDeploy(cfg);
 
-      driveType,
+    if (activeFavoriteSlug) {
+      saveFavoriteDraft(activeFavoriteSlug, cfg);
+    }
 
-      weight,
-
-      weightDist,
-
-      pi,
-
-      carClass,
-
-      tuneId,
-
-      mode,
-
-      surface,
-
-      compound,
-
-      redlineRpm,
-
-      peakTorqueRpm,
-
-      maxTorque,
-
-      topspeed,
-
-      gears,
-
-      includeGearing: mode === "full",
-
-      hasAero,
-
-      aeroF,
-
-      aeroR,
-
-      dragCd,
-
-      tireWF,
-
-      tireWR,
-
-      stockFd,
-
-      stockGears,
-
-      engineSwap,
-
-      aspiration,
-
-      inputDevice,
-
-      units,
-
-    });
-
-
+    if (
+      sliderLimitsSource === "user" &&
+      make &&
+      model &&
+      springFrontMin !== "" &&
+      springFrontMax !== "" &&
+      springRearMin !== "" &&
+      springRearMax !== ""
+    ) {
+      saveUserSliderLimits(make, model, {
+        springs: {
+          unit: units.springs,
+          frontMin: springFrontMin,
+          frontMax: springFrontMax,
+          rearMin: springRearMin,
+          rearMax: springRearMax,
+        },
+        aero:
+          aeroFrontMax !== "" || aeroRearMax !== ""
+            ? {
+                unit: "kg",
+                frontMin: aeroFrontMin === "" ? 0 : aeroFrontMin,
+                frontMax: aeroFrontMax === "" ? null : aeroFrontMax,
+                rearMin: aeroRearMin === "" ? 0 : aeroRearMin,
+                rearMax: aeroRearMax === "" ? null : aeroRearMax,
+              }
+            : undefined,
+      });
+    }
+  };
 
   return (
 
@@ -489,7 +1091,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           { label: "Car", value: `${make} ${model}` },
           { label: "Class", value: `${carClass} ${pi}` },
           { label: "Mode", value: activeMode?.label ?? tuneId, accent: activeMode?.color },
+          {
+            label: "Drive",
+            value: drivetrainSwap !== STOCK_DRIVETRAIN ? `${driveType}↑` : driveType,
+          },
           { label: "Weight", value: `${Math.round(weight)} ${weightLabel(units)}` },
+          { label: "Est PI", value: `~${estimatedPi}` },
         ]}
       />
 
@@ -508,41 +1115,73 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         cars={cars}
         carCount={carCount}
         units={units}
-        onSelect={(patch) => {
-          const slim = patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null;
+        favoriteCars={favoriteCars}
+        measuredSlugs={measuredSlugs}
+        onSelect={(patch, meta) => {
+          const slim =
+            (meta?.slug ? garageCars.find((c) => c.slug === meta.slug) : null) ??
+            (patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null);
           const apply = (garage: typeof slim) => {
+            const isFavorite = !!(meta?.slug && favorites.has(meta.slug) && garage);
+            if (isFavorite && garage && meta?.slug) {
+              // Resume full saved profile: weight, speed, torque, springs, packages…
+              const profile = ensureFavoriteProfile(
+                meta.slug,
+                garage,
+                cars,
+                units,
+                sliderLimitsFile,
+              );
+              applyTuneDraft(profile);
+              setStockDisplacementCc(garage.tuneSpecs?.displacementCc ?? null);
+              setClassPlanNote("");
+              if (
+                profile.springFrontMin == null &&
+                profile.springFrontMax == null &&
+                profile.make &&
+                profile.model
+              ) {
+                const limits = findSliderLimits(sliderLimitsFile, profile.make, profile.model);
+                applySliderLimits(limits, units.springs);
+              }
+              return;
+            }
+
             const merged = mergeGarageIntoDraft(patch, garage, cars, units);
-            if (merged.make) setMake(merged.make);
-            if (merged.model) setModel(merged.model);
-            if (merged.driveType) setDriveType(merged.driveType);
-            if (merged.weightDist != null) setWeightDist(merged.weightDist);
-            if (merged.weight) setWeight(merged.weight);
-            if (merged.pi) setPi(merged.pi);
-            if (merged.carClass) setCarClass(merged.carClass);
-            if (merged.stockFd !== undefined) setStockFd(merged.stockFd);
-            if (merged.stockGears !== undefined) setStockGears(merged.stockGears);
-            if (merged.redlineRpm) setRedlineRpm(merged.redlineRpm);
-            if (merged.peakTorqueRpm) setPeakTorqueRpm(merged.peakTorqueRpm);
-            if (merged.maxTorque) setMaxTorque(merged.maxTorque);
-            if (merged.topspeed) setTopspeed(merged.topspeed);
-            if (merged.gears) setGears(merged.gears);
-            if (merged.compound) setCompound(merged.compound);
-            if (merged.hasAero !== undefined) setHasAero(merged.hasAero);
-            if (merged.aeroF != null) setAeroF(merged.aeroF);
-            if (merged.aeroR != null) setAeroR(merged.aeroR);
-            if (merged.tireWF) setTireWF(merged.tireWF);
-            if (merged.tireWR) setTireWR(merged.tireWR);
-            if (merged.aspiration) setAspiration(merged.aspiration);
+            applyTuneDraft(merged);
             if (garage?.tuneSpecs?.aspiration && !merged.aspiration) {
               setAspiration(aspirationFromGarage(garage.tuneSpecs.aspiration));
             }
-            if (merged.weight) {
-              const lbs = units.weight === "lbs" ? merged.weight : merged.weight * 2.205;
-              setStockWeightLbs(Math.round(lbs));
+            if (garage?.tuneSpecs?.maxTorqueLbFt) {
+              setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
+              setEngineBaseTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
             }
-            if (garage?.tuneSpecs?.maxTorqueLbFt) setStockTorqueLbFt(garage.tuneSpecs.maxTorqueLbFt);
             setStockDisplacementCc(garage?.tuneSpecs?.displacementCc ?? null);
             setEngineSwap("None (Stock)");
+            setDrivetrainSwap(STOCK_DRIVETRAIN);
+            setWeightPackage("stock");
+            setChassisPackage("stock");
+            setPowerStage("stock");
+            setTransPackage("race");
+            setBrakePackage("sport");
+            setAeroPackage("none");
+            setHasAero(false);
+            setClassPlanNote("");
+            const front = merged.tireWF ?? "275/35R19";
+            const rear = merged.tireWR ?? "285/35R19";
+            setStockTireWF(front);
+            setStockTireWR(rear);
+            const tires = applyTirePackage({ packageId: "semi", stockFront: front, stockRear: rear });
+            setTirePackage("semi");
+            setCompound(tires.compound);
+            setTireWF(tires.tireWF);
+            setTireWR(tires.tireWR);
+            const mMake = merged.make ?? patch.make ?? make;
+            const mModel = merged.model ?? patch.model ?? model;
+            if (mMake && mModel) {
+              const limits = findSliderLimits(sliderLimitsFile, mMake, mModel);
+              applySliderLimits(limits, units.springs);
+            }
           };
           apply(slim);
           if (slim && !slim.tuneSpecs) {
@@ -558,6 +1197,12 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         url={url}
         subtitle={`${carClass} ${pi} PI · ${driveType} · ${Math.round(weight)} ${weightLabel(units)}`}
       />
+      <ManualGaragePanel
+        car={activeGarageCar}
+        enrich={enrichGarage}
+        onLoadSaved={onLoadSaved}
+        onBrowseTunes={onMyTunes}
+      />
         </>
       )}
 
@@ -567,9 +1212,24 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
         <Label>Tune mode</Label>
         <TuneModeGrid value={tuneId} onChange={handleModeChange} />
       </div>
-      <Card>
+      <Card className="space-y-3">
         <Label>Drive type</Label>
-        <SegmentedControl options={DRIVE_TYPES} value={driveType} onChange={setDriveType} />
+        <SegmentedControl options={DRIVE_TYPES} value={driveType} onChange={handleDriveTypeChange} />
+        <Label>Drivetrain conversion</Label>
+        <select
+          value={drivetrainSwap}
+          onChange={(e) => commitDrivetrain(e.target.value)}
+          className="min-h-11 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 text-sm"
+        >
+          {dtOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          {usingWikiDrivetrain
+            ? `Stock is ${stockDriveType}. Wiki lists ${dtOptions.length - 1} conversion${dtOptions.length === 2 ? "" : "s"} for this chassis — applies drive layout, weight, and front %.`
+            : `Stock is ${stockDriveType}. No wiki list for this car — showing common conversions. Updates drive layout, weight, and front %.`}
+        </p>
       </Card>
         </>
       )}
@@ -636,15 +1296,87 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           </div>
           <input
             type="range"
-            min={40}
-            max={60}
+            min={35}
+            max={65}
             value={weightDist}
             onChange={(e) => setWeightDist(+e.target.value)}
             className="w-full"
           />
-          <p className="mt-2 text-[10px] text-[var(--ts-muted)]">{weightDist}F / {100 - weightDist}R</p>
+          <p className="mt-2 text-[10px] text-[var(--ts-muted)]">
+            {weightDist}F / {100 - weightDist}R
+            {drivetrainSwap !== STOCK_DRIVETRAIN ? ` · after ${drivetrainSwap}` : ""}
+          </p>
         </Card>
       </div>
+      <Card className="space-y-3">
+        <Label>In-game spring min / max</Label>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          Auto-filled from{" "}
+          {sliderLimitsSource === "measured"
+            ? "GameDB extract (measured)"
+            : sliderLimitsSource === "user"
+              ? "your saved overrides"
+              : sliderLimitsSource === "estimated"
+                ? "weight-based estimates"
+                : "carSliderLimits.json when available"}
+          . Edit to match Tune → Springs in FH6; values save when you deploy.
+          Extract real ranges: <code className="text-[var(--ts-muted)]">scripts/EXTRACT-GAMEDB.md</code>
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div>
+            <Label>Front min</Label>
+            <input
+              type="number"
+              value={springFrontMin}
+              onChange={(e) => {
+                setSpringFrontMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Front max</Label>
+            <input
+              type="number"
+              value={springFrontMax}
+              onChange={(e) => {
+                setSpringFrontMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear min</Label>
+            <input
+              type="number"
+              value={springRearMin}
+              onChange={(e) => {
+                setSpringRearMin(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+          <div>
+            <Label>Rear max</Label>
+            <input
+              type="number"
+              value={springRearMax}
+              onChange={(e) => {
+                setSpringRearMax(e.target.value === "" ? "" : +e.target.value);
+                setSliderLimitsSource("user");
+              }}
+              placeholder="auto"
+              className="min-h-10 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-2 font-[family-name:var(--ts-font-mono)] text-sm"
+            />
+          </div>
+        </div>
+      </Card>
         </>
       )}
 
@@ -666,11 +1398,21 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
             ? `${swapOptions.length - 1} conversions available for this car (Forza Wiki). Power and weight are estimated from displacement and induction.`
             : "No per-car conversion list for this car — showing common swaps."}
         </p>
-        {wikiCar?.drivetrainSwaps?.length ? (
-          <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
-            Drivetrain conversions: {wikiCar.drivetrainSwaps.join(", ")}
-          </p>
-        ) : null}
+        <Label>Drivetrain conversion</Label>
+        <select
+          value={drivetrainSwap}
+          onChange={(e) => commitDrivetrain(e.target.value)}
+          className="min-h-11 w-full rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 text-sm"
+        >
+          {dtOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+          Active layout: {driveType}
+          {drivetrainSwap !== STOCK_DRIVETRAIN ? ` via ${drivetrainSwap}` : " (stock)"}.
+          Same control as Mode — changes weight and front balance for the tune math.
+        </p>
         <Label>Aspiration</Label>
         <div className="grid gap-2 sm:grid-cols-2">
           {ASPIRATIONS.map((a) => (
@@ -709,6 +1451,37 @@ export function TuneInputScreen({ onDeploy, onMyTunes, initialDraft, units }: Tu
           ))}
         </div>
       </Card>
+
+      <Card className="space-y-1">
+        <Label>Upgrade packages</Label>
+        <p className="mb-3 text-[10px] leading-snug text-[var(--ts-dim)]">
+          Weight, power path, tires, gearbox, brakes, and aero — feeds the tune math and PI estimate.
+        </p>
+        <UpgradePackagesCard
+          weightPackage={weightPackage}
+          chassisPackage={chassisPackage}
+          powerStage={powerStage}
+          tirePackage={tirePackage}
+          transPackage={transPackage}
+          brakePackage={brakePackage}
+          aeroPackage={aeroPackage}
+          engineSwapped={engineSwap !== "None (Stock)"}
+          estimatedPi={estimatedPi}
+          estimatedClass={classForEstimatedPi(estimatedPi)}
+          targetClass={targetClass}
+          onWeight={handleWeightPackage}
+          onChassis={handleChassisPackage}
+          onPower={handlePowerStage}
+          onTires={handleTirePackage}
+          onTrans={handleTransPackage}
+          onBrakes={setBrakePackage}
+          onAero={handleAeroPackage}
+          onTargetClass={setTargetClass}
+          onApplyClassPlan={applyClassPlan}
+          classPlanNote={classPlanNote}
+        />
+      </Card>
+
       <div className="grid gap-[var(--ts-section-gap)] md:grid-cols-2">
         <Card className="space-y-3">
           <Label>Tires & RPM</Label>

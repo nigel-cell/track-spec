@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import App from "../App";
+import App from "../App.tsx";
 import { LandingPage } from "./LandingPage";
 import { isElectronShell } from "../lib/appUpdates";
 

@@ -23,6 +23,9 @@
     "import:garage:brands": "node scripts/download-brand-logos.cjs",
     "import:garage:list": "node scripts/build-garage-list.cjs",
     "import:garage:thumbs": "node scripts/build-garage-thumbs.cjs",
+    "build:slider-limits": "node scripts/build-slider-limits.cjs",
+    "extract:gamedb": "node scripts/extract-gamedb-slider-limits.cjs",
+    "extract:gamedb:fixture": "node scripts/create-gamedb-fixture.cjs && node scripts/extract-gamedb-slider-limits.cjs --db scripts/fixtures/gamedb-sample.slt --out /tmp/carSliderLimits-fixture.json",
     "deploy:cf": "npm run build:cloud && wrangler deploy"
   },
   "dependencies": {

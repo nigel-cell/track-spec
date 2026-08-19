@@ -19,10 +19,12 @@ type DetailTab = "overview" | "specs" | "mastery";
 interface CarDetailViewProps {
   car: ForzaGarageCar;
   owned: boolean;
+  favorite?: boolean;
   logoUrl?: string | null;
   detailLoading?: boolean;
   onClose: () => void;
   onToggleOwned: () => void;
+  onToggleFavorite?: () => void;
   onQuickTune?: () => void;
   onManualTune?: () => void;
   onLoadSaved?: (entry: SavedTune) => void;
@@ -32,10 +34,12 @@ interface CarDetailViewProps {
 export function CarDetailView({
   car,
   owned,
+  favorite = false,
   logoUrl,
   detailLoading,
   onClose,
   onToggleOwned,
+  onToggleFavorite,
   onQuickTune,
   onManualTune,
   onLoadSaved,
@@ -138,6 +142,15 @@ export function CarDetailView({
 
           <div className="flex flex-col items-end gap-2">
             <div className="flex flex-wrap items-center justify-end gap-2">
+              {onToggleFavorite && (
+                <Button
+                  variant={favorite ? "outline" : "ghost"}
+                  className="h-9 px-3 text-xs"
+                  onClick={onToggleFavorite}
+                >
+                  {favorite ? "★ Favorite" : "☆ Favorite"}
+                </Button>
+              )}
               <Button
                 variant={owned ? "outline" : "ghost"}
                 className="h-9 px-3 text-xs"

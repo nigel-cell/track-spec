@@ -335,9 +335,25 @@ export function TuneResultsScreen({
             items={[
               { label: "Car", value: `${config.make} ${config.model}`.slice(0, 24) },
               { label: "PI", value: `${config.carClass} ${config.pi}` },
-              { label: "Drive", value: config.driveType },
+              {
+                label: "Drive",
+                value:
+                  config.drivetrainSwap && config.drivetrainSwap !== "None (Stock)"
+                    ? `${config.driveType}↑`
+                    : config.driveType,
+              },
               { label: "Mode", value: mode?.label ?? config.tuneId, accent: mode?.color },
               { label: "Weight", value: `${Math.round(config.weight)} ${weightLabel(effectiveUnits)}` },
+              {
+                label: "Build",
+                value: [
+                  config.powerStage && config.powerStage !== "stock" ? config.powerStage : null,
+                  config.tirePackage && config.tirePackage !== "stock" ? config.tirePackage : null,
+                  config.aeroPackage && config.aeroPackage !== "none" ? config.aeroPackage : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "stock",
+              },
             ]}
           />
         </div>
@@ -362,6 +378,14 @@ export function TuneResultsScreen({
           </div>
         </div>
 
+        {pages &&
+          Object.values(pages).some((p) => p?.values.some((v) => v.clamped)) && (
+            <p className="mt-4 rounded-[var(--ts-radius-sm)] border border-[var(--ts-warning)]/40 bg-[var(--ts-warning)]/10 px-3 py-2 text-[11px] leading-snug text-[var(--ts-warning)]">
+              Some values were clamped to FH6 slider min/max so they stay legal in-game. Percents are
+              slider position (0–100%). Springs use Specs min/max, GameDB extract, or a weight estimate.
+            </p>
+          )}
+
         {data && (
           <Card className="mt-4 overflow-hidden p-0" padding={false}>
             <div className="border-b border-[var(--ts-border)] px-4 py-2 font-[family-name:var(--ts-font-mono)] text-[10px] uppercase tracking-[0.2em] text-[var(--ts-accent)]">
@@ -375,8 +399,27 @@ export function TuneResultsScreen({
                   i < data.values.length - 1 ? "border-b border-[var(--ts-border)]" : "",
                 ].join(" ")}
               >
-                <span className="text-sm text-[var(--ts-text)]">{row.key}</span>
-                <DataValue>{row.value}</DataValue>
+                <div className="min-w-0">
+                  <span className="text-sm text-[var(--ts-text)]">{row.key}</span>
+                  {row.note && (
+                    <div className="mt-0.5 text-[10px] text-[var(--ts-warning)]">{row.note}</div>
+                  )}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
+                  <div className="flex items-baseline gap-2">
+                    {row.pct != null && (
+                      <span className="font-[family-name:var(--ts-font-mono)] text-[11px] tabular-nums text-[var(--ts-muted)]">
+                        {row.pct}%
+                      </span>
+                    )}
+                    <DataValue>{row.value}</DataValue>
+                  </div>
+                  {row.clamped && (
+                    <span className="font-[family-name:var(--ts-font-mono)] text-[9px] uppercase tracking-wider text-[var(--ts-warning)]">
+                      {row.clamped === "max" ? "game max" : "game min"}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             {data.tip && (

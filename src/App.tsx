@@ -19,6 +19,8 @@ import { QuickTuneSheet } from "./components/tune/QuickTuneSheet";
 import { TuneCompareSheet } from "./components/tune/TuneCompareSheet";
 import { listSavedTunes } from "./lib/tuneSaves";
 import { listBuildProfiles, buildProfileToDraft } from "./lib/buildProfiles";
+import { ensureFavoriteProfile } from "./lib/favoriteProfiles";
+import { loadSliderLimitsFile } from "./lib/sliderLimits";
 
 import { DEFAULT_CAR } from "./data/constants";
 
@@ -285,7 +287,12 @@ function AppContent() {
   };
 
   const handleManualTuneFromGarage = (car: ForzaGarageCar) => {
-    openTuneEditor(tuneDraftFromGarage(car, cars, units));
+    void (async () => {
+      const sliderFile = await loadSliderLimitsFile();
+      // Full profile: garage weight/speed/torque + measured springs/ride/aero + last edits.
+      const draft = ensureFavoriteProfile(car.slug, car, cars, units, sliderFile);
+      openTuneEditor(draft);
+    })();
   };
 
 
@@ -314,6 +321,8 @@ function AppContent() {
             onDeploy={handleDeploy}
 
             onMyTunes={() => setMyTunesOpen(true)}
+
+            onLoadSaved={handleLoadSaved}
 
             initialDraft={tuneInputDraft}
 

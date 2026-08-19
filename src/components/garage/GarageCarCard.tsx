@@ -13,6 +13,7 @@ export type GarageCardDensity = "light" | "full";
 interface GarageCarCardProps {
   car: ForzaGarageCar;
   owned: boolean;
+  favorite?: boolean;
   logoUrl?: string | null;
   /** light = mobile (fast); full = desktop (richer). */
   density?: GarageCardDensity;
@@ -20,16 +21,19 @@ interface GarageCarCardProps {
   priorityImage?: boolean;
   onOpen: () => void;
   onToggleOwned: (e: MouseEvent) => void;
+  onToggleFavorite?: (e: MouseEvent) => void;
 }
 
 export const GarageCarCard = memo(function GarageCarCard({
   car,
   owned,
+  favorite = false,
   logoUrl,
   density = "light",
   priorityImage = false,
   onOpen,
   onToggleOwned,
+  onToggleFavorite,
 }: GarageCarCardProps) {
   const accent = rarityColor(car.rarity);
   const full = density === "full";
@@ -105,16 +109,34 @@ export const GarageCarCard = memo(function GarageCarCard({
             <PiBadge cls={car.class} pi={car.pi} />
           </div>
 
-          {owned && (
-            <div
-              className={[
-                "absolute z-[1] flex items-center justify-center rounded-full bg-[var(--ts-accent)] font-bold text-white",
-                full ? "left-2 top-2 h-6 w-6 text-xs" : "left-1.5 top-1.5 h-5 w-5 text-[10px]",
-              ].join(" ")}
-            >
-              ✓
-            </div>
-          )}
+          <div
+            className={[
+              "absolute z-[1] flex items-center gap-1",
+              full ? "left-2 top-2" : "left-1.5 top-1.5",
+            ].join(" ")}
+          >
+            {owned && (
+              <div
+                className={[
+                  "flex items-center justify-center rounded-full bg-[var(--ts-accent)] font-bold text-white",
+                  full ? "h-6 w-6 text-xs" : "h-5 w-5 text-[10px]",
+                ].join(" ")}
+              >
+                ✓
+              </div>
+            )}
+            {favorite && (
+              <div
+                className={[
+                  "flex items-center justify-center rounded-full bg-[var(--ts-warning)] font-bold text-black",
+                  full ? "h-6 w-6 text-xs" : "h-5 w-5 text-[10px]",
+                ].join(" ")}
+                title="Favorite"
+              >
+                ★
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={["flex flex-1 flex-col", full ? "gap-1 p-3" : "gap-0.5 px-2.5 py-2"].join(" ")}>
@@ -133,19 +155,34 @@ export const GarageCarCard = memo(function GarageCarCard({
         </div>
       </button>
 
-      <button
-        type="button"
-        onClick={onToggleOwned}
-        className={[
-          "border-t text-center font-bold uppercase tracking-[0.12em]",
-          full ? "px-3 py-2.5 text-[11px]" : "px-2.5 py-2 text-[10px]",
-          owned
-            ? "border-[var(--ts-accent)]/30 bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
-            : "border-[var(--ts-border)] text-[var(--ts-muted)]",
-        ].join(" ")}
-      >
-        {owned ? "In garage" : "Mark owned"}
-      </button>
+      <div className="grid grid-cols-2 border-t border-[var(--ts-border)]">
+        <button
+          type="button"
+          onClick={onToggleFavorite}
+          className={[
+            "text-center font-bold uppercase tracking-[0.12em]",
+            full ? "px-2 py-2.5 text-[11px]" : "px-2 py-2 text-[10px]",
+            favorite
+              ? "bg-[var(--ts-warning)]/15 text-[var(--ts-warning)]"
+              : "text-[var(--ts-muted)]",
+          ].join(" ")}
+        >
+          {favorite ? "★ Favorite" : "☆ Favorite"}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleOwned}
+          className={[
+            "border-l border-[var(--ts-border)] text-center font-bold uppercase tracking-[0.12em]",
+            full ? "px-2 py-2.5 text-[11px]" : "px-2 py-2 text-[10px]",
+            owned
+              ? "bg-[var(--ts-accent-soft)] text-[var(--ts-accent)]"
+              : "text-[var(--ts-muted)]",
+          ].join(" ")}
+        >
+          {owned ? "In garage" : "Owned"}
+        </button>
+      </div>
     </article>
   );
 });

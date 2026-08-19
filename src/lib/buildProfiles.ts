@@ -1,5 +1,14 @@
 import type { TuneConfig } from "../components/tune/TuneInputScreen";
 import type { AspirationId, EngineSwapId, InputDeviceId } from "../data/engineData";
+import type {
+  AeroPackageId,
+  BrakePackageId,
+  ChassisPackageId,
+  PowerStageId,
+  TirePackageId,
+  TransPackageId,
+  WeightPackageId,
+} from "../data/upgradePackages";
 
 const PROFILES_KEY = "tl_v1_build_profiles";
 const MAX_PROFILES = 50;
@@ -13,6 +22,17 @@ export interface BuildProfile {
   pi?: number;
   carClass?: string;
   engineSwap: EngineSwapId | string;
+  drivetrainSwap?: string;
+  stockDriveType?: "FWD" | "RWD" | "AWD";
+  driveType?: "FWD" | "RWD" | "AWD";
+  weightDist?: number;
+  weightPackage?: WeightPackageId;
+  chassisPackage?: ChassisPackageId;
+  powerStage?: PowerStageId;
+  tirePackage?: TirePackageId;
+  transPackage?: TransPackageId;
+  brakePackage?: BrakePackageId;
+  aeroPackage?: AeroPackageId;
   aspiration: AspirationId;
   inputDevice: InputDeviceId;
   compound?: string;
@@ -73,6 +93,17 @@ export function deleteBuildProfile(id: number): void {
 export function buildProfileToDraft(profile: BuildProfile): Partial<TuneConfig> {
   return {
     engineSwap: profile.engineSwap,
+    drivetrainSwap: profile.drivetrainSwap,
+    stockDriveType: profile.stockDriveType,
+    driveType: profile.driveType,
+    weightDist: profile.weightDist,
+    weightPackage: profile.weightPackage,
+    chassisPackage: profile.chassisPackage,
+    powerStage: profile.powerStage,
+    tirePackage: profile.tirePackage,
+    transPackage: profile.transPackage,
+    brakePackage: profile.brakePackage,
+    aeroPackage: profile.aeroPackage,
     aspiration: profile.aspiration,
     inputDevice: profile.inputDevice,
     compound: profile.compound,
@@ -105,6 +136,17 @@ export function configToBuildProfile(
     pi: config.pi,
     carClass: config.carClass,
     engineSwap: config.engineSwap ?? "None (Stock)",
+    drivetrainSwap: config.drivetrainSwap ?? "None (Stock)",
+    stockDriveType: config.stockDriveType ?? config.driveType,
+    driveType: config.driveType,
+    weightDist: config.weightDist,
+    weightPackage: config.weightPackage ?? "stock",
+    chassisPackage: config.chassisPackage ?? "stock",
+    powerStage: config.powerStage ?? "stock",
+    tirePackage: config.tirePackage ?? "semi",
+    transPackage: config.transPackage ?? "race",
+    brakePackage: config.brakePackage ?? "sport",
+    aeroPackage: config.aeroPackage ?? "none",
     aspiration: config.aspiration ?? "na",
     inputDevice: config.inputDevice ?? "controller",
     compound: config.compound,
