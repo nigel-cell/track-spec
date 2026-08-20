@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "importedAt": "2026-08-07T11:20:37.329Z",
+  "importedAt": "2026-08-20T11:46:54.800Z",
   "source": "https://forza.fandom.com/wiki/Category:Cars_(FH6)",
-  "count": 625,
-  "withEngineSwaps": 491,
+  "count": 634,
+  "withEngineSwaps": 500,
   "cars": [
     {
       "title": "Abarth 124 Spider",
@@ -9401,6 +9401,171 @@
       ],
       "drivetrainSwaps": [
         "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Honda N600",
+      "aspiration": "na",
+      "engine": "I2",
+      "gears": 4,
+      "weightLbs": 1356,
+      "engineSwaps": [
+        "1.2L I3 - Motorbike Engine",
+        "1.6L I4 - VVT",
+        "1.4L I4 - Motorbike Engine",
+        "2.0L I4 - VVT",
+        "1.1L V4 - Motorbike Engine",
+        "1.0L I4 - Motorbike Engine"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Exomotive Exocet Sport V8 XP-5",
+      "aspiration": "na",
+      "engine": "V8",
+      "gears": 6,
+      "weightLbs": 1696,
+      "engineSwaps": [
+        "1.2L I3 - Motorbike Engine",
+        "1.6L I4 - VVT",
+        "1.4L I4 - Motorbike Engine",
+        "1.1L V4 - Motorbike Engine",
+        "1.0L I4 - Motorbike Engine",
+        "3.0L V8 - Racing"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Chevrolet Camaro ZL1 (2024)",
+      "aspiration": "sc",
+      "engine": "V8",
+      "gears": 6,
+      "weightLbs": 3907,
+      "engineSwaps": [
+        "7.4L V8",
+        "6.2L V8",
+        "8.4L V10",
+        "5.5L V8",
+        "6.2L V8-PDSC",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Toyota Celica GT",
+      "aspiration": "na",
+      "engine": "I4",
+      "gears": 5,
+      "weightLbs": 2392,
+      "engineSwaps": [
+        "2.0L I4",
+        "2.4L F4",
+        "2.0L I4 - Turbo",
+        "1.6L I3-T",
+        "2.5L I6-T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Forza Horizon 6 - Widebody-Kit"
+      ]
+    },
+    {
+      "title": "Mitsubishi Starion ESI-R",
+      "aspiration": "t",
+      "engine": "I4",
+      "gears": 5,
+      "weightLbs": 3087,
+      "engineSwaps": [
+        "2.0L I4 - Turbo",
+        "1.6L I4 - Turbo Rally",
+        "6.2L V8",
+        "Racing 3.0L I6T",
+        "Racing 7.2L V8"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Porsche 203 Porsche AG 961",
+      "aspiration": "tt",
+      "engine": "F6",
+      "gears": 6,
+      "weightLbs": 2535,
+      "engineSwaps": [
+        "3.6 F6TT",
+        "4.0L F6",
+        "3.2L F6TT",
+        "5.2L V10",
+        "3.8 F6TT",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Ford Thunderbird",
+      "aspiration": "na",
+      "engine": "V8",
+      "gears": 3,
+      "weightLbs": 3417,
+      "engineSwaps": [
+        "6.7L V8T Diesel",
+        "5.2L V8",
+        "8.4L V10",
+        "Racing 7.2L V8",
+        "8.9L V8 DSC"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Alfa Romeo Autodelta Tipo 33/2 Daytona",
+      "aspiration": "na",
+      "engine": "V8",
+      "gears": 6,
+      "weightLbs": 1529,
+      "engineSwaps": [
+        "4.7L V8",
+        "4.5L V8",
+        "3.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Alfa Romeo - Widebody Kit"
+      ]
+    },
+    {
+      "title": "Nissan Skyline 2000 Turbo RS",
+      "aspiration": "st",
+      "engine": "I4",
+      "gears": 5,
+      "weightLbs": 2568,
+      "engineSwaps": [
+        "2.0L I4-T",
+        "2.6L I6-TT",
+        "3.2L I6",
+        "3.8L V6-TT",
+        "Racing 3.0L I6T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ],
+      "bodyKits": [
+        "Forza Horizon 6 - Widebody Kit"
       ]
     }
   ]

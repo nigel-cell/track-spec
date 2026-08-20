@@ -146,7 +146,13 @@ npm run import:garage
 
 
 
-Writes `public/forzaGarage.json` (merge: keeps existing tuneSpecs, mastery, and local photos) and downloads hero images to `public/garage/heros/` (~50 MB). Rebuild/restart the server after importing.
+Writes `public/forzaGarage.json` (merge: keeps existing tuneSpecs, mastery, local photos, and cars the live list does not have yet) and downloads hero images to `public/garage/heros/` (~50 MB). Rebuild/restart the server after importing.
+
+If forzagarage.com is behind a Festival Playlist drop, add those cars from the Forza Wiki:
+
+```bash
+npm run import:garage:wiki
+```
 
 
 
@@ -278,7 +284,7 @@ Built in-house, no third-party dependencies:
 - [x] Metric / Imperial tuning units
 - [x] AI enhance — in-app API (Gemini, Grok, OpenAI, Claude) + copy prompt fallback
 - [x] Car name lookup by telemetry ordinal
-- [x] FH6 Garage tab — 622 cars, costs, mastery, photos (imported from forzagarage.com)
+- [x] FH6 Garage tab — 631 cars, costs, mastery, photos (forzagarage.com + wiki Series 4)
 
 
 

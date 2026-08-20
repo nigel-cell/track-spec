@@ -17,6 +17,7 @@
     "desktop": "npm run build && electron .",
     "desktop:pack": "npm run build && electron-builder --win portable",
     "import:garage": "node scripts/scrape-forzagarage.cjs --details --merge --local-images && node scripts/patch-garage-specs.cjs --missing && node scripts/patch-garage-mastery.cjs --missing && node scripts/download-perk-icons.cjs && npm run import:garage:brands && npm run build:thumbs && node scripts/build-slider-limits.cjs --keep-measured",
+    "import:garage:wiki": "node scripts/import-wiki-fh6-cars.cjs && npm run build:thumbs && node scripts/build-slider-limits.cjs --keep-measured",
     "import:garage:images": "node scripts/download-garage-images.cjs",
     "import:garage:mastery": "node scripts/patch-garage-mastery.cjs && node scripts/download-perk-icons.cjs && node scripts/build-garage-list.cjs",
     "import:garage:specs": "node scripts/patch-garage-specs.cjs && node scripts/build-garage-list.cjs",

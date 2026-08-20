@@ -7,10 +7,11 @@
     {
       "version": "1.3.1",
       "date": "2026-08-20",
-      "title": "Patch deps + garage merge",
+      "title": "Series 4 cars + patch deps",
       "items": [
+        "Garage adds Series 4 / Car Pass cars the live list is still missing (N600, Camaro ZL1 '24, Exocet, Celica GT, Starion, 961, Thunderbird, Tipo 33/2, Skyline Turbo RS)",
+        "A later forzagarage.com merge keeps those cars instead of deleting them",
         "Compatible npm patches (Express 4.22, Electron 37.10, Vite 5.4.21, Wrangler 4.124)",
-        "Garage recheck from forzagarage.com: still 622 cars, 0 new, 0 dropped",
         "List-page 0 mph / hp / lbs is not stored as a real spec"
       ]
     },

@@ -60,4 +60,28 @@ const garage = mergeGarage({ cars: [prev] }, [
 if (garage.added !== 1 || garage.kept !== 1) fail(`added/kept ${garage.added}/${garage.kept}`);
 if (garage.dropped !== 0) fail(`dropped ${garage.dropped}`);
 
+const withWiki = mergeGarage({ cars: [prev, { slug: "honda-n600-1970", make: "Honda", model: "N600" }] }, [scraped]);
+if (!withWiki.cars.some((c) => c.slug === "honda-n600-1970")) fail("merge dropped a car that is not on the live list");
+if (withWiki.held !== 1) fail(`held ${withWiki.held}`);
+if (withWiki.dropped !== 0) fail(`dropped wiki-only car: ${withWiki.dropped}`);
+
+const garagePath = require("path").join(__dirname, "..", "public", "forzaGarage.json");
+if (require("fs").existsSync(garagePath)) {
+  const data = JSON.parse(require("fs").readFileSync(garagePath, "utf8"));
+  const slugs = new Set((data.cars ?? []).map((c) => c.slug));
+  for (const slug of [
+    "honda-n600-1970",
+    "chevrolet-camaro-zl1-2024",
+    "exomotive-exocet-sport-v8-xp-5-2018",
+    "toyota-celica-gt-1974",
+    "mitsubishi-starion-esi-r-1988",
+    "porsche-203-porsche-ag-961-1987",
+    "ford-thunderbird-1957",
+    "alfa-romeo-autodelta-tipo-33-2-daytona-1968",
+    "nissan-skyline-2000-turbo-rs-1983",
+  ]) {
+    if (!slugs.has(slug)) fail(`missing Series 4 car ${slug}`);
+  }
+}
+
 console.log("check-garage-merge: ok");

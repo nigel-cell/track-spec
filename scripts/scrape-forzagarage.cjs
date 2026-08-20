@@ -261,8 +261,16 @@ function mergeGarage(existing, scrapedCars) {
   const prevBySlug = new Map((existing?.cars ?? []).map((c) => [c.slug, c]));
   const merged = scrapedCars.map((scraped) => mergeCar(prevBySlug.get(scraped.slug), scraped));
   const added = merged.filter((c) => !prevBySlug.has(c.slug)).length;
-  const dropped = (existing?.cars ?? []).filter((c) => !scrapedCars.some((s) => s.slug === c.slug));
-  return { cars: merged, added, dropped: dropped.length, kept: merged.length - added };
+  const scrapedSlugs = new Set(scrapedCars.map((s) => s.slug));
+  // Keep cars the live list does not have yet (wiki Series imports, etc.).
+  const extra = (existing?.cars ?? []).filter((c) => c.slug && !scrapedSlugs.has(c.slug));
+  return {
+    cars: [...merged, ...extra],
+    added,
+    dropped: 0,
+    held: extra.length,
+    kept: merged.length - added,
+  };
 }
 
 async function enrichDetails(cars, concurrency = 6) {
@@ -324,7 +332,7 @@ async function main() {
     added = merged.added;
     dropped = merged.dropped;
     kept = merged.kept;
-    console.log(`Merged: ${kept} updated, ${added} new, ${dropped} dropped`);
+    console.log(`Merged: ${kept} updated, ${added} new, ${merged.held ?? 0} kept off-list`);
   }
 
   const payload = {
