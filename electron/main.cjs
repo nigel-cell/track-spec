@@ -225,7 +225,7 @@ function registerDesktopIpc() {
       appendLog(`Update install: ${JSON.stringify(result)}`);
       if (result.mode === "replace-portable") {
         // Give the helper script a moment to spawn, then quit hard.
-        setTimeout(() => hardQuit("install-update"), 300);
+        setTimeout(() => hardQuit("install-update"), 500);
       }
       return result;
     } catch (err) {

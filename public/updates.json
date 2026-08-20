@@ -1,9 +1,19 @@
 {
-  "version": "1.3.4",
+  "version": "1.3.5",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.5",
+      "date": "2026-08-20",
+      "title": "Install popup that restarts the Windows exe",
+      "items": [
+        "New version opens an Install now popup instead of the changelog sheet",
+        "Install now downloads the new TrackSpec-Live.exe, replaces this one, and opens it again",
+        "Not now leaves you on the current version until you tap the update banner"
+      ]
+    },
     {
       "version": "1.3.4",
       "date": "2026-08-20",

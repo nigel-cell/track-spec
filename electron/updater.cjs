@@ -1,6 +1,6 @@
 /**
  * In-app updater for the Windows portable exe.
- * Downloads a new TrackSpec-Live.exe and replaces the portable package on restart.
+ * Downloads a new TrackSpec-Live.exe, replaces the portable package, and relaunches.
  */
 const { app } = require("electron");
 const fs = require("fs");
@@ -9,6 +9,7 @@ const https = require("https");
 const path = require("path");
 const { spawn } = require("child_process");
 const { getPortableExePath } = require("./portablePath.cjs");
+const { buildReplaceScript } = require("./replaceScript.cjs");
 
 let activeReq = null;
 let downloadedPath = null;
@@ -150,28 +151,9 @@ function cancelUpdate() {
   return { ok: true };
 }
 
-function writeReplaceScript(targetExe, sourceExe) {
+function writeReplaceScript(targetExe, sourceExe, pid) {
   const scriptPath = path.join(app.getPath("temp"), `track-spec-apply-update-${Date.now()}.cmd`);
-  // Wait for this process to exit, then replace the portable exe and relaunch.
-  const content = [
-    "@echo off",
-    "setlocal",
-    `set "TARGET=${targetExe.replace(/"/g, "")}"`,
-    `set "SOURCE=${sourceExe.replace(/"/g, "")}"`,
-    "echo Applying Track Spec update...",
-    "timeout /t 2 /nobreak >nul",
-    ":retry",
-    'copy /Y "%SOURCE%" "%TARGET%" >nul',
-    "if errorlevel 1 (",
-    "  timeout /t 1 /nobreak >nul",
-    "  goto retry",
-    ")",
-    'del "%SOURCE%" >nul 2>&1',
-    'start "" "%TARGET%"',
-    'del "%~f0" >nul 2>&1',
-    "",
-  ].join("\r\n");
-  fs.writeFileSync(scriptPath, content, "utf8");
+  fs.writeFileSync(scriptPath, buildReplaceScript({ targetExe, sourceExe, pid }), "utf8");
   return scriptPath;
 }
 
@@ -182,8 +164,8 @@ function installUpdate() {
 
   const portablePath = getPortableExePath();
   if (portablePath && fs.existsSync(path.dirname(portablePath))) {
-    const script = writeReplaceScript(portablePath, downloadedPath);
-    // Detached cmd so it outlives Electron.
+    const script = writeReplaceScript(portablePath, downloadedPath, process.pid);
+    // Detached cmd so it outlives Electron, waits for this PID to exit, then relaunches.
     const child = spawn("cmd.exe", ["/c", script], {
       detached: true,
       stdio: "ignore",
@@ -206,4 +188,5 @@ module.exports = {
   cancelUpdate,
   installUpdate,
   getDownloadedPath: () => downloadedPath,
+  buildReplaceScript,
 };
