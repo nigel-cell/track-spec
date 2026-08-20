@@ -38,7 +38,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,json,svg,png,woff2,webp}"],
-        globIgnores: ["**/forzaGarage.json", "**/forzaGarage-list.json", "**/garage/**"],
+        globIgnores: ["**/forzaGarage.json", "**/forzaGarage-list.json", "**/starterTunes.json", "**/garage/**"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
@@ -48,6 +48,14 @@ export default defineConfig({
               cacheName: "updates-manifest",
               expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 },
               networkTimeoutSeconds: 5,
+            },
+          },
+          {
+            urlPattern: /starterTunes\.json$/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "starter-tunes",
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
           {
