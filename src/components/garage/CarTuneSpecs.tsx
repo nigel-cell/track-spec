@@ -1,8 +1,10 @@
 import { specGroups } from "../../lib/tuneFromGarage";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
+import { useUnits } from "../../hooks/useUnits";
 
 export function CarTuneSpecs({ car }: { car: ForzaGarageCar }) {
-  const groups = specGroups(car);
+  const { units } = useUnits();
+  const groups = specGroups(car, units);
   if (groups.length === 0) {
     return (
       <p className="rounded-[var(--ts-radius-lg)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-6 text-sm text-[var(--ts-muted)]">

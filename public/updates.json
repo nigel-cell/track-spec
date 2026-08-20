@@ -1,9 +1,18 @@
 {
-  "version": "1.3.6",
+  "version": "1.3.7",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.7",
+      "date": "2026-08-20",
+      "title": "Garage stock follows Metric / Imperial",
+      "items": [
+        "Garage Stock on Manual and car detail uses your units setting",
+        "Metric shows kW, Nm, kg, and km/h — Imperial stays hp, lb-ft, lb, mph"
+      ]
+    },
     {
       "version": "1.3.6",
       "date": "2026-08-20",

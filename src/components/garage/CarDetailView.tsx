@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useUnits } from "../../hooks/useUnits";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
+import { garageStockFigures, garageStockSource } from "../../lib/units";
 import { formatCredits } from "../../lib/forzaGarage";
 import { assetUrl } from "../../lib/assetUrl";
 import { carSubtitle, rarityColor } from "../../lib/garageUi";
@@ -46,8 +48,9 @@ export function CarDetailView({
   onBrowseTunes,
 }: CarDetailViewProps) {
   const [tab, setTab] = useState<DetailTab>("overview");
+  const { units } = useUnits();
   const accent = rarityColor(car.rarity);
-  const ts = car.tuneSpecs;
+  const figures = garageStockFigures(garageStockSource(car), units);
 
   const tabs: { id: DetailTab; label: string }[] = [
     { id: "overview", label: "Overview" },
@@ -187,30 +190,24 @@ export function CarDetailView({
               />
             )}
 
+            {figures.length > 0 && (
             <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: "Power", value: ts?.powerHp ?? car.powerHp, unit: "hp" },
-                { label: "Torque", value: ts?.maxTorqueLbFt, unit: "lb-ft" },
-                { label: "Weight", value: ts?.weightLbs ?? car.weightLbs, unit: "lb" },
-                { label: "Top speed", value: ts?.topspeedMph ?? car.topSpeedMph, unit: "mph" },
-              ].map(
-                (s) =>
-                  s.value != null && (
-                    <div
-                      key={s.label}
-                      className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-4"
-                    >
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ts-muted)]">
-                        {s.label}
-                      </p>
-                      <p className="mt-1 font-[family-name:var(--ts-font-mono)] text-2xl font-bold">
-                        {typeof s.value === "number" ? s.value.toLocaleString() : s.value}
-                        <span className="ml-1 text-sm font-normal text-[var(--ts-muted)]">{s.unit}</span>
-                      </p>
-                    </div>
-                  ),
-              )}
+              {figures.map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-[var(--ts-radius-md)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-4"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--ts-muted)]">
+                    {s.label}
+                  </p>
+                  <p className="mt-1 font-[family-name:var(--ts-font-mono)] text-2xl font-bold">
+                    {s.value.toLocaleString()}
+                    <span className="ml-1 text-sm font-normal text-[var(--ts-muted)]">{s.unit}</span>
+                  </p>
+                </div>
+              ))}
             </section>
+            )}
 
             {car.acquisition && (
               <section className="rounded-[var(--ts-radius-lg)] border border-[var(--ts-border)] bg-[var(--ts-card)] p-5">

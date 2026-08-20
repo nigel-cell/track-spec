@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useUnits } from "../../hooks/useUnits";
 import type { ForzaGarageCar } from "../../lib/forzaGarage";
 import type { SavedTune } from "../../lib/tuneSaves";
+import { garageStockFigures, garageStockSource } from "../../lib/units";
 import { FaceStatsBar } from "../garage/FaceStatsBar";
 import { CarSavedTunes } from "../garage/CarSavedTunes";
 
@@ -18,6 +20,7 @@ export function ManualGaragePanel({
   onLoadSaved,
   onBrowseTunes,
 }: ManualGaragePanelProps) {
+  const { units } = useUnits();
   const [detail, setDetail] = useState<ForzaGarageCar | null>(car);
 
   useEffect(() => {
@@ -38,13 +41,7 @@ export function ManualGaragePanel({
 
   if (!detail) return null;
 
-  const ts = detail.tuneSpecs;
-  const figures = [
-    { label: "Power", value: ts?.powerHp ?? detail.powerHp, unit: "hp" },
-    { label: "Torque", value: ts?.maxTorqueLbFt, unit: "lb-ft" },
-    { label: "Weight", value: ts?.weightLbs ?? detail.weightLbs, unit: "lb" },
-    { label: "Top speed", value: ts?.topspeedMph ?? detail.topSpeedMph, unit: "mph" },
-  ].filter((s) => s.value != null);
+  const figures = garageStockFigures(garageStockSource(detail), units);
 
   return (
     <div className="space-y-3">

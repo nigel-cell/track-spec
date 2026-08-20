@@ -63,6 +63,84 @@ export function torqueLabel(units: TuneUnits): string {
   return units.weight === "kg" ? "Nm" : "lb-ft";
 }
 
+export function powerFromHp(hp: number, units: TuneUnits): number {
+  return units.weight === "kg" ? Math.round(hp * 0.7457) : Math.round(hp);
+}
+
+export function powerLabel(units: TuneUnits): string {
+  return units.weight === "kg" ? "kW" : "hp";
+}
+
+/** Garage stock cards use "lb" (FH), not the form label "lbs". */
+export function garageWeightLabel(units: TuneUnits): string {
+  return units.weight === "kg" ? "kg" : "lb";
+}
+
+export interface GarageStockSource {
+  powerHp?: number | null;
+  maxTorqueLbFt?: number | null;
+  weightLbs?: number | null;
+  topSpeedMph?: number | null;
+}
+
+export interface GarageStockFigure {
+  label: string;
+  value: number;
+  unit: string;
+}
+
+/** Pull imperial garage numbers; tuneSpecs win when present. */
+export function garageStockSource(car: {
+  powerHp?: number | null;
+  torqueLbFt?: number | null;
+  topSpeedMph?: number | null;
+  weightLbs?: number | null;
+  tuneSpecs?: {
+    powerHp?: number | null;
+    maxTorqueLbFt?: number | null;
+    weightLbs?: number | null;
+    topspeedMph?: number | null;
+  } | null;
+}): GarageStockSource {
+  const ts = car.tuneSpecs;
+  return {
+    powerHp: ts?.powerHp ?? car.powerHp ?? null,
+    maxTorqueLbFt: ts?.maxTorqueLbFt ?? car.torqueLbFt ?? null,
+    weightLbs: ts?.weightLbs ?? car.weightLbs ?? null,
+    topSpeedMph: ts?.topspeedMph ?? car.topSpeedMph ?? null,
+  };
+}
+
+/** Convert stored imperial garage figures into the user's display units. */
+export function garageStockFigures(source: GarageStockSource, units: TuneUnits): GarageStockFigure[] {
+  const figures: GarageStockFigure[] = [];
+  if (source.powerHp != null) {
+    figures.push({ label: "Power", value: powerFromHp(source.powerHp, units), unit: powerLabel(units) });
+  }
+  if (source.maxTorqueLbFt != null) {
+    figures.push({
+      label: "Torque",
+      value: torqueFromLbFt(source.maxTorqueLbFt, units),
+      unit: torqueLabel(units),
+    });
+  }
+  if (source.weightLbs != null) {
+    figures.push({
+      label: "Weight",
+      value: weightFromLbs(source.weightLbs, units),
+      unit: garageWeightLabel(units),
+    });
+  }
+  if (source.topSpeedMph != null) {
+    figures.push({
+      label: "Top speed",
+      value: speedFromMph(source.topSpeedMph, units),
+      unit: speedLabel(units),
+    });
+  }
+  return figures;
+}
+
 export function defaultWeight(units: TuneUnits, lbs = 3980): number {
   return units.weight === "kg" ? Math.round(lbs / 2.205) : lbs;
 }

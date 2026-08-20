@@ -2,8 +2,19 @@
 
 import { findCarRecord, type CarRecord } from "../hooks/useCarDatabase";
 import type { TuneConfig } from "../components/tune/TuneInputScreen";
-import type { TuneUnits } from "./units";
-import { IMPERIAL_UNITS, speedFromMph, torqueFromLbFt, weightFromKg, weightFromLbs } from "./units";
+import {
+  IMPERIAL_UNITS,
+  garageWeightLabel,
+  powerFromHp,
+  powerLabel,
+  speedFromMph,
+  speedLabel,
+  torqueFromLbFt,
+  torqueLabel,
+  weightFromKg,
+  weightFromLbs,
+  type TuneUnits,
+} from "./units";
 import { findGarageCar, type ForzaGarageCar } from "./forzaGarage";
 import { aspirationFromGarage } from "../data/engineData";
 
@@ -113,7 +124,10 @@ export function mergeGarageIntoDraft(
 }
 
 /** Human-readable spec groups for Garage detail UI */
-export function specGroups(garage: ForzaGarageCar): { label: string; rows: { k: string; v: string }[] }[] {
+export function specGroups(
+  garage: ForzaGarageCar,
+  units: TuneUnits = IMPERIAL_UNITS,
+): { label: string; rows: { k: string; v: string }[] }[] {
   const ts = garage.tuneSpecs;
   const groups: { label: string; rows: { k: string; v: string }[] }[] = [];
 
@@ -135,18 +149,22 @@ export function specGroups(garage: ForzaGarageCar): { label: string; rows: { k: 
   if (drive.length) groups.push({ label: "Drivetrain", rows: drive });
 
   const engine: { k: string; v: string }[] = [];
-  if (ts?.powerHp ?? garage.powerHp) engine.push({ k: "Power", v: `${ts?.powerHp ?? garage.powerHp} hp` });
-  if (ts?.maxTorqueLbFt) engine.push({ k: "Torque", v: `${ts.maxTorqueLbFt} lb-ft` });
+  const powerHp = ts?.powerHp ?? garage.powerHp;
+  if (powerHp != null) engine.push({ k: "Power", v: `${powerFromHp(powerHp, units).toLocaleString()} ${powerLabel(units)}` });
+  const torqueLbFt = ts?.maxTorqueLbFt ?? garage.torqueLbFt;
+  if (torqueLbFt != null) engine.push({ k: "Torque", v: `${torqueFromLbFt(torqueLbFt, units).toLocaleString()} ${torqueLabel(units)}` });
   if (ts?.displacementCc) engine.push({ k: "Displacement", v: `${ts.displacementCc.toLocaleString()} cc` });
   if (ts?.redlineRpm) engine.push({ k: "Redline", v: `${ts.redlineRpm.toLocaleString()} rpm` });
   if (ts?.peakTorqueRpm) engine.push({ k: "Peak torque RPM", v: `${ts.peakTorqueRpm.toLocaleString()} rpm` });
-  if (ts?.topspeedMph ?? garage.topSpeedMph)
-    engine.push({ k: "Top speed", v: `${ts?.topspeedMph ?? garage.topSpeedMph} mph` });
+  const topspeedMph = ts?.topspeedMph ?? garage.topSpeedMph;
+  if (topspeedMph != null)
+    engine.push({ k: "Top speed", v: `${speedFromMph(topspeedMph, units).toLocaleString()} ${speedLabel(units)}` });
   if (engine.length) groups.push({ label: "Engine", rows: engine });
 
   const chassis: { k: string; v: string }[] = [];
-  if (ts?.weightLbs ?? garage.weightLbs)
-    chassis.push({ k: "Weight", v: `${(ts?.weightLbs ?? garage.weightLbs)!.toLocaleString()} lb` });
+  const weightLbs = ts?.weightLbs ?? garage.weightLbs;
+  if (weightLbs != null)
+    chassis.push({ k: "Weight", v: `${weightFromLbs(weightLbs, units).toLocaleString()} ${garageWeightLabel(units)}` });
   if (ts?.weightDist) chassis.push({ k: "Weight dist (front)", v: `${ts.weightDist}%` });
   if (chassis.length) groups.push({ label: "Weight & balance", rows: chassis });
 
