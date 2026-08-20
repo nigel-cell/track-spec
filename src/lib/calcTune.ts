@@ -78,7 +78,7 @@ export interface CalcTuneInput {
   brakeBalDelta?: number;
   /** Transmission package final-drive multiplier. */
   transFdMult?: number;
-  /** Optional in-game spring slider min/max (same unit as units.springs). */
+  /** Optional in-game spring slider min/max (unit on the object; output is always kgf/mm). */
   springLimits?: Partial<SpringLimits> | null;
   /** Optional aero DF min/max in kg (from garage / user). */
   aeroLimits?: Partial<AeroGameLimits> | null;
@@ -109,7 +109,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     aeroLimits: aeroLimitInput, rideLimits: rideLimitInput,
   } = s;
 
-  const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits };
+  const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits, springs: "kgf/mm" };
 
   const wKg        = units.weight === "lbs" ? weight / 2.205 : weight;
   const weightLbs  = units.weight === "lbs" ? weight : weight * 2.205;
@@ -729,7 +729,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
         row("Rear Spring", sStr(rSpringC.value), rSpringC.hit, rSpringC.hit === "min" ? limits.springs.rearMin : limits.springs.rearMax, sUnit, pctOf(rSpringC.value, limits.springs.rearMin, limits.springs.rearMax)),
         row(
           "Front Ride Height",
-          units.weight === "kg" ? `${fRideC.value.toFixed(1)} cm` : `${(fRideC.value / 2.54).toFixed(1)} in`,
+          `${fRideC.value.toFixed(1)} cm`,
           fRideC.hit,
           fRideC.hit === "min" ? limits.rideCm.frontMin : limits.rideCm.frontMax,
           "cm",
@@ -737,7 +737,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
         ),
         row(
           "Rear Ride Height",
-          units.weight === "kg" ? `${rRideC.value.toFixed(1)} cm` : `${(rRideC.value / 2.54).toFixed(1)} in`,
+          `${rRideC.value.toFixed(1)} cm`,
           rRideC.hit,
           rRideC.hit === "min" ? limits.rideCm.rearMin : limits.rideCm.rearMax,
           "cm",

@@ -11,7 +11,7 @@ export const IMPERIAL_UNITS: TuneUnits = {
 
 export const METRIC_UNITS: TuneUnits = {
   weight: "kg",
-  springs: "n/mm",
+  springs: "kgf/mm",
   pressure: "bar",
   speed: "kmh",
 };
@@ -26,7 +26,9 @@ export function normalizeUnits(raw: Partial<TuneUnits> | null | undefined): Tune
   const speed = raw?.speed === "km/h" || raw?.speed === "kmh" ? "kmh" : "mph";
   const weight = raw?.weight === "kg" ? "kg" : "lbs";
   const springs =
-    raw?.springs === "n/mm" || raw?.springs === "kgf/mm" ? raw.springs : "lbs/in";
+    raw?.springs === "lbs/in"
+      ? "lbs/in"
+      : "kgf/mm";
   const pressure = raw?.pressure === "bar" ? "bar" : "psi";
   return { weight, springs, pressure, speed };
 }

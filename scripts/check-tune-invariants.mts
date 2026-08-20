@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import { applyDrivetrainConversion } from "../src/lib/drivetrainSwap.ts";
 import { buildGameLimits, clampNumber } from "../src/lib/gameLimits.ts";
+import { METRIC_UNITS } from "../src/lib/units.ts";
 import type { SliderLimitsFile } from "../src/lib/sliderLimits.ts";
 
 function fail(msg: string): never {
@@ -72,5 +73,11 @@ if (game.rideCm.frontMin !== 11.2 || game.rideCm.frontMax !== 15.5) {
 if (game.tireBar.min !== 1.0 || game.tireBar.max !== 3.8) {
   fail(`tire bar envelope ${game.tireBar.min}-${game.tireBar.max}`);
 }
+
+if (METRIC_UNITS.springs !== "kgf/mm") fail(`metric springs ${METRIC_UNITS.springs}, expected kgf/mm`);
+const calcSrc = readFileSync(new URL("../src/lib/calcTune.ts", import.meta.url), "utf8");
+if (!calcSrc.includes('springs: "kgf/mm"')) fail("calcTune should force spring output to kgf/mm");
+if (calcSrc.includes("/ 2.54")) fail("ride height still converts to inches");
+if (!calcSrc.includes(".toFixed(1)} cm`")) fail("ride height should print cm");
 
 console.log("check-tune-invariants: ok");

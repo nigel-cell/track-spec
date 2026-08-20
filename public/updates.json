@@ -1,9 +1,18 @@
 {
-  "version": "1.3.3",
+  "version": "1.3.4",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.4",
+      "date": "2026-08-20",
+      "title": "Spring rate kgf/mm, ride height cm",
+      "items": [
+        "Tune Results spring rate is kgf/mm — same number you type in FH6",
+        "Ride height is cm, not inches"
+      ]
+    },
     {
       "version": "1.3.3",
       "date": "2026-08-20",
