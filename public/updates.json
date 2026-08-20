@@ -10,6 +10,7 @@
       "title": "Series 4 cars + patch deps",
       "items": [
         "Garage adds Series 4 / Car Pass cars the live list is still missing (N600, Camaro ZL1 '24, Exocet, Celica GT, Starion, 961, Thunderbird, Tipo 33/2, Skyline Turbo RS)",
+        "Each new car has a Track Spec Race build (street strip, race gearbox, semi-slicks, race brakes) — Load from Garage or Manual",
         "A later forzagarage.com merge keeps those cars instead of deleting them",
         "Compatible npm patches (Express 4.22, Electron 37.10, Vite 5.4.21, Wrangler 4.124)",
         "List-page 0 mph / hp / lbs is not stored as a real spec"

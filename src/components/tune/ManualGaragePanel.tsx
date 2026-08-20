@@ -84,6 +84,7 @@ export function ManualGaragePanel({
         <CarSavedTunes
           make={detail.make}
           model={detail.model}
+          slug={detail.slug}
           onLoad={onLoadSaved}
           onBrowseAll={onBrowseTunes}
         />

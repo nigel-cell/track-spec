@@ -181,6 +181,7 @@ export function CarDetailView({
               <CarSavedTunes
                 make={car.make}
                 model={car.model}
+                slug={car.slug}
                 onLoad={onLoadSaved}
                 onBrowseAll={onBrowseTunes}
               />
