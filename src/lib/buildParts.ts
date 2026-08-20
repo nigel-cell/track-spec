@@ -73,8 +73,8 @@ const BRAKES: Record<string, string> = {
 
 const AERO: Record<string, string[]> = {
   splitter: ["Front Bumper — splitter / lip"],
-  wing: ["Rear Wing"],
-  track: ["Front Bumper — splitter", "Rear Wing"],
+  wing: ["Rear Wing — wing"],
+  track: ["Front Bumper — splitter", "Rear Wing — wing"],
   max: ["Front Bumper — race", "Rear Wing — race", "Rear Bumper — race"],
 };
 
