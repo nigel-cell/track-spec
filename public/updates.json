@@ -10,7 +10,9 @@
       "title": "Garage stock follows Metric / Imperial",
       "items": [
         "Garage Stock on Manual and car detail uses your units setting",
-        "Metric shows kW, Nm, kg, and km/h — Imperial stays hp, lb-ft, lb, mph"
+        "Metric shows kW, Nm, kg, and km/h — Imperial stays hp, lb-ft, lb, mph",
+        "Save draft sits on its own row so Back and Next cannot push it off a phone",
+        "If the device cannot store a draft, Manual says so instead of going silent"
       ]
     },
     {
