@@ -1,6 +1,6 @@
 // Ported from TuneTab.jsx — FH6 physics engine (MIT TuneLab)
 
-import { IMPERIAL_UNITS } from "./units";
+import { IMPERIAL_UNITS } from "./units.ts";
 import {
   buildGameLimits,
   clampNote,
@@ -8,7 +8,7 @@ import {
   sliderPercent,
   type AeroGameLimits,
   type SpringLimits,
-} from "./gameLimits";
+} from "./gameLimits.ts";
 
 // ─── PHYSICS CONSTANTS ────────────────────────────────────────────────────────
 // FH5-baseline spring frequencies — FH6 rewards SOFTER springs than physics predicts.
@@ -80,7 +80,7 @@ export interface CalcTuneInput {
   transFdMult?: number;
   /** Optional in-game spring slider min/max (unit on the object; output is always kgf/mm). */
   springLimits?: Partial<SpringLimits> | null;
-  /** Optional aero DF min/max in kg (from garage / user). */
+  /** Optional aero DF min/max in kgf (from garage / user). Stock garage DF is not the slider max. */
   aeroLimits?: Partial<AeroGameLimits> | null;
   /** Optional per-axle ride height min/max in cm. */
   rideLimits?: Partial<import("./gameLimits").RideGameLimits> | null;
@@ -184,12 +184,31 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   rSpring = +(rSpring * (1 - balanceMod)).toFixed(1);
 
   // ── RIDE HEIGHT
-  // Ride height in cm (native Forza unit) — validated against in-game suspension screen
-  // Ride height — game minimum is 15cm. Drag nose-down via rear bias not front lowering.
-  const fRideCm = isDrift ? 15.5 : isRally || isOffRoad ? 20.0 : isSnow ? 22.0 : isDrag ? 15.0 : 15.0;
-  const rRideCm = isDrift ? 15.0 : isRally || isOffRoad ? 19.0 : isSnow ? 21.0 : isDrag ? 17.0 : 15.0;
-  const fRide = fRideCm; // cm
-  const rRide = rRideCm; // cm
+  // Native cm. Aim at the Low end of the real slider (left = Low, right = High).
+  // Do not target 15 cm as a universal floor — for many cars 15 cm is stock/High.
+  const rideLoF = limits.rideCm.frontMin;
+  const rideLoR = limits.rideCm.rearMin;
+  const rideHiF = limits.rideCm.frontMax;
+  const rideHiR = limits.rideCm.rearMax;
+  const clampRide = (v: number, lo: number, hi: number) => +Math.max(lo, Math.min(hi, v)).toFixed(1);
+  let fRide: number;
+  let rRide: number;
+  if (isRally || isOffRoad) {
+    fRide = clampRide(20.0, rideLoF, rideHiF);
+    rRide = clampRide(19.0, rideLoR, rideHiR);
+  } else if (isSnow) {
+    fRide = clampRide(22.0, rideLoF, rideHiF);
+    rRide = clampRide(21.0, rideLoR, rideHiR);
+  } else if (isDrag) {
+    fRide = rideLoF;
+    rRide = clampRide(rideLoR + 2.0, rideLoR, rideHiR);
+  } else if (isDrift) {
+    fRide = clampRide(rideLoF + 0.5, rideLoF, rideHiF);
+    rRide = clampRide(rideLoR + 0.3, rideLoR, rideHiR);
+  } else {
+    fRide = clampRide(rideLoF + 0.2, rideLoF, rideHiF);
+    rRide = clampRide(Math.max(fRide + 0.3, rideLoR + 0.2), rideLoR, rideHiR);
+  }
 
   // ── DAMPING (critical damping ratio method)
   // Rebound ≈ 0.65–0.75 × critical, Bump ≈ 0.5–0.6 × critical
@@ -388,7 +407,11 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     const wheel_radius_mm = (tr * 25.4 / 2) + sidewall_mm;
     const circumference_m = 2 * Math.PI * wheel_radius_mm / 1000;
 
-    const topKmh = units.speed === "mph" ? effectiveTopspeed * 1.609 : effectiveTopspeed;
+    const userTopKmh = units.speed === "mph" ? effectiveTopspeed * 1.609 : effectiveTopspeed;
+    const isRaceRoad = !isDrift && !isDrag && !isRally && !isOffRoad && !isSnow;
+    // Stock garage top speed (or a 193 km/h metric default) is often below
+    // FH6's 161 km/h accel board. Race/Speed tunes must still clear it.
+    const topKmh = isRaceRoad ? Math.max(userTopKmh, 220) : userTopKmh;
 
     let finalDrive, ratios, gearsWereReduced = false;
 
@@ -412,24 +435,20 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     // the engine above 68% of peak torque RPM → no bog in any gear.
     // Traction is a secondary cap (2× limit) — FH6 has TC, bog is worse.
 
-    const isTechCircuit = activeGears >= 6 && topKmh > 250
-                       && (tuneId === "Circuit" || tuneId === "General");
     const targetFrac = isTouge || isSnow || (isDrag && (dragDist==="quarter"||dragDist==="eighth"))
       ? 0.65 : isWangan || (isDrag && dragDist==="top") ? 1.00
       : isDrift ? 0.70 : (isRally || isOffRoad) ? 0.75
-      : isTechCircuit ? 0.65 : 0.82;
+      : 1.00; // Race / General: full target — 0.82 left cars dead at ~160 km/h
     const targetKmh = topKmh * targetFrac;
 
     // ── FINAL DRIVE: top gear hits targetKmh at 90% redline ──────
-    // stockFd (if present) is used only as a plausibility anchor — it
-    // never overrides the physics result, since FD alone (unlike the
-    // ratio array) showed no systematic corruption in the audit, but we
-    // still don't want to silently trust a single external number.
-    finalDrive = +Math.max(2.20, Math.min(5.50,
+    // Game FD slider is 2.20–6.10. The old 5.50 cap stacked short gears on
+    // top of an 82% speed target and failed the 0–161 km/h board.
+    finalDrive = +Math.max(2.20, Math.min(6.10,
       (effectiveRedline * 0.90 * circumference_m * 3.6) / (targetKmh * 60)
     )).toFixed(2);
     if (transFdMult && transFdMult !== 1) {
-      finalDrive = +Math.max(2.20, Math.min(5.50, finalDrive * transFdMult)).toFixed(2);
+      finalDrive = +Math.max(2.20, Math.min(6.10, finalDrive * transFdMult)).toFixed(2);
     }
 
     // ── RATIOV: pure math from FD ─────────────────────────────────
@@ -524,10 +543,23 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     applyGapGuard();
 
     // Guard: top gear can't overshoot topKmh by more than 5%
-    const topGearKmh = (effectiveRedline * circumference_m * 3.6) / (ratios[ratios.length-1] * finalDrive * 60);
-    if (topGearKmh > topKmh * 1.05) {
+    const topGearKmhAtRedline = () =>
+      (effectiveRedline * circumference_m * 3.6) / (ratios[ratios.length-1] * finalDrive * 60);
+    if (topGearKmhAtRedline() > topKmh * 1.05) {
       ratios[ratios.length-1] = +((effectiveRedline * circumference_m * 3.6) / (topKmh * finalDrive * 60)).toFixed(2);
       applyGapGuard(); // top gear moved — re-anchor the backward sweep
+    }
+    // Guard: lengthen if we still die under the 161 km/h board (or the race target).
+    const requiredKmh = isRaceRoad ? Math.max(targetKmh, 170) : targetKmh;
+    for (let i = 0; i < 80 && topGearKmhAtRedline() < requiredKmh; i++) {
+      if (finalDrive > 2.25) {
+        finalDrive = +(finalDrive - 0.05).toFixed(2);
+      } else if (ratios[ratios.length - 1] > 0.55) {
+        ratios[ratios.length - 1] = +(ratios[ratios.length - 1] - 0.02).toFixed(2);
+        applyGapGuard();
+      } else {
+        break;
+      }
     }
     // Guard: cap 1st→2nd step at 30% max — prevents lurching on wangan/high-power builds
     if (ratios.length > 1) {
@@ -625,7 +657,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     };
   }
 
-  // Aero: clamp to per-car max when known (garage downforce figures).
+  // Aero: clamp to the race-aero slider max (never stock garage DF).
   let aeroFOut = aeroF;
   let aeroROut = aeroR;
   let aeroFHit: "min" | "max" | null = null;
@@ -708,7 +740,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
           values: gearRows,
           tip: gearingData.gearsWereReduced
             ? `Used ${gearingData.ratios.length} of ${gearingData.requestedGears} gears — this car's torque/speed range can't support more without gears overlapping. Final drive is most reliable.`
-            : "Final drive is most reliable. Adjust individual ratios in-game to taste.",
+            : "Final drive is sized so top gear clears 161 km/h. Adjust individual ratios in-game to taste.",
         }
       : null,
 
@@ -794,18 +826,18 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
           values: [
             row(
               "Front Downforce",
-              units.weight === "lbs" ? `${Math.round(aeroFOut * 2.205)} lbs` : `${aeroFOut} kg`,
+              `${aeroFOut} kgf`,
               aeroFHit,
               aeroFHit === "min" ? limits.aero.frontMin : (aeroFMax ?? 0),
-              "kg",
+              "kgf",
               aeroFMax != null ? pctOf(aeroFOut, limits.aero.frontMin, aeroFMax) : undefined,
             ),
             row(
               "Rear Downforce",
-              units.weight === "lbs" ? `${Math.round(aeroROut * 2.205)} lbs` : `${aeroROut} kg`,
+              `${aeroROut} kgf`,
               aeroRHit,
               aeroRHit === "min" ? limits.aero.rearMin : (aeroRMax ?? 0),
-              "kg",
+              "kgf",
               aeroRMax != null ? pctOf(aeroROut, limits.aero.rearMin, aeroRMax) : undefined,
             ),
             { key: "Drag Cd", value: dragCd.toFixed(2) },
@@ -821,7 +853,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
             ? "Drag tune: minimise front downforce, run max rear for straight-line stability. Cd matters more than balance."
             : isWangan
               ? "High speed: raise rear downforce first for stability, match front to taste."
-              : "Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. DF % uses this car's garage aero max when known.",
+              : "Rear-heavy aero balance (40F/60R) keeps the car planted without inducing understeer. DF % is this car's race-aero slider, not stock garage downforce.",
         }
       : null,
   };

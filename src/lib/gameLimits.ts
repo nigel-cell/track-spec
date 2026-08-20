@@ -1,6 +1,6 @@
 /** FH6 in-game slider bounds. Springs are per-car; others are universal (or near-universal). */
 
-import type { CalcTuneUnits } from "./calcTune";
+import type { CalcTuneUnits } from "./calcTune.ts";
 
 export interface SpringLimits {
   frontMin: number;
@@ -23,6 +23,74 @@ export interface RideGameLimits {
   frontMax: number;
   rearMin: number;
   rearMax: number;
+}
+
+/** FH6 Low (left) on the ride slider — confirmed GR86 / 430 sweeps. */
+export const FH6_RIDE_LOW_CM = 11.2;
+
+/** Dummy High ends from the old weight estimate — not real per-car stock. */
+const GENERIC_RIDE_HIGH_CM = new Set([24, 26, 28, 34]);
+
+/**
+ * Stock garage downforce is the OEM figure, not the race-aero slider max.
+ * FH6 race kits land near 2.45× stock (26.01 → 63.7 vs in-game 63 kgf).
+ * Values already in the race band (≥ 50 kgf) are treated as a real max.
+ */
+export function estimateRaceAeroMaxKg(
+  stockKg: number | null | undefined,
+  axle: "front" | "rear",
+): number {
+  const fallback = axle === "front" ? 110 : 160;
+  if (stockKg == null || !Number.isFinite(stockKg) || stockKg <= 0) return fallback;
+  if (stockKg >= 50) return +stockKg.toFixed(1);
+  return +Math.min(200, stockKg * 2.45).toFixed(1);
+}
+
+export function resolveAeroSliderMax(
+  raw: number | null | undefined,
+  axle: "front" | "rear",
+): number {
+  return estimateRaceAeroMaxKg(raw, axle);
+}
+
+/**
+ * FH6 ride sliders go Low (smaller cm) → High (larger cm).
+ * Estimated / mis-typed envelopes often store stock height as min (15–23 cm),
+ * which is actually the High end in-game — so a 15 cm race target shows as
+ * GAME MIN while the in-game slider sits on High.
+ */
+export function normalizeRideEnvelope(
+  ride: RideGameLimits,
+  offRoad = false,
+): RideGameLimits {
+  const floor = offRoad ? 18 : FH6_RIDE_LOW_CM;
+  const fix = (lo: number, hi: number): { min: number; max: number } => {
+    let min = lo;
+    let max = hi;
+    if (min > max) {
+      const t = min;
+      min = max;
+      max = t;
+    }
+    if (!offRoad && min >= 14.5) {
+      const stockHigh = min;
+      if (GENERIC_RIDE_HIGH_CM.has(max) || max - min < 4) {
+        max = stockHigh;
+      }
+      min = floor;
+      max = Math.max(max, stockHigh);
+    }
+    if (max < min + 2) max = +(min + 4).toFixed(1);
+    return { min, max };
+  };
+  const front = fix(ride.frontMin, ride.frontMax);
+  const rear = fix(ride.rearMin, ride.rearMax);
+  return {
+    frontMin: front.min,
+    frontMax: front.max,
+    rearMin: rear.min,
+    rearMax: rear.max,
+  };
 }
 
 export interface GameLimits {
@@ -122,24 +190,18 @@ export function buildGameLimits(args: {
     springs.rearMax = t;
   }
 
-  // Default ride envelope; per-car Soft/High ends override when measured.
-  const defRideMin = args.offRoad ? 18 : 11.2;
+  // Default ride envelope; per-car Low/High ends override when measured.
+  const defRideMin = args.offRoad ? 18 : FH6_RIDE_LOW_CM;
   const defRideMax = args.offRoad ? 34 : 26;
-  const ride: RideGameLimits = {
-    frontMin: args.rideLimits?.frontMin ?? defRideMin,
-    frontMax: args.rideLimits?.frontMax ?? defRideMax,
-    rearMin: args.rideLimits?.rearMin ?? defRideMin,
-    rearMax: args.rideLimits?.rearMax ?? defRideMax,
-  };
-  for (const side of ["front", "rear"] as const) {
-    const lo = `${side}Min` as const;
-    const hi = `${side}Max` as const;
-    if (ride[lo] > ride[hi]) {
-      const t = ride[lo];
-      ride[lo] = ride[hi];
-      ride[hi] = t;
-    }
-  }
+  const ride = normalizeRideEnvelope(
+    {
+      frontMin: args.rideLimits?.frontMin ?? defRideMin,
+      frontMax: args.rideLimits?.frontMax ?? defRideMax,
+      rearMin: args.rideLimits?.rearMin ?? defRideMin,
+      rearMax: args.rideLimits?.rearMax ?? defRideMax,
+    },
+    args.offRoad,
+  );
 
   return {
     // Confirmed Soft/Stiff ends from FH6 gameplay sweeps (GR86 + 430 Scuderia).
@@ -160,9 +222,9 @@ export function buildGameLimits(args: {
     springs,
     aero: {
       frontMin: args.aeroLimits?.frontMin ?? 0,
-      frontMax: args.aeroLimits?.frontMax ?? null,
+      frontMax: resolveAeroSliderMax(args.aeroLimits?.frontMax, "front"),
       rearMin: args.aeroLimits?.rearMin ?? 0,
-      rearMax: args.aeroLimits?.rearMax ?? null,
+      rearMax: resolveAeroSliderMax(args.aeroLimits?.rearMax, "rear"),
     },
   };
 }

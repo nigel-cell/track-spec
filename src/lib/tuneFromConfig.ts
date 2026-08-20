@@ -76,9 +76,9 @@ export function buildCalcInput(
       config.aeroR != null
         ? {
             frontMin: config.aeroFrontMin ?? 0,
-            frontMax: config.aeroFrontMax ?? config.aeroF ?? null,
+            frontMax: config.aeroFrontMax ?? null,
             rearMin: config.aeroRearMin ?? 0,
-            rearMax: config.aeroRearMax ?? config.aeroR ?? null,
+            rearMax: config.aeroRearMax ?? null,
           }
         : null,
     rideLimits:

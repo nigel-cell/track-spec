@@ -181,7 +181,7 @@ export interface TuneConfig {
   springRearMin?: number;
   springRearMax?: number;
 
-  /** Optional aero DF slider bounds (kg). */
+  /** Optional aero DF slider bounds (kgf). Stock garage DF is not the max. */
   aeroFrontMin?: number;
   aeroFrontMax?: number | null;
   aeroRearMin?: number;
@@ -1172,7 +1172,7 @@ export function TuneInputScreen({
         aero:
           aeroFrontMax !== "" || aeroRearMax !== ""
             ? {
-                unit: "kg",
+                unit: "kgf",
                 frontMin: aeroFrontMin === "" ? 0 : aeroFrontMin,
                 frontMax: aeroFrontMax === "" ? null : aeroFrontMax,
                 rearMin: aeroRearMin === "" ? 0 : aeroRearMin,
@@ -1529,8 +1529,10 @@ export function TuneInputScreen({
       <Card className="space-y-3">
         <Label>In-game ride height min / max (cm)</Label>
         <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
-          Soft / High ends from Tune → Alignment &amp; Ride Height. Measured for GR86 and 430
-          Scuderia; other cars use the FH6 envelope until you type the in-game numbers.
+          Soft (Low) / High ends from Tune → Springs. Left on the slider is Low
+          (smaller cm). Type the in-game Low and High — not the stock height. GR86
+          and 430 Scuderia are measured; other cars use 11.2–26 cm until you type
+          the real ends.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>

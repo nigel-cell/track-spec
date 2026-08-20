@@ -16,7 +16,7 @@ export interface AeroLimits {
   frontMax: number | null;
   rearMin: number;
   rearMax: number | null;
-  unit: "kg";
+  unit: "kg" | "kgf";
 }
 
 export interface RideLimits {

@@ -52,8 +52,6 @@ function limitsToConfigFields(
     out.aeroRearMax = limits.aero.rearMax ?? null;
     if (limits.aero.frontMax != null || limits.aero.rearMax != null) {
       out.hasAero = true;
-      if (limits.aero.frontMax != null) out.aeroF = limits.aero.frontMax;
-      if (limits.aero.rearMax != null) out.aeroR = limits.aero.rearMax;
     }
   }
   return out;

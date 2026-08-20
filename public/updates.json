@@ -1,11 +1,19 @@
 {
-  "version": "1.3.7",
+  "version": "1.3.8",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
     {
-      "version": "1.3.7",
+      "version": "1.3.8",
+      "date": "2026-08-20",
+      "title": "Aero, ride height, and gears match FH6",
+      "items": [
+        "Front/rear downforce uses the race-aero slider (kgf), not stock garage DF — track kits are no longer clamped to 26 kg",
+        "Ride height aims at Low on the in-game slider. Stock height is High, not GAME MIN",
+        "Race gears clear the 161 km/h board — final drive is no longer pinned at 5.50"
+      ]
+    },
       "date": "2026-08-20",
       "title": "Metric garage, Save draft, Live Data Out",
       "items": [

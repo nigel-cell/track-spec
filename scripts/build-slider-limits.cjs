@@ -1,7 +1,8 @@
 /**
  * Build per-car spring/aero/ride slider limit estimates from forzaGarage.json.
  * Race-suspension spring min/max are not published — we derive them from curb
- * weight using community-calibrated ratios, and take aero max from tuneSpecs.
+ * weight using community-calibrated ratios. Garage downforce is stock, not the
+ * race-aero slider max — we scale it (~2.45×) so track packages stay legal.
  *
  * Usage: node scripts/build-slider-limits.cjs
  * Out:   public/carSliderLimits.json
@@ -37,14 +38,21 @@ function estimateSpringsLbs(weightLbs, weightDist) {
 
 function estimateRideCm(carClass, offroadHint) {
   if (offroadHint) return { frontMin: 18, frontMax: 34, rearMin: 18, rearMax: 34 };
-  // Road race chassis — game floor is typically 15 cm.
-  const tall = carClass === "D" || carClass === "C";
+  // FH6 Low is ~11.2 cm. High is stock-ish — 15 cm is NOT the floor.
   return {
-    frontMin: 15,
-    frontMax: tall ? 28 : 24,
-    rearMin: 15,
-    rearMax: tall ? 28 : 24,
+    frontMin: 11.2,
+    frontMax: 26,
+    rearMin: 11.2,
+    rearMax: 26,
   };
+}
+
+/** Stock garage DF ≠ race slider max. ~2.45× matches FH6 (26 → 63 kgf). */
+function estimateRaceAeroMaxKg(stockKg, axle) {
+  const fallback = axle === "front" ? 110 : 160;
+  if (!Number.isFinite(stockKg) || stockKg <= 0) return fallback;
+  if (stockKg >= 50) return +stockKg.toFixed(1);
+  return +Math.min(200, stockKg * 2.45).toFixed(1);
 }
 
 function main() {
@@ -55,7 +63,7 @@ function main() {
     generatedAt: new Date().toISOString(),
     source: "estimated from forzaGarage weight + tuneSpecs aero",
     unitSprings: "lbs/in",
-    unitAero: "kg",
+    unitAero: "kgf",
     unitRide: "cm",
     count: 0,
     cars: {},
@@ -91,10 +99,10 @@ function main() {
       aero: hasAero
         ? {
             frontMin: 0,
-            frontMax: Number.isFinite(aeroF) ? +aeroF : null,
+            frontMax: Number.isFinite(aeroF) ? estimateRaceAeroMaxKg(+aeroF, "front") : 110,
             rearMin: 0,
-            rearMax: Number.isFinite(aeroR) ? +aeroR : null,
-            unit: "kg",
+            rearMax: Number.isFinite(aeroR) ? estimateRaceAeroMaxKg(+aeroR, "rear") : 160,
+            unit: "kgf",
           }
         : null,
     };

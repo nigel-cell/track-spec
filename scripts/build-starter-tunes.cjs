@@ -176,9 +176,8 @@ function makeTune(car, limits, mode) {
   const ride = limits?.ride;
   const carHasAero = !!(ts.hasAero || ts.downforceFront || ts.downforceRear);
   const aero = aeroFor(mode, carHasAero);
-  const useGarageAero = mode.aero === "trackIfCarHasIt" && carHasAero;
-  const downF = useGarageAero ? ts.downforceFront || aero.aeroF : aero.aeroF;
-  const downR = useGarageAero ? ts.downforceRear || aero.aeroR : aero.aeroR;
+  const downF = aero.aeroF;
+  const downR = aero.aeroR;
 
   return {
     slug: car.slug,
