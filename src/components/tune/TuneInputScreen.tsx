@@ -81,6 +81,13 @@ import {
 } from "../../lib/sliderLimits";
 import { saveFavoriteDraft } from "../../lib/carFavorites";
 import { ensureFavoriteProfile, hydrateFavoriteProfiles } from "../../lib/favoriteProfiles";
+import {
+  loadLastManualDraft,
+  resolveManualDraft,
+  saveManualDraft,
+  slugFromMakeModel,
+  type ManualDraftSection,
+} from "../../lib/manualDraft";
 import type { SavedTune } from "../../lib/tuneSaves";
 
 import { Button } from "../ui/Button";
@@ -209,6 +216,9 @@ interface TuneInputScreenProps {
 
   initialDraft?: Partial<TuneConfig> | null;
 
+  /** Garage slug when opening Manual for a known car — used to restore that car's draft. */
+  resumeSlug?: string | null;
+
   units: TuneUnits;
 
 }
@@ -268,10 +278,11 @@ export function TuneInputScreen({
   onMyTunes,
   onLoadSaved,
   initialDraft,
+  resumeSlug,
   units,
 }: TuneInputScreenProps) {
 
-  type InputSection = "car" | "tune" | "specs" | "engine";
+  type InputSection = ManualDraftSection;
   const [section, setSection] = useState<InputSection>("car");
   const [mode, setMode] = useState<"quick" | "full">("quick");
   const [weightPackage, setWeightPackage] = useState<WeightPackageId>("stock");
@@ -363,6 +374,10 @@ export function TuneInputScreen({
   const [stockGears, setStockGears] = useState<number[] | null>(null);
 
   const prevUnitsRef = useRef(units);
+  const [draftStatus, setDraftStatus] = useState<string | null>(null);
+  const didRestoreRef = useRef(false);
+  const skipAutosaveRef = useRef(true);
+  const restoredSpringsRef = useRef(false);
 
 
 
@@ -517,10 +532,30 @@ export function TuneInputScreen({
   };
 
   useEffect(() => {
-    if (!initialDraft) return;
-    applyTuneDraft(initialDraft);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once per remount/draft identity
-  }, [initialDraft]);
+    if (didRestoreRef.current) return;
+
+    if (initialDraft) applyTuneDraft(initialDraft);
+
+    const customSlug = initialDraft?.make
+      ? slugFromMakeModel(initialDraft.make, initialDraft.model ?? "")
+      : "";
+    const stored =
+      resolveManualDraft([resumeSlug, customSlug]) ??
+      (!initialDraft && !resumeSlug ? loadLastManualDraft() : null);
+
+    if (stored) {
+      applyTuneDraft(stored.config);
+      setSection(stored.section);
+      setMode(stored.mode);
+      setDraftStatus("Draft restored. Save draft to keep this setup.");
+      if (stored.config.springFrontMin != null || stored.config.springFrontMax != null) {
+        restoredSpringsRef.current = true;
+      }
+    }
+
+    didRestoreRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once per remount
+  }, [initialDraft, resumeSlug]);
 
   useEffect(() => {
     void loadSliderLimitsFile().then(setSliderLimitsFile);
@@ -581,7 +616,13 @@ export function TuneInputScreen({
   useEffect(() => {
     if (!sliderLimitsFile || !make || !model) return;
     // Don't clobber values restored from a draft that already set springs.
-    if (initialDraft?.springFrontMin != null || initialDraft?.springFrontMax != null) return;
+    if (
+      restoredSpringsRef.current ||
+      initialDraft?.springFrontMin != null ||
+      initialDraft?.springFrontMax != null
+    ) {
+      return;
+    }
     const limits = findSliderLimits(sliderLimitsFile, make, model);
     if (limits) applySliderLimits(limits, units.springs);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only auto-fill when file/car identity changes
@@ -966,16 +1007,41 @@ export function TuneInputScreen({
     )?.slug;
   }, [make, model, favorites, favoriteCars, lookupGarage]);
 
-  // Autosave weight, speed, torque, springs, packages, etc. for the active favorite.
+  const persistDraft = (): boolean => {
+    const cfg = snapshotDraft();
+    const customSlug = slugFromMakeModel(make, model);
+    const garageSlug = activeGarageCar?.slug;
+    const slugs = [garageSlug, customSlug].filter((s, i, arr): s is string => !!s && arr.indexOf(s) === i);
+    if (!slugs.length) return false;
+    for (const slug of slugs) {
+      saveManualDraft({
+        slug,
+        section,
+        mode,
+        config: cfg,
+      });
+    }
+    if (garageSlug) saveFavoriteDraft(garageSlug, cfg);
+    else if (activeFavoriteSlug) saveFavoriteDraft(activeFavoriteSlug, cfg);
+    return true;
+  };
+
+  // Autosave any in-progress Manual, including the step you were on.
   useEffect(() => {
-    if (!activeFavoriteSlug) return;
+    if (skipAutosaveRef.current) {
+      skipAutosaveRef.current = false;
+      return;
+    }
     const t = window.setTimeout(() => {
-      saveFavoriteDraft(activeFavoriteSlug, snapshotDraft());
+      persistDraft();
     }, 400);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot fields listed below
   }, [
+    resumeSlug,
+    activeGarageCar?.slug,
     activeFavoriteSlug,
+    section,
     make,
     model,
     driveType,
@@ -1028,13 +1094,15 @@ export function TuneInputScreen({
     units,
   ]);
 
+  const saveDraftNow = () => {
+    if (!persistDraft()) return;
+    setDraftStatus("Draft saved.");
+  };
+
   const deploy = () => {
     const cfg = snapshotDraft() as TuneConfig;
+    persistDraft();
     onDeploy(cfg);
-
-    if (activeFavoriteSlug) {
-      saveFavoriteDraft(activeFavoriteSlug, cfg);
-    }
 
     if (sliderLimitsSource === "user" && make && model) {
       const springsComplete =
@@ -1087,7 +1155,8 @@ export function TuneInputScreen({
         <div>
           <h1 className="font-[family-name:var(--ts-font-heading)] text-xl font-bold tracking-tight">Manual setup</h1>
           <p className="mt-0.5 text-xs text-[var(--ts-muted)]">
-            {carsLoading ? "Loading car database…" : `${carCount || 644} cars in database`}
+            {draftStatus ??
+              (carsLoading ? "Loading car database…" : `${carCount || 644} cars in database`)}
           </p>
         </div>
         <div className="flex w-full items-center gap-2 sm:w-auto">
@@ -1648,6 +1717,9 @@ export function TuneInputScreen({
 
       <div className="sticky bottom-0 z-20 -mx-4 mt-auto bg-gradient-to-t from-[var(--ts-bg)] via-[var(--ts-bg)]/95 to-transparent px-4 pb-2 pt-5 sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:bg-none md:p-0">
         <div className="mx-auto flex max-w-[820px] justify-end gap-2 md:justify-stretch">
+          <Button variant="outline" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={saveDraftNow}>
+            Save draft
+          </Button>
           {sectionIndex > 0 && (
             <Button variant="ghost" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={goPrev}>
               ← Back

@@ -21,6 +21,7 @@ import { listSavedTunes } from "./lib/tuneSaves";
 import { listBuildProfiles, buildProfileToDraft } from "./lib/buildProfiles";
 import { ensureFavoriteProfile } from "./lib/favoriteProfiles";
 import { loadSliderLimitsFile } from "./lib/sliderLimits";
+import { loadManualDraft, slugFromMakeModel } from "./lib/manualDraft";
 
 import { DEFAULT_CAR } from "./data/constants";
 
@@ -108,10 +109,12 @@ function AppContent() {
   const [tuneInputDraft, setTuneInputDraft] = useState<Partial<TuneConfig> | null>(null);
 
   const [tuneInputKey, setTuneInputKey] = useState(0);
+  const [tuneInputSlug, setTuneInputSlug] = useState<string | null>(null);
 
   const [quickTuneOpen, setQuickTuneOpen] = useState(false);
   const [quickTuneDraft, setQuickTuneDraft] = useState<Partial<TuneConfig> | null>(null);
   const [quickTuneLabel, setQuickTuneLabel] = useState("");
+  const [quickTuneSlug, setQuickTuneSlug] = useState<string | undefined>();
   const [quickTuneManualHandler, setQuickTuneManualHandler] = useState<"garage" | "telemetry" | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
   const [dismissedCarOrdinal, setDismissedCarOrdinal] = useState<number | null>(null);
@@ -238,8 +241,9 @@ function AppContent() {
 
 
 
-  const openTuneEditor = (draft: Partial<TuneConfig>) => {
+  const openTuneEditor = (draft: Partial<TuneConfig>, slug?: string | null) => {
     setTuneInputDraft(draft);
+    setTuneInputSlug(slug ?? null);
     setTuneInputKey((k) => k + 1);
     setTuneView("input");
     setTab("tune");
@@ -264,6 +268,7 @@ function AppContent() {
   ) => {
     setQuickTuneDraft(mergeBuildProfile(draft, carSlug));
     setQuickTuneLabel(label);
+    setQuickTuneSlug(carSlug);
     setQuickTuneManualHandler(manualSource);
     setQuickTuneOpen(true);
   };
@@ -299,7 +304,9 @@ function AppContent() {
       const sliderFile = await loadSliderLimitsFile();
       // Full profile: garage weight/speed/torque + measured springs/ride/aero + last edits.
       const draft = ensureFavoriteProfile(car.slug, car, cars, units, sliderFile);
-      openTuneEditor(draft);
+      const stored =
+        loadManualDraft(car.slug) ?? loadManualDraft(slugFromMakeModel(car.make, car.model));
+      openTuneEditor(stored?.config ? { ...draft, ...stored.config } : draft, car.slug);
     })();
   };
 
@@ -320,25 +327,20 @@ function AppContent() {
         lockMainScroll={tab === "telemetry"}
       >
 
-        {tab === "tune" && tuneView === "input" && (
-
+        <div
+          className={tab === "tune" && tuneView === "input" ? "contents" : "hidden"}
+          aria-hidden={!(tab === "tune" && tuneView === "input")}
+        >
           <TuneInputScreen
-
             key={tuneInputKey}
-
             onDeploy={handleDeploy}
-
             onMyTunes={() => setMyTunesOpen(true)}
-
             onLoadSaved={handleLoadSaved}
-
             initialDraft={tuneInputDraft}
-
+            resumeSlug={tuneInputSlug}
             units={units}
-
           />
-
-        )}
+        </div>
 
         {tab === "tune" && tuneView === "results" && config && (
 
@@ -527,7 +529,12 @@ function AppContent() {
           quickTuneManualHandler === "garage"
             ? () => {
                 setQuickTuneOpen(false);
-                if (quickTuneDraft) openTuneEditor(quickTuneDraft);
+                if (!quickTuneDraft) return;
+                const stored = quickTuneSlug ? loadManualDraft(quickTuneSlug) : null;
+                openTuneEditor(
+                  stored?.config ? { ...quickTuneDraft, ...stored.config } : quickTuneDraft,
+                  quickTuneSlug,
+                );
               }
             : quickTuneManualHandler === "telemetry"
               ? () => {
