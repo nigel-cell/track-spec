@@ -5,7 +5,18 @@ import { assetUrl } from "./assetUrl";
 import type { StarterTuneFile, StarterTuneRecord } from "./makeStarterTune";
 
 let cache: StarterTuneFile | null = null;
+let bySlug: Map<string, StarterTuneRecord[]> | null = null;
 let loadPromise: Promise<StarterTuneFile | null> | null = null;
+
+function indexTunes(file: StarterTuneFile) {
+  const map = new Map<string, StarterTuneRecord[]>();
+  for (const tune of file.tunes) {
+    const list = map.get(tune.slug) ?? [];
+    list.push(tune);
+    map.set(tune.slug, list);
+  }
+  bySlug = map;
+}
 
 export async function loadStarterTunes(): Promise<StarterTuneFile | null> {
   if (cache) return cache;
@@ -17,6 +28,7 @@ export async function loadStarterTunes(): Promise<StarterTuneFile | null> {
       const res = await fetch(url);
       if (!res.ok) return null;
       cache = (await res.json()) as StarterTuneFile;
+      indexTunes(cache);
       return cache;
     } catch {
       return null;
@@ -30,6 +42,7 @@ export function listStarterTunesForSlug(
   slug: string | undefined,
 ): StarterTuneRecord[] {
   if (!file || !slug) return [];
+  if (file === cache && bySlug) return bySlug.get(slug) ?? [];
   return file.tunes.filter((t) => t.slug === slug);
 }
 

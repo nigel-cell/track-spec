@@ -1,9 +1,18 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.2",
+      "date": "2026-08-20",
+      "title": "Race build on every car",
+      "items": [
+        "Every garage car has a Track Spec Race tune — Load from Garage or Manual",
+        "Stock engine, street strip, race gearbox, semi-slicks, race brakes"
+      ]
+    },
     {
       "version": "1.3.1",
       "date": "2026-08-20",

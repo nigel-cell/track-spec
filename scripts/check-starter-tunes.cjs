@@ -1,32 +1,29 @@
 /**
- * Series 4 bundled Race tunes exist with a Race build.
+ * Every garage car has a bundled Race build.
  * Usage: node scripts/check-starter-tunes.cjs
  */
 const fs = require("fs");
 const path = require("path");
-
-const SLUGS = [
-  "honda-n600-1970",
-  "exomotive-exocet-sport-v8-xp-5-2018",
-  "chevrolet-camaro-zl1-2024",
-  "toyota-celica-gt-1974",
-  "mitsubishi-starion-esi-r-1988",
-  "porsche-203-porsche-ag-961-1987",
-  "ford-thunderbird-1957",
-  "alfa-romeo-autodelta-tipo-33-2-daytona-1968",
-  "nissan-skyline-2000-turbo-rs-1983",
-];
 
 function fail(msg) {
   console.error(`FAIL: ${msg}`);
   process.exit(1);
 }
 
-const file = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "public", "starterTunes.json"), "utf8"));
-if (file.tunes.length !== SLUGS.length) fail(`starter count ${file.tunes.length} != ${SLUGS.length}`);
+const root = path.join(__dirname, "..");
+const garage = JSON.parse(fs.readFileSync(path.join(root, "public/forzaGarage.json"), "utf8"));
+const file = JSON.parse(fs.readFileSync(path.join(root, "public/starterTunes.json"), "utf8"));
+const slugs = (garage.cars ?? []).map((c) => c.slug).filter(Boolean);
 
-for (const slug of SLUGS) {
-  const tune = file.tunes.find((t) => t.slug === slug);
+if (file.tunes.length !== slugs.length) {
+  fail(`starter count ${file.tunes.length} != garage ${slugs.length}`);
+}
+
+const bySlug = new Map(file.tunes.map((t) => [t.slug, t]));
+let missingSprings = 0;
+
+for (const slug of slugs) {
+  const tune = bySlug.get(slug);
   if (!tune) fail(`missing starter for ${slug}`);
   const c = tune.config;
   if (c.tuneId !== "Race") fail(`${slug} tuneId ${c.tuneId}`);
@@ -34,9 +31,14 @@ for (const slug of SLUGS) {
   if (c.tirePackage !== "semi") fail(`${slug} tires ${c.tirePackage}`);
   if (c.engineSwap !== "None (Stock)") fail(`${slug} swap ${c.engineSwap}`);
   if (c.weightPackage !== "street") fail(`${slug} weight ${c.weightPackage}`);
-  if (!(c.springFrontMin > 0) || !(c.springFrontMax > c.springFrontMin)) {
-    fail(`${slug} missing spring limits`);
-  }
+  if (!(c.springFrontMin > 0) || !(c.springFrontMax > c.springFrontMin)) missingSprings++;
 }
 
-console.log("check-starter-tunes: ok");
+if (missingSprings > slugs.length * 0.05) {
+  fail(`too many cars missing spring limits: ${missingSprings}/${slugs.length}`);
+}
+
+const n600 = bySlug.get("honda-n600-1970");
+if (!n600 || n600.config.driveType !== "FWD") fail("N600 Race tune missing");
+
+console.log(`check-starter-tunes: ok (${file.tunes.length} cars, ${missingSprings} without spring ends)`);

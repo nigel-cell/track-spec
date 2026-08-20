@@ -1,24 +1,13 @@
 /**
- * Write public/starterTunes.json for Series 4 cars.
+ * Write public/starterTunes.json — one Race build per garage car.
  * Usage: node scripts/build-starter-tunes.cjs
  */
 const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const SLUGS = [
-  "honda-n600-1970",
-  "exomotive-exocet-sport-v8-xp-5-2018",
-  "chevrolet-camaro-zl1-2024",
-  "toyota-celica-gt-1974",
-  "mitsubishi-starion-esi-r-1988",
-  "porsche-203-porsche-ag-961-1987",
-  "ford-thunderbird-1957",
-  "alfa-romeo-autodelta-tipo-33-2-daytona-1968",
-  "nissan-skyline-2000-turbo-rs-1983",
-];
-
 const WEIGHT_DIST = { FWD: 63, RWD: 47, AWD: 53 };
+const FALLBACK_TIRE = { width: 275, aspect: 35, rim: 19 };
 
 function aspirationId(raw) {
   if (!raw) return "na";
@@ -44,7 +33,7 @@ function estimateRedline(car) {
 
 function parseTire(spec) {
   const m = String(spec || "").replace(/\s+/g, "").match(/^(\d{3})\/(\d{2})R(\d{2})$/i);
-  return m ? { width: +m[1], aspect: +m[2], rim: +m[3] } : { width: 205, aspect: 55, rim: 16 };
+  return m ? { width: +m[1], aspect: +m[2], rim: +m[3] } : null;
 }
 
 function formatTire(width, aspect, rim) {
@@ -59,18 +48,19 @@ function makeRaceTune(car, limits) {
   const ts = car.tuneSpecs || {};
   const drive = ts.driveType || car.drive || "RWD";
   const stockLbs = ts.weightLbs ?? car.weightLbs ?? 2800;
-  const stockTq = ts.maxTorqueLbFt ?? 200;
+  const stockTq = ts.maxTorqueLbFt ?? car.torqueLbFt ?? 200;
   const redline = estimateRedline(car);
   const peak = ts.peakTorqueRpm ?? Math.round(redline * 0.65);
   const weightLbs = Math.max(600, stockLbs - 80);
-  const f = parseTire(ts.tireFront);
-  const r = parseTire(ts.tireRear);
+  const f = parseTire(ts.tireFront) ?? FALLBACK_TIRE;
+  const r = parseTire(ts.tireRear) ?? FALLBACK_TIRE;
   const springs = limits?.springs;
   const ride = limits?.ride;
+  const hasAero = !!(ts.hasAero || ts.downforceFront || ts.downforceRear);
 
   return {
     slug: car.slug,
-    name: "Series 4 Race",
+    name: "Race",
     note: "Stock engine. Street strip, race gearbox, semi-slicks, race brakes.",
     balance: 40,
     aggression: 45,
@@ -93,10 +83,10 @@ function makeRaceTune(car, limits) {
       topspeed: ts.topspeedMph ?? car.topSpeedMph ?? 180,
       gears: 6,
       includeGearing: true,
-      hasAero: false,
-      aeroF: 0,
-      aeroR: 0,
-      dragCd: 0.32,
+      hasAero,
+      aeroF: hasAero ? ts.downforceFront || 70 : 0,
+      aeroR: hasAero ? ts.downforceRear || 110 : 0,
+      dragCd: hasAero ? 0.36 : 0.32,
       tireWF: formatTire(Math.min(355, f.width + 20), f.aspect, f.rim),
       tireWR: formatTire(Math.min(365, r.width + 30), r.aspect, r.rim),
       engineSwap: "None (Stock)",
@@ -107,7 +97,7 @@ function makeRaceTune(car, limits) {
       tirePackage: "semi",
       transPackage: "race",
       brakePackage: "race",
-      aeroPackage: "none",
+      aeroPackage: hasAero ? "track" : "none",
       aspiration: aspirationId(ts.aspiration),
       inputDevice: "controller",
       sliderLimitsSource: limits?.source,
@@ -127,17 +117,8 @@ function makeRaceTune(car, limits) {
 function main() {
   const garage = JSON.parse(fs.readFileSync(path.join(ROOT, "public/forzaGarage.json"), "utf8"));
   const limitsFile = JSON.parse(fs.readFileSync(path.join(ROOT, "public/carSliderLimits.json"), "utf8"));
-  const bySlug = new Map((garage.cars ?? []).map((c) => [c.slug, c]));
-  const tunes = [];
-
-  for (const slug of SLUGS) {
-    const car = bySlug.get(slug);
-    if (!car) {
-      console.error(`missing garage car ${slug}`);
-      process.exit(1);
-    }
-    tunes.push(makeRaceTune(car, limitsFile.cars?.[slug] ?? null));
-  }
+  const cars = (garage.cars ?? []).filter((c) => c.slug);
+  const tunes = cars.map((car) => makeRaceTune(car, limitsFile.cars?.[car.slug] ?? null));
 
   const out = {
     version: 1,
@@ -146,8 +127,9 @@ function main() {
     tunes,
   };
   const dest = path.join(ROOT, "public/starterTunes.json");
-  fs.writeFileSync(dest, `${JSON.stringify(out, null, 2)}\n`);
-  console.log(`Wrote ${tunes.length} starter tunes → public/starterTunes.json`);
+  fs.writeFileSync(dest, JSON.stringify(out));
+  const kb = (fs.statSync(dest).size / 1024).toFixed(0);
+  console.log(`Wrote ${tunes.length} starter tunes → public/starterTunes.json (${kb} KB)`);
 }
 
 main();
