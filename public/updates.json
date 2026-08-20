@@ -1,9 +1,19 @@
 {
-  "version": "1.3.0",
-  "updatedAt": "2026-08-19",
+  "version": "1.3.1",
+  "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.1",
+      "date": "2026-08-20",
+      "title": "Patch deps + garage merge",
+      "items": [
+        "Compatible npm patches (Express 4.22, Electron 37.10, Vite 5.4.21, Wrangler 4.124)",
+        "Garage recheck from forzagarage.com: still 622 cars, 0 new, 0 dropped",
+        "List-page 0 mph / hp / lbs is not stored as a real spec"
+      ]
+    },
     {
       "version": "1.3.0",
       "date": "2026-08-19",

@@ -236,12 +236,11 @@ function mergeCar(prev, scraped) {
   for (const key of LIST_FIELDS) {
     const next = scraped[key];
     if (next == null || next === "") continue;
-    // List page uses 0 when speed/power is unknown — don't wipe a real value.
+    // List page uses 0 when speed/power/weight is unknown — don't treat 0 as data.
     if (
       typeof next === "number" &&
       next === 0 &&
-      (key === "topSpeedMph" || key === "powerHp" || key === "weightLbs") &&
-      prev[key]
+      (key === "topSpeedMph" || key === "powerHp" || key === "weightLbs")
     ) {
       continue;
     }

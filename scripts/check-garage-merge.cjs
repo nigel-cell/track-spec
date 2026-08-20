@@ -39,6 +39,16 @@ if (merged.mastery?.cells?.length !== 2) fail("lost mastery");
 if (merged.logoCode !== "TOY") fail("lost logoCode");
 if (merged.stats.HND !== 6.1) fail("stats not updated");
 if (merged.topSpeedMph !== 140) fail(`zero speed wiped real value: ${merged.topSpeedMph}`);
+
+const unknownSpeed = mergeCar(
+  { slug: "lamborghini-centenario-lp-770-4-2017", image: "/garage/heros/x.webp" },
+  { slug: "lamborghini-centenario-lp-770-4-2017", topSpeedMph: 0, powerHp: 0, weightLbs: 0, pi: 998 },
+);
+if (unknownSpeed.topSpeedMph === 0) fail("list-page 0 mph recorded as a real top speed");
+if (unknownSpeed.powerHp === 0) fail("list-page 0 hp recorded as a real power");
+if (unknownSpeed.weightLbs === 0) fail("list-page 0 lbs recorded as a real weight");
+if (unknownSpeed.pi !== 998) fail(`pi ${unknownSpeed.pi}`);
+
 if (needsDetails(prev)) fail("complete car should not need details");
 if (!needsDetails(null)) fail("new car needs details");
 if (!needsDetails({ slug: "new" })) fail("bare car needs details");
