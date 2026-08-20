@@ -1,9 +1,19 @@
 {
-  "version": "1.3.5",
+  "version": "1.3.6",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.6",
+      "date": "2026-08-20",
+      "title": "Install popup + FH6 spring/ride units",
+      "items": [
+        "Install now downloads the new TrackSpec-Live.exe, replaces this one, and opens it again",
+        "Tune Results spring rate is kgf/mm — same number you type in FH6",
+        "Ride height is cm, not inches"
+      ]
+    },
     {
       "version": "1.3.5",
       "date": "2026-08-20",

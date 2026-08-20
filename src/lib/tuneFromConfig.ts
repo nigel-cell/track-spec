@@ -61,7 +61,7 @@ export function buildCalcInput(
     transFdMult: full ? trans.fdMult : 1,
     springLimits: hasSpringLimits
       ? {
-          unit: units.springs,
+          unit: config.units?.springs ?? "lbs/in",
           frontMin: config.springFrontMin,
           frontMax: config.springFrontMax,
           rearMin: config.springRearMin,

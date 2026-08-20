@@ -51,7 +51,7 @@ export function MenuSheet({
               Tuning units
             </h3>
             <p className="mb-3 text-xs text-[var(--ts-muted)]">
-              Match what you see in Forza — weight, tire pressure, springs, and speed.
+              Weight, tire pressure, and speed. Spring rate is kgf/mm and ride height is cm — same as the FH6 sliders.
             </p>
             <div className="mb-4 grid grid-cols-2 gap-2">
               {[
@@ -64,7 +64,7 @@ export function MenuSheet({
                 {
                   id: "metric" as const,
                   label: "Metric",
-                  sub: "kg · bar · km/h",
+                  sub: "kg · kgf/mm · cm · km/h",
                   value: METRIC_UNITS,
                 },
               ].map((preset) => {
