@@ -4,6 +4,7 @@ import { AppShell, type TabId } from "./components/layout/AppShell";
 
 import { MenuSheet } from "./components/layout/MenuSheet";
 import { UpdatesSheet } from "./components/layout/UpdatesSheet";
+import { InstallUpdateDialog } from "./components/layout/InstallUpdateDialog";
 
 import { SetupScreen } from "./components/telemetry/SetupScreen";
 
@@ -43,6 +44,7 @@ import { useUnits } from "./hooks/useUnits";
 import { useAppRefresh } from "./hooks/useAppRefresh";
 import { useDesktopAutoUpdate } from "./hooks/useDesktopAutoUpdate";
 import { isElectronShell } from "./lib/appUpdates";
+import { hasDesktopUpdater } from "./lib/desktopBridge";
 import { convertValuesForUnits, resolveTuneUnits } from "./lib/units";
 
 import { TuneInputScreen, type TuneConfig } from "./components/tune/TuneInputScreen";
@@ -120,6 +122,8 @@ function AppContent() {
   const [dismissedCarOrdinal, setDismissedCarOrdinal] = useState<number | null>(null);
   const [garageVisited, setGarageVisited] = useState(false);
 
+  const [installOpen, setInstallOpen] = useState(false);
+
   const { telemetry, lookupCarOrdinal } = useTelemetryContext();
 
   const { units, setUnits } = useUnits();
@@ -129,7 +133,9 @@ function AppContent() {
   const prevUnitsRef = useRef(units);
 
   useEffect(() => {
-    if (desktopUpdate.promptOpen) setUpdatesOpen(true);
+    if (!desktopUpdate.promptOpen) return;
+    if (isElectronShell() && hasDesktopUpdater()) setInstallOpen(true);
+    else setUpdatesOpen(true);
   }, [desktopUpdate.promptOpen]);
 
   useEffect(() => {
@@ -435,11 +441,12 @@ function AppContent() {
 
 
 
-      {showUpdateReady && (
+      {showUpdateReady && !installOpen && (
         <button
           type="button"
           onClick={() => {
-            if (isElectronShell()) setUpdatesOpen(true);
+            if (isElectronShell() && hasDesktopUpdater()) setInstallOpen(true);
+            else if (isElectronShell()) setUpdatesOpen(true);
             else void refreshApp();
           }}
           className="fixed left-3 right-3 top-[env(safe-area-inset-top,0px)] z-[60] mt-2 rounded-[var(--ts-radius-md)] border border-[var(--ts-accent-border)] bg-[var(--ts-accent-soft)] px-4 py-2.5 text-center text-xs font-semibold text-[var(--ts-accent)] shadow-lg md:left-auto md:right-4 md:max-w-sm"
@@ -484,8 +491,19 @@ function AppContent() {
         }}
         updateReady={showUpdateReady}
         refreshBusy={refreshing}
-        autoStartDownload={desktopUpdate.available}
         onUpdateNow={() => void refreshApp()}
+      />
+
+      <InstallUpdateDialog
+        open={installOpen && isElectronShell()}
+        version={desktopUpdate.check?.remoteVersion}
+        title={desktopUpdate.check?.remote?.entries?.[0]?.title}
+        items={desktopUpdate.check?.remote?.entries?.[0]?.items}
+        downloadUrl={desktopUpdate.check?.remote?.downloadUrl}
+        onLater={() => {
+          setInstallOpen(false);
+          desktopUpdate.dismissPrompt();
+        }}
       />
 
 

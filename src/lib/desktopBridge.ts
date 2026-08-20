@@ -13,7 +13,7 @@ export type DesktopInfo = {
   userData: string;
 };
 
-type TrackSpecDesktopApi = {
+export type TrackSpecDesktopApi = {
   isDesktop: true;
   getInfo: () => Promise<DesktopInfo>;
   downloadUpdate: (url: string) => Promise<{ ok: boolean; path?: string; bytes?: number; error?: string }>;
