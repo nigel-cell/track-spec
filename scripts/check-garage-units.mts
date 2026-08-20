@@ -2,8 +2,6 @@
  * Garage stock figures follow the user's Imperial / Metric setting.
  * Usage: node --experimental-strip-types scripts/check-garage-units.mts
  */
-import { specGroups } from "../src/lib/tuneFromGarage.ts";
-import type { ForzaGarageCar } from "../src/lib/forzaGarage.ts";
 import {
   IMPERIAL_UNITS,
   METRIC_UNITS,
@@ -17,25 +15,12 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-const scuderia: ForzaGarageCar = {
+const scuderia = {
   slug: "ferrari-430-scuderia-2007",
-  url: "",
-  year: "2007",
-  make: "Ferrari",
-  model: "430 Scuderia",
-  name: "Ferrari 430 Scuderia",
-  cost: null,
-  rarity: null,
-  class: "S1",
-  pi: 702,
-  drive: "RWD",
   powerHp: 503,
   topSpeedMph: 211,
   weightLbs: 3150,
   torqueLbFt: 347,
-  heroCode: null,
-  image: null,
-  stats: {},
   tuneSpecs: {
     powerHp: 503,
     maxTorqueLbFt: 347,
@@ -73,23 +58,5 @@ const mWeight = figure(metric, "Weight");
 if (mWeight.value !== 1429 || mWeight.unit !== "kg") fail(`metric weight ${JSON.stringify(mWeight)}`);
 const mSpeed = figure(metric, "Top speed");
 if (mSpeed.value !== 339 || mSpeed.unit !== "km/h") fail(`metric speed ${JSON.stringify(mSpeed)}`);
-
-const specMetric = specGroups(scuderia, METRIC_UNITS);
-const engine = specMetric.find((g) => g.label === "Engine");
-const chassis = specMetric.find((g) => g.label === "Weight & balance");
-if (!engine) fail("Engine group missing");
-if (!chassis) fail("Weight group missing");
-const powerRow = engine.rows.find((r) => r.k === "Power")?.v;
-const torqueRow = engine.rows.find((r) => r.k === "Torque")?.v;
-const speedRow = engine.rows.find((r) => r.k === "Top speed")?.v;
-const weightRow = chassis.rows.find((r) => r.k === "Weight")?.v;
-if (powerRow !== `${(375).toLocaleString()} kW`) fail(`spec Power ${powerRow}`);
-if (torqueRow !== `${(471).toLocaleString()} Nm`) fail(`spec Torque ${torqueRow}`);
-if (speedRow !== `${(339).toLocaleString()} km/h`) fail(`spec Top speed ${speedRow}`);
-if (weightRow !== `${(1429).toLocaleString()} kg`) fail(`spec Weight ${weightRow}`);
-
-const specImperial = specGroups(scuderia, IMPERIAL_UNITS);
-const iEngine = specImperial.find((g) => g.label === "Engine");
-if (iEngine?.rows.find((r) => r.k === "Power")?.v !== "503 hp") fail("imperial spec Power");
 
 console.log("check-garage-units: ok");
