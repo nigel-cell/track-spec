@@ -1,5 +1,5 @@
 /**
- * Write public/starterTunes.json — Race, Touge, Drag, Rally per garage car.
+ * Write public/starterTunes.json — Race, Touge, Speed, Drag, Rally, Cross Country per garage car.
  * Usage: node scripts/build-starter-tunes.cjs
  */
 const fs = require("fs");
@@ -45,6 +45,23 @@ const MODES = [
     aero: "splitterIfCarHasIt",
   },
   {
+    tuneId: "Wangan",
+    name: "Speed",
+    note: "Stock engine. Street strip, race gearbox, semi-slicks. Long gears for traps.",
+    balance: 20,
+    aggression: 25,
+    surface: "Road",
+    weightDelta: -80,
+    weightPackage: "street",
+    chassisPackage: "stock",
+    tirePackage: "semi",
+    tireDeltaF: 20,
+    tireDeltaR: 30,
+    compound: "Race Semi-Slick",
+    brakePackage: "race",
+    aero: "wingIfCarHasIt",
+  },
+  {
     tuneId: "Drag",
     name: "Drag Run",
     note: "Stock engine. Sport strip, race gearbox, drag radials. No aero.",
@@ -68,6 +85,23 @@ const MODES = [
     balance: 40,
     aggression: 35,
     surface: "Mixed",
+    weightDelta: -55,
+    weightPackage: "street",
+    chassisPackage: "braced",
+    tirePackage: "rally",
+    tireDeltaF: 0,
+    tireDeltaR: 0,
+    compound: "Rally",
+    brakePackage: "sport",
+    aero: "none",
+  },
+  {
+    tuneId: "Cross-Country",
+    name: "Cross Country",
+    note: "Stock engine. Street strip, chassis brace, rally tires. Dirt trails.",
+    balance: 45,
+    aggression: 45,
+    surface: "Dirt",
     weightDelta: -55,
     weightPackage: "street",
     chassisPackage: "braced",
@@ -121,6 +155,9 @@ function aeroFor(mode, carHasAero) {
   }
   if (mode.aero === "splitterIfCarHasIt" && carHasAero) {
     return { aeroPackage: "splitter", hasAero: true, aeroF: 45, aeroR: 15, dragCd: 0.33 };
+  }
+  if (mode.aero === "wingIfCarHasIt" && carHasAero) {
+    return { aeroPackage: "wing", hasAero: true, aeroF: 15, aeroR: 70, dragCd: 0.34 };
   }
   return { aeroPackage: "none", hasAero: false, aeroF: 0, aeroR: 0, dragCd: 0.32 };
 }

@@ -9,10 +9,11 @@ export interface TuneMode {
 export const TUNE_MODES: TuneMode[] = [
   { id: "Race", code: "TARMAC", label: "Track Day", sub: "Circuit & road", color: "#FF3333" },
   { id: "Touge", code: "MOUNTAIN", label: "Touge Run", sub: "Tight corners", color: "#7ecc3a" },
-  { id: "Wangan", code: "HIGHWAY", label: "Wangan", sub: "High speed", color: "#00cfff" },
+  { id: "Wangan", code: "HIGHWAY", label: "Speed", sub: "Highway & traps", color: "#00cfff" },
   { id: "Drift", code: "ANGLE", label: "Drift Session", sub: "Sideways", color: "#ff6b35" },
   { id: "Drag", code: "STRAIGHT", label: "Drag Run", sub: "Launch focus", color: "#e6b800" },
   { id: "Rally", code: "LOOSE", label: "Rally Stage", sub: "Gravel & dirt", color: "#d4a855" },
+  { id: "Cross-Country", code: "TRAIL", label: "Cross Country", sub: "Dirt trails", color: "#8b6b3a" },
   { id: "General", code: "GENERAL", label: "All-Round", sub: "Balanced setup", color: "#8899aa" },
   { id: "Rain", code: "WET", label: "Wet Control", sub: "Rain & puddles", color: "#6ab0d4" },
 ];

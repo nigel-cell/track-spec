@@ -25,6 +25,7 @@ export const PHYSICS = {
     Touge:   {f:1.08, r:0.99},  // +10% — tight corners need planted front
     Drift:   {f:0.85, r:0.78},  // +6% — still soft but more controlled
     Rally:   {f:0.63, r:0.58},  // unchanged — FH5 rally feel confirmed same
+    "Cross-Country": {f:0.68, r:0.62},  // a bit stiffer than rally — dirt roads + jumps
     Drag:    {f:0.95, r:0.72},  // +5% — front squat control
     Wangan:  {f:1.04, r:0.97},  // +10% — high speed needs stability
     Rain:    {f:0.85, r:0.79},  // +10% — FM wet model more aggressive
@@ -185,8 +186,8 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
   // ── RIDE HEIGHT
   // Ride height in cm (native Forza unit) — validated against in-game suspension screen
   // Ride height — game minimum is 15cm. Drag nose-down via rear bias not front lowering.
-  const fRideCm = isDrift ? 15.5 : isRally ? 20.0 : isSnow ? 22.0 : isDrag ? 15.0 : 15.0;
-  const rRideCm = isDrift ? 15.0 : isRally ? 19.0 : isSnow ? 21.0 : isDrag ? 17.0 : 15.0;
+  const fRideCm = isDrift ? 15.5 : isRally || isOffRoad ? 20.0 : isSnow ? 22.0 : isDrag ? 15.0 : 15.0;
+  const rRideCm = isDrift ? 15.0 : isRally || isOffRoad ? 19.0 : isSnow ? 21.0 : isDrag ? 17.0 : 15.0;
   const fRide = fRideCm; // cm
   const rRide = rRideCm; // cm
 

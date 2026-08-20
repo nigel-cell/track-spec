@@ -16,6 +16,7 @@ const COMPOUND_BY_MODE: Record<string, string> = {
   Drift: "Race Semi-Slick",
   Drag: "Drag",
   Rally: "Rally",
+  "Cross-Country": "Rally",
   Rain: "Street",
   General: "Sport",
 };
@@ -27,6 +28,7 @@ const SURFACE_BY_MODE: Record<string, string> = {
   Drift: "Road",
   Drag: "Road",
   Rally: "Mixed",
+  "Cross-Country": "Dirt",
   Rain: "Road",
   General: "Road",
 };

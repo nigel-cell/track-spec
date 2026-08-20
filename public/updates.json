@@ -7,12 +7,14 @@
     {
       "version": "1.3.3",
       "date": "2026-08-20",
-      "title": "Touge, Drag, and Rally on every car",
+      "title": "Touge, Drag, Rally, Cross Country, and Speed on every car",
       "items": [
-        "Each garage car now has four Track Spec tunes: Track Day, Touge Run, Drag Run, Rally Stage",
+        "Each garage car now has six Track Spec tunes: Track Day, Touge Run, Speed, Drag Run, Rally Stage, Cross Country",
         "Touge: street strip, semi-slicks, splitter when the car has aero",
+        "Speed: street strip, semi-slicks, rear wing when the car has aero, long gears for traps",
         "Drag: sport strip, drag radials, no aero",
         "Rally: street strip, chassis brace, rally tires, mixed surface",
+        "Cross Country: street strip, chassis brace, rally tires, dirt trails",
         "Load from Garage or Manual. Buy the listed Upgrades parts, then enter the sliders"
       ]
     },

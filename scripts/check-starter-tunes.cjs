@@ -1,5 +1,5 @@
 /**
- * Every garage car has bundled Race, Touge, Drag, and Rally builds.
+ * Every garage car has bundled Track Day, Touge, Speed, Drag, Rally, and Cross Country builds.
  * Usage: node scripts/check-starter-tunes.cjs
  */
 const fs = require("fs");
@@ -10,7 +10,7 @@ function fail(msg) {
   process.exit(1);
 }
 
-const MODES = ["Race", "Touge", "Drag", "Rally"];
+const MODES = ["Race", "Touge", "Wangan", "Drag", "Rally", "Cross-Country"];
 const root = path.join(__dirname, "..");
 const garage = JSON.parse(fs.readFileSync(path.join(root, "public/forzaGarage.json"), "utf8"));
 const file = JSON.parse(fs.readFileSync(path.join(root, "public/starterTunes.json"), "utf8"));
@@ -45,12 +45,17 @@ for (const slug of slugs) {
   }
   const race = list.find((t) => t.config.tuneId === "Race");
   const touge = list.find((t) => t.config.tuneId === "Touge");
+  const speed = list.find((t) => t.config.tuneId === "Wangan");
   const drag = list.find((t) => t.config.tuneId === "Drag");
   const rally = list.find((t) => t.config.tuneId === "Rally");
+  const xc = list.find((t) => t.config.tuneId === "Cross-Country");
   if (race.config.tirePackage !== "semi") fail(`${slug} Race tires ${race.config.tirePackage}`);
   if (race.config.weightPackage !== "street") fail(`${slug} Race weight ${race.config.weightPackage}`);
   if (touge.config.tirePackage !== "semi") fail(`${slug} Touge tires ${touge.config.tirePackage}`);
   if (touge.config.surface !== "Road") fail(`${slug} Touge surface ${touge.config.surface}`);
+  if (speed.name !== "Speed") fail(`${slug} Speed name ${speed.name}`);
+  if (speed.config.tirePackage !== "semi") fail(`${slug} Speed tires ${speed.config.tirePackage}`);
+  if (speed.config.surface !== "Road") fail(`${slug} Speed surface ${speed.config.surface}`);
   if (drag.config.tirePackage !== "drag") fail(`${slug} Drag tires ${drag.config.tirePackage}`);
   if (drag.config.compound !== "Drag") fail(`${slug} Drag compound ${drag.config.compound}`);
   if (drag.config.aeroPackage !== "none") fail(`${slug} Drag aero ${drag.config.aeroPackage}`);
@@ -59,6 +64,10 @@ for (const slug of slugs) {
   if (rally.config.compound !== "Rally") fail(`${slug} Rally compound ${rally.config.compound}`);
   if (rally.config.surface !== "Mixed") fail(`${slug} Rally surface ${rally.config.surface}`);
   if (rally.config.chassisPackage !== "braced") fail(`${slug} Rally chassis ${rally.config.chassisPackage}`);
+  if (xc.config.tirePackage !== "rally") fail(`${slug} XC tires ${xc.config.tirePackage}`);
+  if (xc.config.compound !== "Rally") fail(`${slug} XC compound ${xc.config.compound}`);
+  if (xc.config.surface !== "Dirt") fail(`${slug} XC surface ${xc.config.surface}`);
+  if (xc.config.chassisPackage !== "braced") fail(`${slug} XC chassis ${xc.config.chassisPackage}`);
 }
 
 if (missingSprings > slugs.length * MODES.length * 0.05) {

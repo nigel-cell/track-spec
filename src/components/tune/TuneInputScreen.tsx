@@ -229,6 +229,8 @@ const COMPOUND_BY_MODE: Record<string, string> = {
 
   Rally: "Rally",
 
+  "Cross-Country": "Rally",
+
   Rain: "Street",
 
   General: "Sport",
@@ -250,6 +252,8 @@ const SURFACE_BY_MODE: Record<string, string> = {
   Drag: "Road",
 
   Rally: "Mixed",
+
+  "Cross-Country": "Dirt",
 
   Rain: "Road",
 
