@@ -6,37 +6,35 @@ const STEPS = [
 
   {
 
-    title: "1. Start the relay on your PC",
+    title: "1. Open Track Spec on this PC",
 
-    body: "Double-click START.bat or run npm run server in the project folder.",
-
-    code: "START.bat",
+    body: "Double-click TrackSpec-Live.exe. That starts the Live relay. You do not need START.bat if you are using the exe.",
 
   },
 
   {
 
-    title: "2. Enable Data Out in Forza",
+    title: "2. Enable Data Out in Forza Horizon 6",
 
-    body: "Options → HUD and Gameplay → bottom of page.",
+    body: "Settings → HUD and Gameplay → scroll to Data Out. FH6 only sends packets while you are driving — not in menus, pause, or replay.",
 
-    list: ["Data Out: ON", "Data Out IP: 127.0.0.1 (PC) or your PC IP (Xbox)", "Data Out Port: 9999"],
+    list: ["Data Out: ON", "Data Out IP: 127.0.0.1 (same PC) or this PC’s Wi-Fi IP (Xbox)", "Data Out Port: 9999"],
 
   },
 
   {
 
-    title: "3. Open on iPhone or desktop",
+    title: "3. Drive, then open Live",
 
-    body: "Same Wi‑Fi as your PC. Use Safari on iPhone or any browser on desktop.",
+    body: "Start driving in FH6. Live should switch to Game connected. On a phone, same Wi-Fi, type the PC IP on the Live tab.",
 
     list: [
 
-      "iPhone URL: http://<PC-IP>:3000",
+      "iPhone: enter the PC IP on Live (not the Cloudflare site for Data Out)",
 
-      "Desktop: http://localhost:3000",
+      "Desktop exe: leave the IP blank",
 
-      "Tap Test mock on Live tab to preview without the game",
+      "Tap Test mock on Live to preview without the game",
 
     ],
 

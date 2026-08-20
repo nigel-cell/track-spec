@@ -44,6 +44,18 @@ app.get("/ping", (_req, res) => {
   res.type("text").send(`Track Spec OK — relay running on UDP 9999, WebSocket on ${port}`);
 });
 
+app.get("/api/status", (_req, res) => {
+  const port = Number(process.env.TRACK_SPEC_BOUND_HTTP_PORT) || Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
+  res.json({
+    ok: true,
+    httpPort: port,
+    udpPort: FORZA_UDP_PORT,
+    udpBound,
+    udpError: udpError || null,
+    lastPacketAt: lastUdpAt || null,
+  });
+});
+
 app.use(express.static(DIST_DIR));
 
 app.use(express.json());
@@ -100,9 +112,16 @@ app.get("/api/records/cars", (_req, res) => {
 
 
 
-const udpSocket = dgram.createSocket("udp4");
+let udpSocket = null;
 
 const FORZA_UDP_PORT = 9999;
+
+let udpBound = null;
+let udpError = null;
+let lastUdpAt = 0;
+let udpRetryTimer = null;
+let udpAttempts = 0;
+const UDP_RETRY_MAX = 30;
 
 const PREFERRED_HTTP_PORT = Number(process.env.TRACK_SPEC_HTTP_PORT) || 3000;
 const HTTP_PORT_TRIES = Math.max(1, Number(process.env.TRACK_SPEC_HTTP_PORT_TRIES) || 10);
@@ -643,59 +662,97 @@ let packetCount = 0;
 
 let lastLogTime = 0;
 
-
-
-udpSocket.on("message", (msg) => {
-
+function handleUdpMessage(msg) {
   if (simulationInterval) return;
-
   const telemetry = parseForzaTelemetry(msg);
-
   if (!telemetry) return;
-
+  lastUdpAt = Date.now();
   packetCount++;
-
-  const now = Date.now();
-
+  const now = lastUdpAt;
   if (now - lastLogTime > 5000) {
-
     console.log(`[UDP] ${packetCount} pkts/5s | Car ${telemetry.carOrdinal} | PI ${telemetry.carPerformanceIndex}`);
-
     packetCount = 0;
-
     lastLogTime = now;
-
   }
-
   publishTelemetry(telemetry);
-
-});
-
-
-
-udpSocket.on("listening", () => {
-
-  const { address, port } = udpSocket.address();
-
-  console.log(`[UDP] Listening on ${address}:${port}`);
-
-});
-
-
-
-udpSocket.on("error", (err) => {
-  console.error(`[UDP] ${err.message} — Live telemetry may be unavailable (is another Track Spec already running?)`);
-  if (err.code === "EADDRINUSE") {
-    console.error("[UDP] Port 9999 is already in use. Close other telemetry tools / Track Spec first.");
-  }
-  if (!process.env.TRACK_SPEC_ELECTRON && err.code !== "EADDRINUSE") process.exit(1);
-});
-
-try {
-  udpSocket.bind(FORZA_UDP_PORT);
-} catch (err) {
-  console.error(`[UDP] bind failed: ${err && err.message ? err.message : err}`);
 }
+
+function scheduleUdpRetry() {
+  if (udpRetryTimer) return;
+  if (udpAttempts >= UDP_RETRY_MAX) {
+    console.error("[UDP] Gave up binding port 9999. Close other Track Spec / telemetry tools, then reopen this app.");
+    return;
+  }
+  udpAttempts += 1;
+  udpRetryTimer = setTimeout(() => {
+    udpRetryTimer = null;
+    bindUdp();
+  }, 1000);
+}
+
+function bindUdp() {
+  try {
+    if (udpSocket) {
+      udpSocket.removeAllListeners();
+      udpSocket.close();
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    udpSocket = dgram.createSocket("udp4");
+  } catch (err) {
+    udpBound = false;
+    udpError = err && err.message ? err.message : String(err);
+    scheduleUdpRetry();
+    return;
+  }
+
+  udpSocket.on("message", handleUdpMessage);
+
+  udpSocket.on("listening", () => {
+    udpBound = true;
+    udpError = null;
+    udpAttempts = 0;
+    const { address, port } = udpSocket.address();
+    console.log(`[UDP] Listening on ${address}:${port}`);
+  });
+
+  udpSocket.on("error", (err) => {
+    udpBound = false;
+    udpError =
+      err && err.code === "EADDRINUSE"
+        ? "Port 9999 is already in use. Close other Track Spec windows, then reopen this one."
+        : err && err.message
+          ? err.message
+          : "Could not listen on port 9999";
+    console.error(`[UDP] ${udpError}`);
+    if (err && err.code === "EADDRINUSE") {
+      console.error("[UDP] Close other telemetry tools / Track Spec first.");
+    }
+    try {
+      udpSocket.close();
+    } catch {
+      /* ignore */
+    }
+    if (!process.env.TRACK_SPEC_ELECTRON && err && err.code !== "EADDRINUSE" && err.code !== "EACCES") {
+      process.exit(1);
+    }
+    scheduleUdpRetry();
+  });
+
+  try {
+    udpSocket.bind({ port: FORZA_UDP_PORT, exclusive: true });
+  } catch (err) {
+    udpBound = false;
+    udpError = err && err.message ? err.message : String(err);
+    console.error(`[UDP] bind failed: ${udpError}`);
+    scheduleUdpRetry();
+  }
+}
+
+bindUdp();
 
 
 
@@ -842,7 +899,16 @@ function shutdownRelay() {
   }
 
   try {
-    udpSocket.close();
+    if (udpRetryTimer) {
+      clearTimeout(udpRetryTimer);
+      udpRetryTimer = null;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    if (udpSocket) udpSocket.close();
   } catch {
     /* ignore */
   }

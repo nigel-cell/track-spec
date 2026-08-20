@@ -30,6 +30,8 @@ import {
 
 } from "../../lib/telemetry";
 
+import { liveStatusColor, liveStatusDetail, liveStatusLabel } from "../../lib/liveStatus";
+
 
 
 const C = {
@@ -389,6 +391,9 @@ export function TelemetryScreen({
     clientMockActive,
     isGameLive,
     serverOnline,
+    udpBound,
+    udpError,
+    sawGame,
     toggleMock,
     suggestedIp,
     liveBalance,
@@ -444,37 +449,20 @@ export function TelemetryScreen({
 
 
 
-  const statusLabel =
+  const linkState = {
+    wsStatus,
+    mockActive,
+    isGameLive,
+    sawGame,
+    udpBound,
+    udpError,
+  };
 
-    wsStatus !== "connected" && !clientMockActive
+  const statusLabel = liveStatusLabel(linkState);
 
-      ? "Server offline"
+  const statusDetail = liveStatusDetail(linkState);
 
-      : mockActive
-
-        ? "Mock data active"
-
-        : isGameLive
-
-          ? "Game connected"
-
-          : "Waiting for game…";
-
-
-
-  const statusColor =
-
-    wsStatus !== "connected" && !clientMockActive
-
-      ? "var(--ts-danger)"
-
-      : mockActive || isGameLive
-
-        ? "var(--ts-success)"
-
-        : "var(--ts-warning)";
-
-
+  const statusColor = liveStatusColor(linkState);
 
   const speed = telemetry ? Math.round(telemetry.speedKmh) : 0;
 
@@ -585,6 +573,7 @@ export function TelemetryScreen({
           units={units}
           statusLabel={statusLabel}
           statusColor={statusColor}
+          statusDetail={statusDetail}
           mockActive={mockActive}
           onToggleMock={toggleMock}
           onQuickTune={onQuickTune}
@@ -648,11 +637,14 @@ export function TelemetryScreen({
 
             {!mockActive && serverOnline === false && wsStatus !== "connected" && (
 
-              <span className="text-[var(--ts-muted)]">· run START.bat on PC</span>
+              <span className="text-[var(--ts-muted)]">· open TrackSpec-Live.exe</span>
 
             )}
 
           </div>
+          {statusDetail && (
+            <p className="mt-2 max-w-xl text-xs leading-snug text-[var(--ts-muted)]">{statusDetail}</p>
+          )}
 
         </div>
 

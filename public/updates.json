@@ -1,9 +1,19 @@
 {
-  "version": "1.3.6",
+  "version": "1.3.7",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.7",
+      "date": "2026-08-20",
+      "title": "Live says why the game is not connected",
+      "items": [
+        "FH6 only sends Data Out while you are driving — Live says that instead of Waiting for game",
+        "If port 9999 is already in use after an update, the relay retries and Live says Port 9999 blocked",
+        "Setup lists TrackSpec-Live.exe, 127.0.0.1, and port 9999"
+      ]
+    },
     {
       "version": "1.3.6",
       "date": "2026-08-20",
