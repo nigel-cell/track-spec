@@ -1,5 +1,5 @@
 /**
- * Full saved profiles for favorite cars: weight, speed, torque, tires,
+ * Saved profiles for owned and favorite cars: weight, speed, torque, tires,
  * measured spring/ride/aero limits, and last Manual setup edits.
  */
 
@@ -16,6 +16,11 @@ import {
   type SliderLimitsFile,
 } from "./sliderLimits";
 import { loadFavoriteDraft, saveFavoriteDraft } from "./carFavorites";
+import {
+  loadManualDraft,
+  mergeResumedConfig,
+  slugFromMakeModel,
+} from "./manualDraft";
 
 function limitsToConfigFields(
   limits: CarSliderLimits | null,
@@ -90,6 +95,54 @@ export function ensureFavoriteProfile(
   return merged;
 }
 
+export function hasSavedCarSetup(slug: string, make = "", model = ""): boolean {
+  if (slug && loadFavoriteDraft(slug)) return true;
+  if (slug && loadManualDraft(slug)) return true;
+  const custom = slugFromMakeModel(make, model);
+  return !!(custom && loadManualDraft(custom));
+}
+
+/**
+ * Garage stock + last saved edits for an owned or favorite car.
+ * Manual draft fields (weight, springs, packages, mode) win when present.
+ */
+export function resumeCarProfile(
+  slug: string,
+  garage: ForzaGarageCar,
+  cars: CarRecord[],
+  units: TuneUnits = IMPERIAL_UNITS,
+  sliderFile: SliderLimitsFile | null = null,
+): {
+  config: Partial<TuneConfig>;
+  section?: import("./manualDraft").ManualDraftSection;
+  mode?: import("./manualDraft").ManualDraftMode;
+} {
+  const profile = ensureFavoriteProfile(slug, garage, cars, units, sliderFile);
+  const manual =
+    loadManualDraft(slug) ?? loadManualDraft(slugFromMakeModel(garage.make, garage.model));
+  return {
+    config: mergeResumedConfig(profile, null, manual?.config),
+    section: manual?.section,
+    mode: manual?.mode,
+  };
+}
+
+/** Hydrate owned + favorite garage cars that lack a full draft. */
+export function hydrateCarProfiles(
+  slugs: Iterable<string>,
+  garageCars: ForzaGarageCar[],
+  cars: CarRecord[],
+  units: TuneUnits = IMPERIAL_UNITS,
+  sliderFile: SliderLimitsFile | null = null,
+): void {
+  const bySlug = new Map(garageCars.map((c) => [c.slug, c]));
+  for (const slug of slugs) {
+    const garage = bySlug.get(slug);
+    if (!garage) continue;
+    ensureFavoriteProfile(slug, garage, cars, units, sliderFile);
+  }
+}
+
 /** Hydrate all currently favorited garage cars that lack a full draft. */
 export function hydrateFavoriteProfiles(
   favoriteSlugs: Set<string>,
@@ -98,9 +151,5 @@ export function hydrateFavoriteProfiles(
   units: TuneUnits = IMPERIAL_UNITS,
   sliderFile: SliderLimitsFile | null = null,
 ): void {
-  for (const slug of favoriteSlugs) {
-    const garage = garageCars.find((c) => c.slug === slug);
-    if (!garage) continue;
-    ensureFavoriteProfile(slug, garage, cars, units, sliderFile);
-  }
+  hydrateCarProfiles(favoriteSlugs, garageCars, cars, units, sliderFile);
 }
