@@ -7,12 +7,15 @@
     {
       "version": "1.3.7",
       "date": "2026-08-20",
-      "title": "Garage stock follows Metric / Imperial",
+      "title": "Metric garage, Save draft, Live Data Out",
       "items": [
         "Garage Stock on Manual and car detail uses your units setting",
         "Metric shows kW, Nm, kg, and km/h — Imperial stays hp, lb-ft, lb, mph",
         "Save draft sits on its own row so Back and Next cannot push it off a phone",
-        "If the device cannot store a draft, Manual says so instead of going silent"
+        "If the device cannot store a draft, Manual says so instead of going silent",
+        "FH6 only sends Data Out while you are driving — Live says that instead of Waiting for game",
+        "If port 9999 is already in use after an update, the relay retries and Live says Port 9999 blocked",
+        "Setup lists TrackSpec-Live.exe, 127.0.0.1, and port 9999"
       ]
     },
     {

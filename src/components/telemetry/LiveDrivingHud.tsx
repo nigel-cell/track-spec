@@ -229,6 +229,7 @@ export interface LiveDrivingHudProps {
   units: TuneUnits;
   statusLabel: string;
   statusColor: string;
+  statusDetail?: string | null;
   mockActive: boolean;
   onToggleMock: () => void;
   onQuickTune?: () => void;
@@ -268,6 +269,7 @@ export function LiveDrivingHud({
   units,
   statusLabel,
   statusColor,
+  statusDetail,
   mockActive,
   onToggleMock,
   onQuickTune,
@@ -281,7 +283,7 @@ export function LiveDrivingHud({
   const steerPct = telemetry ? Math.round(telemetry.steer * 100) : 0;
 
   return (
-    <div className="relative grid h-full min-h-0 grid-rows-[auto_auto_auto_1fr] bg-[var(--ts-bg)]">
+    <div className="relative flex h-full min-h-0 flex-col bg-[var(--ts-bg)]">
       <LivePbAlert alert={telemetry?.pbAlert ?? null} units={units} />
       {/* Status */}
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--ts-border)] px-4 py-2">
@@ -330,6 +332,11 @@ export function LiveDrivingHud({
           </Button>
         </div>
       </header>
+      {statusDetail && (
+        <p className="shrink-0 border-b border-[var(--ts-border)] bg-[var(--ts-card)] px-4 py-2 text-xs leading-snug text-[var(--ts-muted)]">
+          {statusDetail}
+        </p>
+      )}
 
       {loadedConfig && <LoadedTuneStrip config={loadedConfig} />}
 
@@ -370,7 +377,7 @@ export function LiveDrivingHud({
       </section>
 
       {/* Dashboard body */}
-      <section className="grid min-h-0 grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-3 p-3">
+      <section className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-3 p-3">
         <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--ts-border)] bg-[var(--ts-card)]">
           <LiveTrackMap telemetry={telemetry} variant="fill" />
         </div>

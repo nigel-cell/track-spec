@@ -102,9 +102,17 @@ export function useTelemetryWs() {
 
   const [tutorialIps, setTutorialIps] = useState<string[]>(["127.0.0.1"]);
 
+  const [udpBound, setUdpBound] = useState<boolean | null>(null);
+
+  const [udpError, setUdpError] = useState<string | null>(null);
+
+  const [sawGame, setSawGame] = useState(false);
+
 
 
   const wsRef = useRef<WebSocket | null>(null);
+
+  const simRef = useRef(false);
 
 
 
@@ -224,11 +232,15 @@ export function useTelemetryWs() {
 
             setLastPacketTime(Date.now());
 
+            if (!simRef.current) setSawGame(true);
+
           } else if (payload.type === "init" && payload.data?.ips) {
 
             setTutorialIps(payload.data.ips);
 
           } else if (payload.type === "simulation_status") {
+
+            simRef.current = !!payload.active;
 
             setSimulationActive(!!payload.active);
 
@@ -304,17 +316,63 @@ export function useTelemetryWs() {
 
     async function poll() {
 
+      const port = resolveWsPort();
+
       try {
 
-        const res = await fetch(`http://${host}:${resolveWsPort()}/ping`);
+        const statusRes = await fetch(`http://${host}:${port}/api/status`);
+
+        if (cancelled) return;
+
+        if (statusRes.ok) {
+
+          const data = (await statusRes.json()) as {
+
+            udpBound?: boolean;
+
+            udpError?: string | null;
+
+          };
+
+          setServerOnline(true);
+
+          setUdpBound(typeof data.udpBound === "boolean" ? data.udpBound : null);
+
+          setUdpError(data.udpError || null);
+
+          return;
+
+        }
+
+      } catch {
+
+        /* old relay has no /api/status */
+
+      }
+
+      try {
+
+        const res = await fetch(`http://${host}:${port}/ping`);
 
         if (cancelled) return;
 
         setServerOnline(res.ok);
 
+        setUdpBound(null);
+
+        setUdpError(null);
+
       } catch {
 
-        if (!cancelled) setServerOnline(false);
+        if (!cancelled) {
+
+          setServerOnline(false);
+
+          setUdpBound(null);
+
+          setUdpError(null);
+
+        }
 
       }
 
@@ -383,6 +441,12 @@ export function useTelemetryWs() {
     isGameLive,
 
     serverOnline,
+
+    udpBound,
+
+    udpError,
+
+    sawGame,
 
     toggleMock,
 
