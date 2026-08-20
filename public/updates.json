@@ -1,9 +1,21 @@
 {
-  "version": "1.3.2",
+  "version": "1.3.3",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.3",
+      "date": "2026-08-20",
+      "title": "Touge, Drag, and Rally on every car",
+      "items": [
+        "Each garage car now has four Track Spec tunes: Track Day, Touge Run, Drag Run, Rally Stage",
+        "Touge: street strip, semi-slicks, splitter when the car has aero",
+        "Drag: sport strip, drag radials, no aero",
+        "Rally: street strip, chassis brace, rally tires, mixed surface",
+        "Load from Garage or Manual. Buy the listed Upgrades parts, then enter the sliders"
+      ]
+    },
     {
       "version": "1.3.2",
       "date": "2026-08-20",
