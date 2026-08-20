@@ -19,7 +19,8 @@ import { Button } from "../ui/Button";
 import { Card, DataValue, Label } from "../ui/Card";
 
 import { FineTuneFlow } from "./FineTuneFlow";
-
+import { EnhancePromptSheet } from "./EnhancePromptSheet";
+import { BuildPartsCard } from "./BuildPartsCard";
 import { SaveTunesSheet } from "./SaveTunesSheet";
 import { useForzaGarage } from "../../hooks/useForzaGarage";
 import { configToBuildProfile, saveBuildProfile } from "../../lib/buildProfiles";
@@ -348,15 +349,20 @@ export function TuneResultsScreen({
                 label: "Build",
                 value: [
                   config.powerStage && config.powerStage !== "stock" ? config.powerStage : null,
+                  config.weightPackage && config.weightPackage !== "stock" ? config.weightPackage : null,
+                  config.transPackage && config.transPackage !== "stock" ? config.transPackage : null,
                   config.tirePackage && config.tirePackage !== "stock" ? config.tirePackage : null,
+                  config.brakePackage && config.brakePackage !== "stock" ? config.brakePackage : null,
                   config.aeroPackage && config.aeroPackage !== "none" ? config.aeroPackage : null,
                 ]
                   .filter(Boolean)
-                  .join(" · ") || "stock",
+                  .join(" · ") || "Race springs",
               },
             ]}
           />
         </div>
+
+        <BuildPartsCard config={config} />
 
         <div className="mt-4 -mx-4 sticky top-[52px] z-[9] border-b border-[var(--ts-border)] bg-[var(--ts-bg)]/95 px-4 backdrop-blur-md">
           <div className="flex gap-0.5 overflow-x-auto pb-px">

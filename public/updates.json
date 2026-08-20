@@ -10,7 +10,8 @@
       "title": "Race build on every car",
       "items": [
         "Every garage car has a Track Spec Race tune — Load from Garage or Manual",
-        "Stock engine, street strip, race gearbox, semi-slicks, race brakes"
+        "Stock engine, street strip, race gearbox, semi-slicks, race brakes",
+        "Tune Results lists the Upgrades parts to buy first (Race springs, ARBs, trans, clutch, diff, brakes, alignment). Copy/export includes the same list"
       ]
     },
     {

@@ -1,5 +1,6 @@
 import { TUNE_MODES, TUNE_TAB_ORDER } from "../data/constants";
 import type { TuneConfig } from "../components/tune/TuneInputScreen";
+import { formatBuildPartsText } from "./buildParts";
 import type { CalcTuneResult } from "./calcTune";
 import type { TuneUnits } from "./units";
 import { IMPERIAL_UNITS, resolveTuneUnits } from "./units";
@@ -233,6 +234,8 @@ export function formatTuneText(
         : ""
     }`,
     "─────────────────────────────",
+    "",
+    formatBuildPartsText(config),
   ];
 
   for (const pg of TUNE_TAB_ORDER) {

@@ -6,6 +6,7 @@ import {
   starterToSavedTune,
 } from "../../lib/starterTunes";
 import { TUNE_MODES } from "../../data/constants";
+import { buildPartsSummary } from "../../lib/buildParts";
 import { Button } from "../ui/Button";
 
 interface CarSavedTunesProps {
@@ -16,7 +17,15 @@ interface CarSavedTunesProps {
   onBrowseAll?: () => void;
 }
 
-function TuneRow({ tune, onLoad }: { tune: SavedTune; onLoad: (entry: SavedTune) => void }) {
+function TuneRow({
+  tune,
+  onLoad,
+  showParts,
+}: {
+  tune: SavedTune;
+  onLoad: (entry: SavedTune) => void;
+  showParts?: boolean;
+}) {
   const accent = TUNE_MODES.find((m) => m.id === tune.config.tuneId)?.color ?? "var(--ts-accent)";
   return (
     <div className="flex items-center justify-between gap-3 rounded-[var(--ts-radius-sm)] border border-[var(--ts-border)] bg-[var(--ts-surface)] px-3 py-2">
@@ -26,6 +35,11 @@ function TuneRow({ tune, onLoad }: { tune: SavedTune; onLoad: (entry: SavedTune)
           {tune.config.tuneId} · {tune.date}
           {tune.trackNote ? ` · ${tune.trackNote}` : ""}
         </p>
+        {showParts ? (
+          <p className="mt-0.5 text-[10px] leading-snug text-[var(--ts-dim)]">
+            Buy: {buildPartsSummary(tune.config)}
+          </p>
+        ) : null}
       </div>
       <Button
         variant="outline"
@@ -65,7 +79,7 @@ export function CarSavedTunes({ make, model, slug, onLoad, onBrowseAll }: CarSav
           </h2>
           <div className="space-y-2">
             {starters.map((t) => (
-              <TuneRow key={t.id} tune={t} onLoad={onLoad} />
+              <TuneRow key={t.id} tune={t} onLoad={onLoad} showParts />
             ))}
           </div>
         </section>
