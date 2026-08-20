@@ -1,9 +1,18 @@
 {
-  "version": "1.3.6",
+  "version": "1.3.7",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.7",
+      "date": "2026-08-20",
+      "title": "Save draft stays on the screen",
+      "items": [
+        "Save draft sits on its own row so Back and Next cannot push it off a phone",
+        "If the device cannot store it, Manual says so instead of going silent"
+      ]
+    },
     {
       "version": "1.3.6",
       "date": "2026-08-20",

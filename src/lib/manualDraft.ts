@@ -62,12 +62,29 @@ function readAll(): Record<string, ManualDraftRecord> {
   }
 }
 
-function writeAll(map: Record<string, ManualDraftRecord>): void {
+function writeAll(map: Record<string, ManualDraftRecord>): boolean {
   try {
-    localStorage.setItem(MANUAL_DRAFTS_KEY, JSON.stringify(map));
+    const json = JSON.stringify(map);
+    localStorage.setItem(MANUAL_DRAFTS_KEY, json);
+    return localStorage.getItem(MANUAL_DRAFTS_KEY) === json;
   } catch {
-    /* quota */
+    return false;
   }
+}
+
+/** Drop oldest drafts until the map actually writes. */
+function writeAllOrPrune(map: Record<string, ManualDraftRecord>, keepSlug: string): boolean {
+  prune(map, keepSlug);
+  if (writeAll(map)) return true;
+  const oldestFirst = Object.values(map).sort((a, b) => a.savedAt.localeCompare(b.savedAt));
+  for (const oldest of oldestFirst) {
+    if (oldest.slug === keepSlug) continue;
+    delete map[oldest.slug];
+    if (writeAll(map)) return true;
+  }
+  const keep = map[keepSlug];
+  if (!keep) return false;
+  return writeAll({ [keepSlug]: keep });
 }
 
 function normalizeRecord(fallbackSlug: string, value: unknown): ManualDraftRecord | null {
@@ -116,8 +133,7 @@ export function saveManualDraft(input: {
   };
   const all = readAll();
   all[slug] = record;
-  prune(all, slug);
-  writeAll(all);
+  if (!writeAllOrPrune(all, slug)) return null;
   try {
     localStorage.setItem(LAST_MANUAL_DRAFT_KEY, slug);
   } catch {

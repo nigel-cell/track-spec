@@ -20,10 +20,14 @@ function fail(msg: string): never {
 
 class MemoryStorage {
   private readonly map = new Map<string, string>();
+  throwOnSet = false;
+  noOpSet = false;
   getItem(key: string): string | null {
     return this.map.has(key) ? this.map.get(key)! : null;
   }
   setItem(key: string, value: string): void {
+    if (this.throwOnSet) throw new Error("quota");
+    if (this.noOpSet) return;
     this.map.set(key, String(value));
   }
   removeItem(key: string): void {
@@ -34,8 +38,9 @@ class MemoryStorage {
   }
 }
 
+const storage = new MemoryStorage();
 Object.defineProperty(globalThis, "localStorage", {
-  value: new MemoryStorage(),
+  value: storage,
   configurable: true,
 });
 
@@ -130,5 +135,30 @@ if (resumed.weight !== 3120) fail("manual draft weight should win");
 if (resumed.tuneId !== "Touge") fail("favorite tuneId should remain when manual omits it");
 if (resumed.mode !== "full") fail("manual mode should apply");
 if (resumed.pi !== 800) fail("baseline pi should remain");
+
+storage.throwOnSet = true;
+if (
+  saveManualDraft({
+    slug: "quota-car",
+    section: "car",
+    mode: "quick",
+    config: { make: "Quota" },
+  })
+) {
+  fail("saveManualDraft should return null when localStorage throws");
+}
+storage.throwOnSet = false;
+storage.noOpSet = true;
+if (
+  saveManualDraft({
+    slug: "noop-car",
+    section: "car",
+    mode: "quick",
+    config: { make: "Noop" },
+  })
+) {
+  fail("saveManualDraft should return null when localStorage does not keep the write");
+}
+storage.noOpSet = false;
 
 console.log("check-manual-draft: ok");

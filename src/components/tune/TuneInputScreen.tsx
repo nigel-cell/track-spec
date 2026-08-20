@@ -1035,14 +1035,20 @@ export function TuneInputScreen({
     const garageSlug = activeGarageCar?.slug;
     const slugs = [garageSlug, customSlug].filter((s, i, arr): s is string => !!s && arr.indexOf(s) === i);
     if (!slugs.length) return false;
+    let wrote = false;
     for (const slug of slugs) {
-      saveManualDraft({
-        slug,
-        section,
-        mode,
-        config: cfg,
-      });
+      if (
+        saveManualDraft({
+          slug,
+          section,
+          mode,
+          config: cfg,
+        })
+      ) {
+        wrote = true;
+      }
     }
+    if (!wrote) return false;
     if (garageSlug) saveFavoriteDraft(garageSlug, cfg);
     else if (activeFavoriteSlug) saveFavoriteDraft(activeFavoriteSlug, cfg);
     return true;
@@ -1117,8 +1123,16 @@ export function TuneInputScreen({
   ]);
 
   const saveDraftNow = () => {
-    if (!persistDraft()) return;
-    setDraftStatus("Draft saved.");
+    const customSlug = slugFromMakeModel(make, model);
+    if (!activeGarageCar?.slug && !customSlug) {
+      setDraftStatus("Type a make and model first.");
+      return;
+    }
+    if (!persistDraft()) {
+      setDraftStatus("Could not save this draft on the device. Storage may be full.");
+      return;
+    }
+    setDraftStatus("Draft saved on this device.");
   };
 
   const deploy = () => {
@@ -1766,24 +1780,30 @@ export function TuneInputScreen({
       )}
 
       <div className="sticky bottom-0 z-20 -mx-4 mt-auto bg-gradient-to-t from-[var(--ts-bg)] via-[var(--ts-bg)]/95 to-transparent px-4 pb-2 pt-5 sm:-mx-6 sm:px-6 md:static md:mx-0 md:mt-6 md:bg-none md:p-0">
-        <div className="mx-auto flex max-w-[820px] justify-end gap-2 md:justify-stretch">
-          <Button variant="outline" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={saveDraftNow}>
+        <div className="mx-auto flex max-w-[820px] flex-col gap-2 sm:flex-row sm:items-stretch">
+          <Button
+            variant="outline"
+            className="w-full px-3 py-2 text-xs sm:w-auto sm:shrink-0 md:text-sm"
+            onClick={saveDraftNow}
+          >
             Save draft
           </Button>
-          {sectionIndex > 0 && (
-            <Button variant="ghost" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={goPrev}>
-              ← Back
-            </Button>
-          )}
-          {sectionIndex < sectionOrder.length - 1 ? (
-            <Button variant="primary" className="min-w-[116px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={goNext}>
-              {sections.find((s) => s.id === sectionOrder[sectionIndex + 1])?.label} →
-            </Button>
-          ) : (
-            <Button variant="cta" className="min-w-[140px] px-4 py-2 text-xs md:flex-1 md:text-sm" onClick={deploy}>
-              Deploy tune
-            </Button>
-          )}
+          <div className="flex min-w-0 flex-1 gap-2">
+            {sectionIndex > 0 && (
+              <Button variant="ghost" className="shrink-0 px-3 py-2 text-xs md:text-sm" onClick={goPrev}>
+                ← Back
+              </Button>
+            )}
+            {sectionIndex < sectionOrder.length - 1 ? (
+              <Button variant="primary" className="min-w-0 flex-1 px-4 py-2 text-xs md:text-sm" onClick={goNext}>
+                {sections.find((s) => s.id === sectionOrder[sectionIndex + 1])?.label} →
+              </Button>
+            ) : (
+              <Button variant="cta" className="min-w-0 flex-1 px-4 py-2 text-xs md:text-sm" onClick={deploy}>
+                Deploy tune
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
