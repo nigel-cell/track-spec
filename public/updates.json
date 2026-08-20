@@ -1,9 +1,19 @@
 {
-  "version": "1.3.4",
+  "version": "1.3.5",
   "updatedAt": "2026-08-20",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.5",
+      "date": "2026-08-20",
+      "title": "Owned cars keep the Manual details you type",
+      "items": [
+        "I have this car on Manual marks it owned and stores Specs + Build on this device",
+        "Pick that car again (search or chip) and you get the last weight, springs, packages, and step",
+        "Garage Mark owned does the same — you don’t re-enter the same numbers every tune"
+      ]
+    },
     {
       "version": "1.3.4",
       "date": "2026-08-20",

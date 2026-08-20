@@ -14,8 +14,9 @@ interface CarPickerProps {
   cars: CarRecord[];
   carCount: number;
   units: TuneUnits;
-  /** Garage favorites shown first for quick resume. */
-  favoriteCars?: ForzaGarageCar[];
+  /** Garage cars pinned for quick resume (favorites first, then owned). */
+  pinnedCars?: { car: ForzaGarageCar; kind: "favorite" | "owned" }[];
+  lookupGarage?: (make: string, model: string) => ForzaGarageCar | null;
   measuredSlugs?: Set<string>;
   onSelect: (patch: ReturnType<typeof applyCarToForm>, meta?: { slug?: string }) => void;
 }
@@ -40,7 +41,8 @@ export function CarPicker({
   cars,
   carCount,
   units,
-  favoriteCars = [],
+  pinnedCars = [],
+  lookupGarage,
   measuredSlugs,
   onSelect,
 }: CarPickerProps) {
@@ -52,14 +54,22 @@ export function CarPicker({
     [cars, query, make],
   );
 
+  const favoriteCars = useMemo(
+    () => pinnedCars.filter((p) => p.kind === "favorite").map((p) => p.car),
+    [pinnedCars],
+  );
+
   const favoriteRows = useMemo(() => {
     return favoriteCars
       .map((g) => ({ garage: g, record: matchCarRecord(cars, g) }))
       .filter((x) => x.record);
   }, [favoriteCars, cars]);
 
+  const slugFor = (car: CarRecord, slug?: string) =>
+    slug ?? lookupGarage?.(car.make, car.model.split(" '")[0])?.slug;
+
   const pick = (car: CarRecord, slug?: string) => {
-    onSelect(applyCarToForm(car, units), { slug });
+    onSelect(applyCarToForm(car, units), { slug: slugFor(car, slug) });
     setQuery("");
     setOpen(false);
   };
@@ -95,10 +105,10 @@ export function CarPicker({
         </span>
       </button>
 
-      {!open && favoriteCars.length > 0 && (
+      {!open && pinnedCars.length > 0 && (
         <div className="mt-2 space-y-1.5">
           <div className="flex flex-wrap gap-2">
-            {favoriteCars.map((g) => {
+            {pinnedCars.map(({ car: g, kind }) => {
               const measured = measuredSlugs?.has(g.slug);
               const active =
                 g.make === make &&
@@ -133,7 +143,8 @@ export function CarPicker({
                   ].join(" ")}
                 >
                   <span className="font-[family-name:var(--ts-font-heading)] font-semibold text-[var(--ts-text)]">
-                    ★ {g.model}
+                    {kind === "favorite" ? "★ " : "✓ "}
+                    {g.model}
                   </span>
                   {measured && (
                     <span className="ml-1.5 font-[family-name:var(--ts-font-mono)] text-[9px] uppercase text-[var(--ts-warning)]">
@@ -145,7 +156,7 @@ export function CarPicker({
             })}
           </div>
           <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
-            Favorites keep weight, top speed, torque, tires, springs, and build edits on this device.
+            Cars you have keep weight, speed, torque, springs, and build edits on this device.
           </p>
         </div>
       )}

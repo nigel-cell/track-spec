@@ -80,7 +80,7 @@ import {
   type SliderLimitsFile,
 } from "../../lib/sliderLimits";
 import { saveFavoriteDraft } from "../../lib/carFavorites";
-import { ensureFavoriteProfile, hydrateFavoriteProfiles } from "../../lib/favoriteProfiles";
+import { hydrateCarProfiles, resumeCarProfile, hasSavedCarSetup } from "../../lib/favoriteProfiles";
 import {
   loadLastManualDraft,
   resolveManualDraft,
@@ -388,6 +388,8 @@ export function TuneInputScreen({
     lookup: lookupGarage,
     enrich: enrichGarage,
     favorites,
+    owned,
+    toggleOwned,
     ensureLoaded: ensureGarageLoaded,
   } = useForzaGarage();
 
@@ -399,6 +401,24 @@ export function TuneInputScreen({
     () => garageCars.filter((c) => favorites.has(c.slug)),
     [garageCars, favorites],
   );
+
+  const pinnedCars = useMemo(() => {
+    const rows: { car: (typeof garageCars)[number]; kind: "favorite" | "owned" }[] = [];
+    const seen = new Set<string>();
+    for (const car of favoriteCars) {
+      seen.add(car.slug);
+      rows.push({ car, kind: "favorite" });
+    }
+    let extra = 0;
+    for (const car of garageCars) {
+      if (!owned.has(car.slug) || seen.has(car.slug)) continue;
+      seen.add(car.slug);
+      rows.push({ car, kind: "owned" });
+      extra += 1;
+      if (extra >= 8) break;
+    }
+    return rows;
+  }, [favoriteCars, garageCars, owned]);
 
   const activeGarageCar = useMemo(() => {
     const hit = lookupGarage(make, model.split(" '")[0]);
@@ -423,9 +443,11 @@ export function TuneInputScreen({
 
   // Seed/refresh favorite profiles with garage weight, speed, torque + measured springs.
   useEffect(() => {
-    if (!garageCars.length || !favorites.size) return;
-    hydrateFavoriteProfiles(favorites, garageCars, cars, units, sliderLimitsFile);
-  }, [garageCars, favorites, cars, units, sliderLimitsFile]);
+    if (!garageCars.length) return;
+    const slugs = new Set<string>([...favorites, ...owned]);
+    if (!slugs.size) return;
+    hydrateCarProfiles(slugs, garageCars, cars, units, sliderLimitsFile);
+  }, [garageCars, favorites, owned, cars, units, sliderLimitsFile]);
 
   const { lookup: lookupWiki } = useWikiSwaps();
 
@@ -1200,35 +1222,42 @@ export function TuneInputScreen({
         cars={cars}
         carCount={carCount}
         units={units}
-        favoriteCars={favoriteCars}
+        pinnedCars={pinnedCars}
+        lookupGarage={lookupGarage}
         measuredSlugs={measuredSlugs}
         onSelect={(patch, meta) => {
           const slim =
             (meta?.slug ? garageCars.find((c) => c.slug === meta.slug) : null) ??
             (patch.make && patch.model ? lookupGarage(patch.make, patch.model) : null);
           const apply = (garage: typeof slim) => {
-            const isFavorite = !!(meta?.slug && favorites.has(meta.slug) && garage);
-            if (isFavorite && garage && meta?.slug) {
-              // Resume full saved profile: weight, speed, torque, springs, packages…
-              const profile = ensureFavoriteProfile(
-                meta.slug,
-                garage,
-                cars,
-                units,
-                sliderLimitsFile,
-              );
-              applyTuneDraft(profile);
+            const slug = meta?.slug ?? garage?.slug;
+            const keep =
+              !!slug &&
+              !!garage &&
+              (favorites.has(slug) ||
+                owned.has(slug) ||
+                hasSavedCarSetup(slug, garage.make, garage.model));
+            if (keep && garage && slug) {
+              const resumed = resumeCarProfile(slug, garage, cars, units, sliderLimitsFile);
+              applyTuneDraft(resumed.config);
+              if (resumed.section) setSection(resumed.section);
+              if (resumed.mode) setMode(resumed.mode);
               setStockDisplacementCc(garage.tuneSpecs?.displacementCc ?? null);
               setClassPlanNote("");
               if (
-                profile.springFrontMin == null &&
-                profile.springFrontMax == null &&
-                profile.make &&
-                profile.model
+                resumed.config.springFrontMin == null &&
+                resumed.config.springFrontMax == null &&
+                resumed.config.make &&
+                resumed.config.model
               ) {
-                const limits = findSliderLimits(sliderLimitsFile, profile.make, profile.model);
+                const limits = findSliderLimits(
+                  sliderLimitsFile,
+                  resumed.config.make,
+                  resumed.config.model,
+                );
                 applySliderLimits(limits, units.springs);
               }
+              setDraftStatus("Loaded your last setup for this car.");
               return;
             }
 
@@ -1274,6 +1303,27 @@ export function TuneInputScreen({
           }
         }}
       />
+      {activeGarageCar && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={owned.has(activeGarageCar.slug) ? "outline" : "secondary"}
+            className="h-9 px-3 text-xs"
+            onClick={() => {
+              const slug = activeGarageCar.slug;
+              const already = owned.has(slug);
+              toggleOwned(slug);
+              if (!already) persistDraft();
+            }}
+          >
+            {owned.has(activeGarageCar.slug) ? "✓ I have this car" : "I have this car"}
+          </Button>
+          <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
+            {owned.has(activeGarageCar.slug)
+              ? "Specs and Build stay on this device. Pick this car again and they’re still here."
+              : "Mark it so the details you type in Specs and Build don’t get wiped next time."}
+          </p>
+        </div>
+      )}
       <CarPhotoHero
         make={make}
         model={model}

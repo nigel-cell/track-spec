@@ -10,6 +10,7 @@ import {
   resolveManualDraft,
   saveManualDraft,
   slugFromMakeModel,
+  mergeResumedConfig,
 } from "../src/lib/manualDraft.ts";
 
 function fail(msg: string): never {
@@ -118,5 +119,16 @@ const stillKept = loadManualDraft("keep-me");
 if (!stillKept || stillKept.section !== "engine" || stillKept.config.weight !== 9) {
   fail("re-saving a draft should refresh it and keep it through prune");
 }
+
+const resumed = mergeResumedConfig(
+  { make: "Ferrari", weight: 3000, tuneId: "Race", pi: 800 },
+  { weight: 3150, tuneId: "Touge" },
+  { weight: 3120, mode: "full" },
+);
+if (resumed.make !== "Ferrari") fail("baseline make should remain");
+if (resumed.weight !== 3120) fail("manual draft weight should win");
+if (resumed.tuneId !== "Touge") fail("favorite tuneId should remain when manual omits it");
+if (resumed.mode !== "full") fail("manual mode should apply");
+if (resumed.pi !== 800) fail("baseline pi should remain");
 
 console.log("check-manual-draft: ok");

@@ -151,3 +151,12 @@ export function resolveManualDraft(
   }
   return null;
 }
+
+/** Last Manual edits win over a saved favorite profile, which wins over garage stock. */
+export function mergeResumedConfig<T extends Record<string, unknown>>(
+  baseline: T,
+  favoriteDraft: Partial<T> | null | undefined,
+  manualDraft: Partial<T> | null | undefined,
+): T {
+  return { ...baseline, ...(favoriteDraft ?? {}), ...(manualDraft ?? {}) };
+}
