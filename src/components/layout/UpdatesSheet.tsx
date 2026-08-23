@@ -3,7 +3,7 @@ import {
   APP_VERSION,
   checkForAppUpdate,
   isElectronShell,
-  loadLocalUpdates,
+  loadChangelog,
   type UpdateCheckResult,
   type UpdatesManifest,
 } from "../../lib/appUpdates";
@@ -70,7 +70,7 @@ export function UpdatesSheet({
     if (!open) return;
     let cancelled = false;
     setLoadError(null);
-    void loadLocalUpdates()
+    void loadChangelog()
       .then((m) => {
         if (!cancelled) setManifest(m);
       })

@@ -1,9 +1,18 @@
 {
-  "version": "1.3.8",
-  "updatedAt": "2026-08-20",
+  "version": "1.3.9",
+  "updatedAt": "2026-08-23",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.9",
+      "date": "2026-08-23",
+      "title": "What’s new list is back",
+      "items": [
+        "The Update sheet was empty because the changelog file was broken after 1.3.8 — it loads again",
+        "If this device’s copy fails to open, Track Spec pulls the list from GitHub instead of going blank"
+      ]
+    },
     {
       "version": "1.3.8",
       "date": "2026-08-20",
@@ -14,6 +23,8 @@
         "Race gears clear the 161 km/h board — final drive is no longer pinned at 5.50"
       ]
     },
+    {
+      "version": "1.3.7",
       "date": "2026-08-20",
       "title": "Metric garage, Save draft, Live Data Out",
       "items": [

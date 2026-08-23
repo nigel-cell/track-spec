@@ -14,12 +14,20 @@ export interface UpdatesManifest {
 }
 
 /** Bundled at build time — “this install” version. */
-export const APP_VERSION = "1.3.8";
+export const APP_VERSION = "1.3.9";
 
 const REMOTE_MANIFEST =
   "https://raw.githubusercontent.com/nigel-cell/track-spec/main/public/updates.json";
 
 let cachedLocal: UpdatesManifest | null = null;
+
+export function parseUpdatesManifest(data: unknown): UpdatesManifest {
+  const m = data as UpdatesManifest;
+  if (!m || typeof m !== "object" || typeof m.version !== "string" || !Array.isArray(m.entries)) {
+    throw new Error("Could not load changelog");
+  }
+  return m;
+}
 
 function parseVersion(v: string): number[] {
   return v
@@ -46,8 +54,19 @@ export async function loadLocalUpdates(): Promise<UpdatesManifest> {
   if (cachedLocal) return cachedLocal;
   const res = await fetch(`./updates.json?v=${APP_VERSION}`);
   if (!res.ok) throw new Error("Could not load changelog");
-  cachedLocal = (await res.json()) as UpdatesManifest;
+  cachedLocal = parseUpdatesManifest(await res.json());
   return cachedLocal;
+}
+
+/** Local file first; GitHub if this install’s copy is missing or broken. */
+export async function loadChangelog(): Promise<UpdatesManifest> {
+  try {
+    return await loadLocalUpdates();
+  } catch {
+    const res = await fetch(`${REMOTE_MANIFEST}?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Could not load changelog");
+    return parseUpdatesManifest(await res.json());
+  }
 }
 
 export type UpdateCheckResult = {
@@ -77,7 +96,7 @@ export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
         message: "Could not reach the update server. Try again on Wi‑Fi.",
       };
     }
-    const remote = (await res.json()) as UpdatesManifest;
+    const remote = parseUpdatesManifest(await res.json());
     if (isNewerVersion(remote.version, ver)) {
       return {
         status: "available",
