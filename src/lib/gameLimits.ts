@@ -29,7 +29,7 @@ export interface RideGameLimits {
 export const FH6_RIDE_LOW_CM = 11.2;
 
 /**
- * In-game Low for most sedans / trucks (Ford Sierra Cosworth, Tacoma, etc.).
+ * In-game Low for the Sierra and most sedans: 15.9 cm front and rear.
  * 11.2 is NOT legal on these — the slider sits under the bar.
  */
 export const FH6_TALL_RIDE_LOW_CM = 15.9;

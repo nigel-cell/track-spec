@@ -105,11 +105,11 @@ if (estimateRaceAeroMaxKg(58.3, "front") !== 58.3) {
 const sierraEnds = normalizeRideEnvelope({
   frontMin: 15.9,
   frontMax: 26,
-  rearMin: 16.2,
+  rearMin: 15.9,
   rearMax: 26,
 });
-if (sierraEnds.frontMin !== 15.9 || sierraEnds.rearMin !== 16.2) {
-  fail(`Sierra Low must stay 15.9 / 16.2, got ${JSON.stringify(sierraEnds)}`);
+if (sierraEnds.frontMin !== 15.9 || sierraEnds.rearMin !== 15.9) {
+  fail(`Sierra Low must stay 15.9 / 15.9, got ${JSON.stringify(sierraEnds)}`);
 }
 if (rideHeightTargetCm(11.2, 26) !== 15.9) {
   fail(`wide 11.2–26 estimate must aim 15.9, got ${rideHeightTargetCm(11.2, 26)}`);
@@ -169,7 +169,7 @@ const screenshot: CalcTuneInput = {
   units: METRIC_UNITS,
   transFdMult: 1.05,
   aeroLimits: { frontMin: 0, frontMax: 26.01, rearMin: 0, rearMax: 31.78 },
-  rideLimits: { frontMin: 15.9, frontMax: 24, rearMin: 22.5, rearMax: 28 },
+  rideLimits: { frontMin: 15.9, frontMax: 26, rearMin: 15.9, rearMax: 26 },
 };
 
 const pages = calcTune(screenshot);
@@ -184,7 +184,7 @@ if (!frontDf.value.includes("kgf") || !rearDf.value.includes("kgf")) {
 const fRide = row(pages, "Springs", "Front Ride Height");
 const rRide = row(pages, "Springs", "Rear Ride Height");
 if (num(fRide.value) < 15.9) fail(`front ride below Sierra/sedan game min: ${fRide.value}`);
-if (num(rRide.value) < 16.2) fail(`rear ride below Sierra game min: ${rRide.value}`);
+if (num(rRide.value) < 15.9) fail(`rear ride below Sierra game min: ${rRide.value}`);
 
 const sierraTune = calcTune({
   ...screenshot,

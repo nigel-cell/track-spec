@@ -38,12 +38,12 @@ function estimateSpringsLbs(weightLbs, weightDist) {
 
 function estimateRideCm(carClass, offroadHint) {
   if (offroadHint) return { frontMin: 18, frontMax: 34, rearMin: 18, rearMax: 34 };
-  // Most road cars (Ford Sierra Cosworth, sedans) cannot go below 15.9 cm.
+  // In-game Low on the Sierra (and most sedans) is 15.9 cm front and rear.
   // 11.2 is only legal on measured slammed sports chassis (GR86 / 430).
   return {
     frontMin: 15.9,
     frontMax: 26,
-    rearMin: 16.2,
+    rearMin: 15.9,
     rearMax: 26,
   };
 }

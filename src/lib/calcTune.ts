@@ -208,7 +208,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     rRide = clampRide(rideLoR + 0.3, rideLoR, rideHiR);
   } else {
     fRide = rideHeightTargetCm(rideLoF, rideHiF);
-    rRide = clampRide(Math.max(rideHeightTargetCm(rideLoR, rideHiR), fRide + 0.3), rideLoR, rideHiR);
+    rRide = rideHeightTargetCm(rideLoR, rideHiR);
   }
 
   // ── DAMPING (critical damping ratio method)
