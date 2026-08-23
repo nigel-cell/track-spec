@@ -10,6 +10,7 @@ import {
   clampNumber,
   estimateRaceAeroMaxKg,
   normalizeRideEnvelope,
+  rideHeightTargetCm,
 } from "../src/lib/gameLimits.ts";
 import { METRIC_UNITS } from "../src/lib/units.ts";
 import type { SliderLimitsFile } from "../src/lib/sliderLimits.ts";
@@ -41,8 +42,8 @@ if (!gr86.springs || !f430.springs) fail("measured cars missing springs");
 
 const skyline = limits.cars["nissan-skyline-2000-turbo-rs-1983"];
 if (!skyline || skyline.source !== "estimated") fail("Skyline missing estimated limits");
-if (!skyline.ride || skyline.ride.frontMin !== 11.2 || skyline.ride.frontMax !== 26) {
-  fail(`estimated ride should be 11.2–26 cm, got ${JSON.stringify(skyline.ride)}`);
+if (!skyline.ride || skyline.ride.frontMin !== 15.9 || skyline.ride.frontMax !== 26) {
+  fail(`estimated ride should be 15.9–26 cm, got ${JSON.stringify(skyline.ride)}`);
 }
 
 const awd = applyDrivetrainConversion({
@@ -101,17 +102,20 @@ if (estimateRaceAeroMaxKg(58.3, "front") !== 58.3) {
   fail("measured aero max ≥50 kgf must stay as-is");
 }
 
-const inverted = normalizeRideEnvelope({
+const sierraEnds = normalizeRideEnvelope({
   frontMin: 15.9,
-  frontMax: 24,
-  rearMin: 22.5,
-  rearMax: 28,
+  frontMax: 26,
+  rearMin: 16.2,
+  rearMax: 26,
 });
-if (inverted.frontMin !== 11.2 || inverted.frontMax !== 15.9) {
-  fail(`stock-as-min ride should become 11.2–15.9 F, got ${JSON.stringify(inverted)}`);
+if (sierraEnds.frontMin !== 15.9 || sierraEnds.rearMin !== 16.2) {
+  fail(`Sierra Low must stay 15.9 / 16.2, got ${JSON.stringify(sierraEnds)}`);
 }
-if (inverted.rearMin !== 11.2 || inverted.rearMax !== 22.5) {
-  fail(`stock-as-min rear should become 11.2–22.5, got ${JSON.stringify(inverted)}`);
+if (rideHeightTargetCm(11.2, 26) !== 15.9) {
+  fail(`wide 11.2–26 estimate must aim 15.9, got ${rideHeightTargetCm(11.2, 26)}`);
+}
+if (rideHeightTargetCm(11.2, 15.5) !== 11.4) {
+  fail(`GR86 measured Low must stay ~11.4, got ${rideHeightTargetCm(11.2, 15.5)}`);
 }
 
 const measuredRide = normalizeRideEnvelope({
@@ -179,11 +183,24 @@ if (!frontDf.value.includes("kgf") || !rearDf.value.includes("kgf")) {
 
 const fRide = row(pages, "Springs", "Front Ride Height");
 const rRide = row(pages, "Springs", "Rear Ride Height");
-if (num(fRide.value) >= 15.5) fail(`front ride still sitting on fake min/high: ${fRide.value}`);
-if (num(rRide.value) >= 20) fail(`rear ride still sitting on fake min/high: ${rRide.value}`);
-if (fRide.clamped === "min" && num(fRide.value) >= 15.5) {
-  fail("front ride still labelled GAME MIN at stock height");
-}
+if (num(fRide.value) < 15.9) fail(`front ride below Sierra/sedan game min: ${fRide.value}`);
+if (num(rRide.value) < 16.2) fail(`rear ride below Sierra game min: ${rRide.value}`);
+
+const sierraTune = calcTune({
+  ...screenshot,
+  rideLimits: { frontMin: 11.2, frontMax: 26, rearMin: 11.2, rearMax: 26 },
+});
+const sierraF = row(sierraTune, "Springs", "Front Ride Height");
+const sierraR = row(sierraTune, "Springs", "Rear Ride Height");
+if (num(sierraF.value) < 15.9) fail(`Sierra-style estimate still types 11.4 cm: ${sierraF.value}`);
+if (num(sierraR.value) < 15.9) fail(`Sierra rear still below game min: ${sierraR.value}`);
+
+const gr86Tune = calcTune({
+  ...screenshot,
+  rideLimits: { frontMin: 11.2, frontMax: 15.5, rearMin: 11.2, rearMax: 15.9 },
+});
+const gr86F = row(gr86Tune, "Springs", "Front Ride Height");
+if (num(gr86F.value) > 12) fail(`GR86 ride should stay near measured Low, got ${gr86F.value}`);
 
 const fd = row(pages, "Gearing", "Final Drive");
 const lastGear = [...(pages.Gearing?.values ?? [])].reverse().find((v) => v.key.includes("Gear"));

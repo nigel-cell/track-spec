@@ -5,6 +5,7 @@ import {
   buildGameLimits,
   clampNote,
   clampNumber,
+  rideHeightTargetCm,
   sliderPercent,
   type AeroGameLimits,
   type SpringLimits,
@@ -206,8 +207,8 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     fRide = clampRide(rideLoF + 0.5, rideLoF, rideHiF);
     rRide = clampRide(rideLoR + 0.3, rideLoR, rideHiR);
   } else {
-    fRide = clampRide(rideLoF + 0.2, rideLoF, rideHiF);
-    rRide = clampRide(Math.max(fRide + 0.3, rideLoR + 0.2), rideLoR, rideHiR);
+    fRide = rideHeightTargetCm(rideLoF, rideHiF);
+    rRide = clampRide(Math.max(rideHeightTargetCm(rideLoR, rideHiR), fRide + 0.3), rideLoR, rideHiR);
   }
 
   // ── DAMPING (critical damping ratio method)

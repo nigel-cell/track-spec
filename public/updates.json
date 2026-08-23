@@ -1,9 +1,18 @@
 {
-  "version": "1.3.9",
+  "version": "1.3.10",
   "updatedAt": "2026-08-23",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.10",
+      "date": "2026-08-23",
+      "title": "Sierra ride height stays at game min",
+      "items": [
+        "Ford Sierra Cosworth and other tall cars no longer get 11.4 cm — that is below the in-game Low (15.9 cm)",
+        "Ride height uses 15.9 cm Low unless the car was measured as a slammed sports chassis (GR86 / 430)"
+      ]
+    },
     {
       "version": "1.3.9",
       "date": "2026-08-23",

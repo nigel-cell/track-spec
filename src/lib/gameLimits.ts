@@ -25,11 +25,14 @@ export interface RideGameLimits {
   rearMax: number;
 }
 
-/** FH6 Low (left) on the ride slider — confirmed GR86 / 430 sweeps. */
+/** FH6 Low on a slammed sports chassis — confirmed GR86 / 430 sweeps. */
 export const FH6_RIDE_LOW_CM = 11.2;
 
-/** Dummy High ends from the old weight estimate — not real per-car stock. */
-const GENERIC_RIDE_HIGH_CM = new Set([24, 26, 28, 34]);
+/**
+ * In-game Low for most sedans / trucks (Ford Sierra Cosworth, Tacoma, etc.).
+ * 11.2 is NOT legal on these — the slider sits under the bar.
+ */
+export const FH6_TALL_RIDE_LOW_CM = 15.9;
 
 /**
  * Stock garage downforce is the OEM figure, not the race-aero slider max.
@@ -55,15 +58,13 @@ export function resolveAeroSliderMax(
 
 /**
  * FH6 ride sliders go Low (smaller cm) → High (larger cm).
- * Estimated / mis-typed envelopes often store stock height as min (15–23 cm),
- * which is actually the High end in-game — so a 15 cm race target shows as
- * GAME MIN while the in-game slider sits on High.
+ * Do not rewrite a 15.9 cm Low down to 11.2 — that is below the legal min
+ * on the Ford Sierra Cosworth and other tall chassis.
  */
 export function normalizeRideEnvelope(
   ride: RideGameLimits,
-  offRoad = false,
+  _offRoad = false,
 ): RideGameLimits {
-  const floor = offRoad ? 18 : FH6_RIDE_LOW_CM;
   const fix = (lo: number, hi: number): { min: number; max: number } => {
     let min = lo;
     let max = hi;
@@ -71,14 +72,6 @@ export function normalizeRideEnvelope(
       const t = min;
       min = max;
       max = t;
-    }
-    if (!offRoad && min >= 14.5) {
-      const stockHigh = min;
-      if (GENERIC_RIDE_HIGH_CM.has(max) || max - min < 4) {
-        max = stockHigh;
-      }
-      min = floor;
-      max = Math.max(max, stockHigh);
     }
     if (max < min + 2) max = +(min + 4).toFixed(1);
     return { min, max };
@@ -91,6 +84,23 @@ export function normalizeRideEnvelope(
     rearMin: rear.min,
     rearMax: rear.max,
   };
+}
+
+/**
+ * Ride height to type in FH6. Use the real Low when we measured a short
+ * sports range. A wide 11.2–26 estimate is not a real Low — those cars
+ * (Sierra, Tacoma, most sedans) start at 15.9 cm.
+ */
+export function rideHeightTargetCm(min: number, max: number): number {
+  const span = max - min;
+  const measuredSportsLow = min <= 12.5 && span <= 6.5;
+  const fakeWideFloor = min <= 12.2 && max >= 24;
+  const target = measuredSportsLow
+    ? min + 0.2
+    : fakeWideFloor
+      ? FH6_TALL_RIDE_LOW_CM
+      : min + 0.2;
+  return +Math.max(min, Math.min(max, target)).toFixed(1);
 }
 
 export interface GameLimits {
@@ -191,7 +201,7 @@ export function buildGameLimits(args: {
   }
 
   // Default ride envelope; per-car Low/High ends override when measured.
-  const defRideMin = args.offRoad ? 18 : FH6_RIDE_LOW_CM;
+  const defRideMin = args.offRoad ? 18 : FH6_TALL_RIDE_LOW_CM;
   const defRideMax = args.offRoad ? 34 : 26;
   const ride = normalizeRideEnvelope(
     {

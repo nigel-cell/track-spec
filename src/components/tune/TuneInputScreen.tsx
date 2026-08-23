@@ -1530,9 +1530,9 @@ export function TuneInputScreen({
         <Label>In-game ride height min / max (cm)</Label>
         <p className="text-[10px] leading-snug text-[var(--ts-dim)]">
           Soft (Low) / High ends from Tune → Springs. Left on the slider is Low
-          (smaller cm). Type the in-game Low and High — not the stock height. GR86
-          and 430 Scuderia are measured; other cars use 11.2–26 cm until you type
-          the real ends.
+          (smaller cm). Type the in-game Low and High. GR86 and 430 Scuderia are
+          measured; other cars use 15.9 cm Low until you type the real ends — 11.2
+          cm is below the min on the Sierra and most sedans.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>

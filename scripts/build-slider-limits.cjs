@@ -38,11 +38,12 @@ function estimateSpringsLbs(weightLbs, weightDist) {
 
 function estimateRideCm(carClass, offroadHint) {
   if (offroadHint) return { frontMin: 18, frontMax: 34, rearMin: 18, rearMax: 34 };
-  // FH6 Low is ~11.2 cm. High is stock-ish — 15 cm is NOT the floor.
+  // Most road cars (Ford Sierra Cosworth, sedans) cannot go below 15.9 cm.
+  // 11.2 is only legal on measured slammed sports chassis (GR86 / 430).
   return {
-    frontMin: 11.2,
+    frontMin: 15.9,
     frontMax: 26,
-    rearMin: 11.2,
+    rearMin: 16.2,
     rearMax: 26,
   };
 }
@@ -77,7 +78,9 @@ function main() {
     const weightDist = ts.weightDist ?? WEIGHT_DIST[drive] ?? 53;
     const springs = estimateSpringsLbs(weightLbs, weightDist);
     const offroad =
-      /off-?road|rally|trophy|baja|crawler|truck|ute/i.test(`${car.model} ${car.name || ""}`);
+      /off-?road|rally|trophy|baja|crawler|truck|ute|tacoma|hilux|land cruiser|4runner|bronco|wrangler|defender|pickup/i.test(
+        `${car.model} ${car.name || ""}`,
+      );
     const ride = estimateRideCm(car.class, offroad);
 
     const aeroF = ts.downforceFront;
