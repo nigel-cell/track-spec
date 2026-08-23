@@ -68,12 +68,10 @@ export function buildCalcInput(
           rearMax: config.springRearMax,
         }
       : null,
+    aeroMeasured: config.sliderLimitsSource === "measured",
     aeroLimits:
-      config.hasAero ||
-      config.aeroFrontMax != null ||
-      config.aeroRearMax != null ||
-      config.aeroF != null ||
-      config.aeroR != null
+      config.sliderLimitsSource === "measured" &&
+      (config.aeroFrontMax != null || config.aeroRearMax != null)
         ? {
             frontMin: config.aeroFrontMin ?? 0,
             frontMax: config.aeroFrontMax ?? null,

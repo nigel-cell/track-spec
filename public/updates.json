@@ -1,9 +1,18 @@
 {
-  "version": "1.3.10",
+  "version": "1.3.11",
   "updatedAt": "2026-08-23",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.11",
+      "date": "2026-08-23",
+      "title": "22B aero is not GAME MAX",
+      "items": [
+        "Stock garage downforce is not the race-aero slider — 22B 79.8 kgf sits near Speed, not Cornering",
+        "Track aero types 70 / 110 kgf. We only clamp when GameDB measured the real slider (GR86 / 430)"
+      ]
+    },
     {
       "version": "1.3.10",
       "date": "2026-08-23",

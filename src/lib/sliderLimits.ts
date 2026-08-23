@@ -141,6 +141,29 @@ export function saveUserSliderLimits(
   writeOverrides(all);
 }
 
+/** Bundled file only — ignores local spring/ride overrides. */
+export function findFileSliderLimits(
+  file: SliderLimitsFile | null,
+  make: string,
+  model: string,
+): CarSliderLimits | null {
+  if (!file?.cars) return null;
+  const key = carLimitsKey(make, model);
+  if (file.cars[key]) return file.cars[key];
+  const target = norm(`${make} ${model.split(" '")[0]}`);
+  let best: CarSliderLimits | null = null;
+  let bestLen = 0;
+  for (const car of Object.values(file.cars)) {
+    const title = norm(`${car.make} ${car.model}`);
+    if (title === target) return car;
+    if ((target.includes(title) || title.includes(target)) && title.length > bestLen) {
+      best = car;
+      bestLen = title.length;
+    }
+  }
+  return best;
+}
+
 export function findSliderLimits(
   file: SliderLimitsFile | null,
   make: string,
@@ -149,28 +172,7 @@ export function findSliderLimits(
   const key = carLimitsKey(make, model);
   const overrides = readOverrides();
   const user = overrides[key];
-
-  let base: CarSliderLimits | null = null;
-  if (file?.cars) {
-    if (file.cars[key]) base = file.cars[key];
-    else {
-      const target = norm(`${make} ${model.split(" '")[0]}`);
-      let best: CarSliderLimits | null = null;
-      let bestLen = 0;
-      for (const car of Object.values(file.cars)) {
-        const title = norm(`${car.make} ${car.model}`);
-        if (title === target) {
-          best = car;
-          break;
-        }
-        if ((target.includes(title) || title.includes(target)) && title.length > bestLen) {
-          best = car;
-          bestLen = title.length;
-        }
-      }
-      base = best;
-    }
-  }
+  const base = findFileSliderLimits(file, make, model);
 
   if (!base && !user) return null;
   if (!base) {

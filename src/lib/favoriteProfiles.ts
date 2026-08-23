@@ -11,6 +11,7 @@ import type { TuneUnits } from "./units";
 import { IMPERIAL_UNITS } from "./units";
 import { convertSpringValue } from "./gameLimits";
 import {
+  findFileSliderLimits,
   findSliderLimits,
   type CarSliderLimits,
   type SliderLimitsFile,
@@ -25,6 +26,7 @@ import {
 function limitsToConfigFields(
   limits: CarSliderLimits | null,
   units: TuneUnits,
+  measured = false,
 ): Partial<TuneConfig> {
   if (!limits) return {};
   const out: Partial<TuneConfig> = {
@@ -45,7 +47,7 @@ function limitsToConfigFields(
     out.rideRearMin = limits.ride.rearMin;
     out.rideRearMax = limits.ride.rearMax;
   }
-  if (limits.aero) {
+  if (limits.aero && measured) {
     out.aeroFrontMin = limits.aero.frontMin ?? 0;
     out.aeroFrontMax = limits.aero.frontMax ?? null;
     out.aeroRearMin = limits.aero.rearMin ?? 0;
@@ -57,6 +59,27 @@ function limitsToConfigFields(
   return out;
 }
 
+function fileAeroIsMeasured(
+  sliderFile: SliderLimitsFile | null,
+  make: string,
+  model: string,
+): boolean {
+  return findFileSliderLimits(sliderFile, make, model)?.source === "measured";
+}
+
+/** Stock garage DF is not the race slider. Drop guessed maxes from old drafts. */
+export function dropGuessedAeroMax(
+  config: Partial<TuneConfig>,
+  measured = false,
+): Partial<TuneConfig> {
+  if (measured) return config;
+  return {
+    ...config,
+    aeroFrontMax: undefined,
+    aeroRearMax: undefined,
+  };
+}
+
 /** Garage stock specs + measured slider ends → baseline favorite profile. */
 export function buildFavoriteBaseline(
   garage: ForzaGarageCar,
@@ -66,7 +89,8 @@ export function buildFavoriteBaseline(
 ): Partial<TuneConfig> {
   const base = tuneDraftFromGarage(garage, cars, units);
   const limits = findSliderLimits(sliderFile, garage.make, garage.model);
-  return { ...base, ...limitsToConfigFields(limits, units) };
+  const measured = fileAeroIsMeasured(sliderFile, garage.make, garage.model);
+  return { ...base, ...limitsToConfigFields(limits, units, measured) };
 }
 
 /**
@@ -82,13 +106,15 @@ export function ensureFavoriteProfile(
   sliderFile: SliderLimitsFile | null = null,
 ): Partial<TuneConfig> {
   const baseline = buildFavoriteBaseline(garage, cars, units, sliderFile);
+  const measured = fileAeroIsMeasured(sliderFile, garage.make, garage.model);
   const saved = loadFavoriteDraft<Partial<TuneConfig>>(slug);
   if (!saved) {
-    saveFavoriteDraft(slug, baseline);
-    return baseline;
+    const cleaned = dropGuessedAeroMax(baseline, measured);
+    saveFavoriteDraft(slug, cleaned);
+    return cleaned;
   }
   // Saved edits win; baseline fills any missing stock fields.
-  const merged = { ...baseline, ...saved };
+  const merged = dropGuessedAeroMax({ ...baseline, ...saved }, measured);
   saveFavoriteDraft(slug, merged);
   return merged;
 }
@@ -118,8 +144,9 @@ export function resumeCarProfile(
   const profile = ensureFavoriteProfile(slug, garage, cars, units, sliderFile);
   const manual =
     loadManualDraft(slug) ?? loadManualDraft(slugFromMakeModel(garage.make, garage.model));
+  const measured = fileAeroIsMeasured(sliderFile, garage.make, garage.model);
   return {
-    config: mergeResumedConfig(profile, null, manual?.config),
+    config: dropGuessedAeroMax(mergeResumedConfig(profile, null, manual?.config), measured),
     section: manual?.section,
     mode: manual?.mode,
   };

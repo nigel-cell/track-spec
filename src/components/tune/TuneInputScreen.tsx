@@ -73,6 +73,7 @@ import type {
 } from "../../data/upgradePackages";
 import { convertSpringValue } from "../../lib/gameLimits";
 import {
+  findFileSliderLimits,
   findSliderLimits,
   loadSliderLimitsFile,
   saveUserSliderLimits,
@@ -583,7 +584,11 @@ export function TuneInputScreen({
     void loadSliderLimitsFile().then(setSliderLimitsFile);
   }, []);
 
-  const applySliderLimits = (limits: CarSliderLimits | null, springUnit: TuneUnits["springs"]) => {
+  const applySliderLimits = (
+    limits: CarSliderLimits | null,
+    springUnit: TuneUnits["springs"],
+    measured = false,
+  ) => {
     if (!limits) {
       setSpringFrontMin("");
       setSpringFrontMax("");
@@ -610,7 +615,7 @@ export function TuneInputScreen({
       setSpringRearMin(round(limits.springs.rearMin));
       setSpringRearMax(round(limits.springs.rearMax));
     }
-    if (limits.aero) {
+    if (limits.aero && measured) {
       setAeroFrontMin(limits.aero.frontMin ?? 0);
       setAeroFrontMax(limits.aero.frontMax ?? "");
       setAeroRearMin(limits.aero.rearMin ?? 0);
@@ -646,7 +651,8 @@ export function TuneInputScreen({
       return;
     }
     const limits = findSliderLimits(sliderLimitsFile, make, model);
-    if (limits) applySliderLimits(limits, units.springs);
+    const measured = findFileSliderLimits(sliderLimitsFile, make, model)?.source === "measured";
+    if (limits) applySliderLimits(limits, units.springs, measured);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only auto-fill when file/car identity changes
   }, [sliderLimitsFile, make, model]);
 
@@ -1269,7 +1275,10 @@ export function TuneInputScreen({
                   resumed.config.make,
                   resumed.config.model,
                 );
-                applySliderLimits(limits, units.springs);
+                const measured =
+                  findFileSliderLimits(sliderLimitsFile, resumed.config.make, resumed.config.model)
+                    ?.source === "measured";
+                applySliderLimits(limits, units.springs, measured);
               }
               setDraftStatus("Loaded your last setup for this car.");
               return;
@@ -1308,7 +1317,9 @@ export function TuneInputScreen({
             const mModel = merged.model ?? patch.model ?? model;
             if (mMake && mModel) {
               const limits = findSliderLimits(sliderLimitsFile, mMake, mModel);
-              applySliderLimits(limits, units.springs);
+              const measured =
+                findFileSliderLimits(sliderLimitsFile, mMake, mModel)?.source === "measured";
+              applySliderLimits(limits, units.springs, measured);
             }
           };
           apply(slim);

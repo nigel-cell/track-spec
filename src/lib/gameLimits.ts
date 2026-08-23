@@ -36,24 +36,24 @@ export const FH6_TALL_RIDE_LOW_CM = 15.9;
 
 /**
  * Stock garage downforce is the OEM figure, not the race-aero slider max.
- * FH6 race kits land near 2.45× stock (26.01 → 63.7 vs in-game 63 kgf).
- * Values already in the race band (≥ 50 kgf) are treated as a real max.
+ * Do not invent GAME MAX from stock (22B stock 79.8 kgf sits near Speed,
+ * not Cornering). Only a GameDB extract is a real slider end.
  */
 export function estimateRaceAeroMaxKg(
-  stockKg: number | null | undefined,
-  axle: "front" | "rear",
-): number {
-  const fallback = axle === "front" ? 110 : 160;
-  if (stockKg == null || !Number.isFinite(stockKg) || stockKg <= 0) return fallback;
-  if (stockKg >= 50) return +stockKg.toFixed(1);
-  return +Math.min(200, stockKg * 2.45).toFixed(1);
+  _stockKg?: number | null,
+  _axle?: "front" | "rear",
+): number | null {
+  return null;
 }
 
 export function resolveAeroSliderMax(
   raw: number | null | undefined,
-  axle: "front" | "rear",
-): number {
-  return estimateRaceAeroMaxKg(raw, axle);
+  _axle: "front" | "rear",
+  measured = false,
+): number | null {
+  if (!measured) return null;
+  if (raw == null || !Number.isFinite(raw) || raw <= 0) return null;
+  return +raw.toFixed(1);
 }
 
 /**
@@ -170,6 +170,8 @@ export function buildGameLimits(args: {
   aeroLimits?: Partial<AeroGameLimits> | null;
   rideLimits?: Partial<RideGameLimits> | null;
   offRoad?: boolean;
+  /** True only when GameDB extract measured the race-aero slider. */
+  aeroMeasured?: boolean;
 }): GameLimits {
   const est = estimateSpringLimitsLbs(args.weightLbs, args.weightDist);
   const unit = args.units.springs;
@@ -232,9 +234,9 @@ export function buildGameLimits(args: {
     springs,
     aero: {
       frontMin: args.aeroLimits?.frontMin ?? 0,
-      frontMax: resolveAeroSliderMax(args.aeroLimits?.frontMax, "front"),
+      frontMax: resolveAeroSliderMax(args.aeroLimits?.frontMax, "front", args.aeroMeasured === true),
       rearMin: args.aeroLimits?.rearMin ?? 0,
-      rearMax: resolveAeroSliderMax(args.aeroLimits?.rearMax, "rear"),
+      rearMax: resolveAeroSliderMax(args.aeroLimits?.rearMax, "rear", args.aeroMeasured === true),
     },
   };
 }

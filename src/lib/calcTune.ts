@@ -81,8 +81,10 @@ export interface CalcTuneInput {
   transFdMult?: number;
   /** Optional in-game spring slider min/max (unit on the object; output is always kgf/mm). */
   springLimits?: Partial<SpringLimits> | null;
-  /** Optional aero DF min/max in kgf (from garage / user). Stock garage DF is not the slider max. */
+  /** Optional aero DF min/max in kgf. Used only when aeroMeasured is true. */
   aeroLimits?: Partial<AeroGameLimits> | null;
+  /** GameDB extract measured this car's race-aero slider. Stock garage DF is not that. */
+  aeroMeasured?: boolean;
   /** Optional per-axle ride height min/max in cm. */
   rideLimits?: Partial<import("./gameLimits").RideGameLimits> | null;
 }
@@ -107,7 +109,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     hasAero, aeroF, aeroR, dragCd, pi, carClass,
     units: rawUnits, feelBalance, feelAggression, stockFd, stockGears, includeGearing, dragDist,
     brakePressureDelta, brakeBalDelta, transFdMult, springLimits: springLimitInput,
-    aeroLimits: aeroLimitInput, rideLimits: rideLimitInput,
+    aeroLimits: aeroLimitInput, aeroMeasured, rideLimits: rideLimitInput,
   } = s;
 
   const units: CalcTuneUnits = { ...IMPERIAL_UNITS, ...rawUnits, springs: "kgf/mm" };
@@ -146,6 +148,7 @@ export function calcTune(s: CalcTuneInput): CalcTuneResult {
     aeroLimits: aeroLimitInput,
     rideLimits: rideLimitInput,
     offRoad: isRally || isOffRoad || isSnow,
+    aeroMeasured,
   });
 
   // ── PI-based natural frequency (ForzaTune polynomial method)

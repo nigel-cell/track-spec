@@ -18,13 +18,6 @@ const fs = require("fs");
 const path = require("path");
 const { DatabaseSync } = require("node:sqlite");
 
-function estimateRaceAeroMaxKg(stockKg, axle) {
-  const fallback = axle === "front" ? 110 : 160;
-  if (!Number.isFinite(stockKg) || stockKg <= 0) return fallback;
-  if (stockKg >= 50) return +stockKg.toFixed(1);
-  return +Math.min(200, stockKg * 2.45).toFixed(1);
-}
-
 function parseArgs(argv) {
   const out = {
     db: null,
@@ -474,15 +467,7 @@ Options:
             rearMax: payload.aeroRearMax,
             unit: "kgf",
           }
-        : garageCar?.tuneSpecs?.hasAero
-          ? {
-              frontMin: 0,
-              frontMax: estimateRaceAeroMaxKg(garageCar.tuneSpecs.downforceFront, "front"),
-              rearMin: 0,
-              rearMax: estimateRaceAeroMaxKg(garageCar.tuneSpecs.downforceRear, "rear"),
-              unit: "kgf",
-            }
-          : null,
+        : null,
     };
     // strip undefined
     if (!out.cars[key].springs) delete out.cars[key].springs;

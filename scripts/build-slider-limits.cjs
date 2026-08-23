@@ -2,7 +2,8 @@
  * Build per-car spring/aero/ride slider limit estimates from forzaGarage.json.
  * Race-suspension spring min/max are not published — we derive them from curb
  * weight using community-calibrated ratios. Garage downforce is stock, not the
- * race-aero slider max — we scale it (~2.45×) so track packages stay legal.
+ * race-aero slider max — estimated cars leave aero max empty so we do not
+ * invent GAME MAX. Measured GameDB extracts keep their real slider ends.
  *
  * Usage: node scripts/build-slider-limits.cjs
  * Out:   public/carSliderLimits.json
@@ -48,13 +49,7 @@ function estimateRideCm(carClass, offroadHint) {
   };
 }
 
-/** Stock garage DF ≠ race slider max. ~2.45× matches FH6 (26 → 63 kgf). */
-function estimateRaceAeroMaxKg(stockKg, axle) {
-  const fallback = axle === "front" ? 110 : 160;
-  if (!Number.isFinite(stockKg) || stockKg <= 0) return fallback;
-  if (stockKg >= 50) return +stockKg.toFixed(1);
-  return +Math.min(200, stockKg * 2.45).toFixed(1);
-}
+/** Stock garage DF is not the race slider max. Do not invent one. */
 
 function main() {
   const garage = JSON.parse(fs.readFileSync(GARAGE, "utf8"));
@@ -102,9 +97,9 @@ function main() {
       aero: hasAero
         ? {
             frontMin: 0,
-            frontMax: Number.isFinite(aeroF) ? estimateRaceAeroMaxKg(+aeroF, "front") : 110,
+            frontMax: null,
             rearMin: 0,
-            rearMax: Number.isFinite(aeroR) ? estimateRaceAeroMaxKg(+aeroR, "rear") : 160,
+            rearMax: null,
             unit: "kgf",
           }
         : null,

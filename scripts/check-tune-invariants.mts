@@ -10,6 +10,7 @@ import {
   clampNumber,
   estimateRaceAeroMaxKg,
   normalizeRideEnvelope,
+  resolveAeroSliderMax,
   rideHeightTargetCm,
 } from "../src/lib/gameLimits.ts";
 import { METRIC_UNITS } from "../src/lib/units.ts";
@@ -94,12 +95,26 @@ if (calcSrc.includes("/ 2.54")) fail("ride height still converts to inches");
 if (!calcSrc.includes(".toFixed(1)} cm`")) fail("ride height should print cm");
 if (!calcSrc.includes("kgf")) fail("aero output should use kgf");
 
-const aero26 = estimateRaceAeroMaxKg(26.01, "front");
-if (Math.abs(aero26 - 63.7) > 0.2) fail(`stock 26.01 kgf should scale to ~63.7, got ${aero26}`);
-const aero32 = estimateRaceAeroMaxKg(31.78, "rear");
-if (Math.abs(aero32 - 77.9) > 0.5) fail(`stock 31.78 kgf should scale to ~77.9, got ${aero32}`);
-if (estimateRaceAeroMaxKg(58.3, "front") !== 58.3) {
-  fail("measured aero max ≥50 kgf must stay as-is");
+if (estimateRaceAeroMaxKg(26.01, "front") !== null) {
+  fail("stock DF must not invent a race-aero GAME MAX");
+}
+if (estimateRaceAeroMaxKg(79.8, "front") !== null) {
+  fail("22B stock 79.8 kgf is not the slider max");
+}
+if (resolveAeroSliderMax(79.8, "front", false) !== null) {
+  fail("estimated resolveAeroSliderMax must stay empty");
+}
+if (resolveAeroSliderMax(101, "front", true) !== 101) {
+  fail("measured resolveAeroSliderMax must keep the extract");
+}
+
+const sti22b = limits.cars["subaru-impreza-22b-sti-version-1998"];
+if (!sti22b || sti22b.source !== "estimated") fail("22B missing estimated limits");
+if (sti22b.aero?.frontMax != null || sti22b.aero?.rearMax != null) {
+  fail(`22B stock DF must not be stored as GAME MAX: ${JSON.stringify(sti22b.aero)}`);
+}
+if (!gr86.aero || gr86.aero.frontMax !== 101 || gr86.aero.rearMax !== 131) {
+  fail(`GR86 measured aero must stay 101 / 131, got ${JSON.stringify(gr86.aero)}`);
 }
 
 const sierraEnds = normalizeRideEnvelope({
@@ -168,17 +183,37 @@ const screenshot: CalcTuneInput = {
   feelAggression: 45,
   units: METRIC_UNITS,
   transFdMult: 1.05,
-  aeroLimits: { frontMin: 0, frontMax: 26.01, rearMin: 0, rearMax: 31.78 },
+  aeroLimits: { frontMin: 0, frontMax: 79.8, rearMin: 0, rearMax: 20.4 },
   rideLimits: { frontMin: 15.9, frontMax: 26, rearMin: 15.9, rearMax: 26 },
 };
 
 const pages = calcTune(screenshot);
 const frontDf = row(pages, "Aero", "Front Downforce");
 const rearDf = row(pages, "Aero", "Rear Downforce");
-if (num(frontDf.value) < 50) fail(`track aero clamped to stock DF: ${frontDf.value}`);
-if (num(rearDf.value) < 60) fail(`track rear aero clamped to stock DF: ${rearDf.value}`);
+if (num(frontDf.value) !== 70 || num(rearDf.value) !== 110) {
+  fail(`track aero must stay 70 / 110 kgf, got ${frontDf.value} / ${rearDf.value}`);
+}
+if (frontDf.clamped || rearDf.clamped || frontDf.note || rearDf.note) {
+  fail("estimated stock DF must not show GAME MAX");
+}
 if (!frontDf.value.includes("kgf") || !rearDf.value.includes("kgf")) {
   fail(`aero should print kgf, got ${frontDf.value} / ${rearDf.value}`);
+}
+
+const measuredAero = calcTune({
+  ...screenshot,
+  aeroF: 110,
+  aeroR: 160,
+  aeroMeasured: true,
+  aeroLimits: { frontMin: 65, frontMax: 101, rearMin: 79, rearMax: 131 },
+});
+const measuredF = row(measuredAero, "Aero", "Front Downforce");
+const measuredR = row(measuredAero, "Aero", "Rear Downforce");
+if (num(measuredF.value) !== 101 || num(measuredR.value) !== 131) {
+  fail(`measured aero clamp: expected 101 / 131, got ${measuredF.value} / ${measuredR.value}`);
+}
+if (measuredF.clamped !== "max" || measuredR.clamped !== "max") {
+  fail("measured extract must still clamp past the real slider max");
 }
 
 const fRide = row(pages, "Springs", "Front Ride Height");
