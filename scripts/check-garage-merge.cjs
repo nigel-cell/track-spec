@@ -79,6 +79,9 @@ if (require("fs").existsSync(garagePath)) {
     "ford-thunderbird-1957",
     "alfa-romeo-autodelta-tipo-33-2-daytona-1968",
     "nissan-skyline-2000-turbo-rs-1983",
+    "bentley-continental-gt-speed-2025",
+    "ginetta-g40-junior-2019",
+    "mclaren-w1-2025",
   ]) {
     if (!slugs.has(slug)) fail(`missing Series 4 car ${slug}`);
   }

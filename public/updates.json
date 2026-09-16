@@ -1,9 +1,18 @@
 {
-  "version": "1.3.11",
-  "updatedAt": "2026-08-23",
+  "version": "1.3.12",
+  "updatedAt": "2026-09-16",
   "downloadUrl": "https://github.com/nigel-cell/track-spec/releases/latest/download/TrackSpec-Live.exe",
   "repoUrl": "https://github.com/nigel-cell/track-spec",
   "entries": [
+    {
+      "version": "1.3.12",
+      "date": "2026-09-16",
+      "title": "Series 5 British Automotive cars",
+      "items": [
+        "Garage adds Series 5 / Car Pass cars forzagarage.com is still missing (Continental GT Speed ’25, G40 Junior, XKR-S GT, Astra VXR, Esprit V8, XJ-S, McLaren W1, Demon 170, Sport Spider, Luftauto 002)",
+        "Each new car has the usual Track Spec starter tunes. Buy the listed Upgrades parts, then enter the sliders"
+      ]
+    },
     {
       "version": "1.3.11",
       "date": "2026-08-23",

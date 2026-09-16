@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "importedAt": "2026-08-20T11:46:54.800Z",
+  "importedAt": "2026-09-16T14:00:15.566Z",
   "source": "https://forza.fandom.com/wiki/Category:Cars_(FH6)",
-  "count": 634,
-  "withEngineSwaps": 500,
+  "count": 644,
+  "withEngineSwaps": 510,
   "cars": [
     {
       "title": "Abarth 124 Spider",
@@ -9566,6 +9566,181 @@
       ],
       "bodyKits": [
         "Forza Horizon 6 - Widebody Kit"
+      ]
+    },
+    {
+      "title": "Bentley Continental GT Speed (2025)",
+      "aspiration": "tth",
+      "engine": "V8",
+      "gears": 8,
+      "weightLbs": 5421,
+      "engineSwaps": [
+        "6.2L V8",
+        "6.0L W12-TT",
+        "5.2L V10",
+        "8.4L V10",
+        "6.5L V12",
+        "7.7L V12",
+        "7.4L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Ginetta G40 Junior",
+      "aspiration": "na",
+      "engine": "I4",
+      "gears": 6,
+      "weightLbs": 1904,
+      "engineSwaps": [
+        "0.7L I1",
+        "1.6L I4 - VVT",
+        "2.0L I4 - VVT",
+        "2.4L F4",
+        "1.3L 2 Rotor",
+        "1.6L I3-T",
+        "3.0L V8 - Racing",
+        "5.2L V10",
+        "8.4L V10"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Jaguar XKR-S GT",
+      "aspiration": "sc",
+      "engine": "V8",
+      "gears": 6,
+      "weightLbs": 3977,
+      "engineSwaps": [
+        "5.2L V10",
+        "3.5L V6-TT",
+        "7.7L V12",
+        "Racing 3.0L I6T",
+        "1.6L I4-T"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Vauxhall Astra VXR (2006)",
+      "aspiration": "t",
+      "engine": "I4",
+      "gears": 6,
+      "weightLbs": 3071,
+      "engineSwaps": [
+        "1.6L I4 - VVT",
+        "2.4L F4",
+        "1.6L I3-T",
+        "2.5L I5-T",
+        "3.0L V8 - Racing"
+      ],
+      "drivetrainSwaps": [
+        "RWD Drivetrain",
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Lotus Esprit V8",
+      "aspiration": "tt",
+      "engine": "V8",
+      "gears": 5,
+      "weightLbs": 2851,
+      "engineSwaps": [
+        "3.5L V6-PDSC",
+        "3.0L V8 - Racing",
+        "6.2L V8",
+        "5.2L V10"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Jaguar XJ-S",
+      "aspiration": "na",
+      "engine": "V12",
+      "gears": 3,
+      "weightLbs": 3869,
+      "engineSwaps": [
+        "6.0L V12",
+        "6.1L V12",
+        "6.5L V12",
+        "Racing V12",
+        "7.7L V12",
+        "7.0L V12",
+        "1.6L I4-T",
+        "6.5L V12"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "McLaren W1",
+      "aspiration": "tth",
+      "engine": "V8",
+      "gears": 8,
+      "weightLbs": 3187,
+      "engineSwaps": [
+        "5.2L V10",
+        "6.1L V12",
+        "4.0L V8TT"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Dodge Challenger SRT Demon 170",
+      "aspiration": "pds",
+      "engine": "V8",
+      "gears": 8,
+      "weightLbs": 4280,
+      "engineSwaps": [
+        "7.0L V8 - H",
+        "8.4L V10",
+        "7.7L V12",
+        "8.9L V8 DSC"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Renault Sport Spider",
+      "aspiration": "na",
+      "engine": "I4",
+      "gears": 5,
+      "weightLbs": 2127,
+      "engineSwaps": [
+        "2.0L I4 - VVT",
+        "2.0L I4 - Turbo",
+        "1.6L I3-T",
+        "1.6L I4 - Turbo Rally",
+        "3.0L V8 - Racing"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
+      ]
+    },
+    {
+      "title": "Porsche 911 Carrera Coupe 'Luftauto 002'",
+      "aspiration": "na",
+      "engine": "F6",
+      "gears": 5,
+      "weightLbs": 2896,
+      "engineSwaps": [
+        "3.0L F6-T",
+        "4.0L F6",
+        "3.8 F6TT",
+        "4.6L V8 Hybrid"
+      ],
+      "drivetrainSwaps": [
+        "AWD Drivetrain"
       ]
     }
   ]

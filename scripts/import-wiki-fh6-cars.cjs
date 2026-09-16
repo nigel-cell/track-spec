@@ -11,6 +11,8 @@ const https = require("https");
 const ROOT = path.join(__dirname, "..");
 const GARAGE_PATH = path.join(ROOT, "public", "forzaGarage.json");
 const HERO_DIR = path.join(ROOT, "public", "garage", "heros");
+const LOGO_DIR = path.join(ROOT, "public", "garage", "logos");
+const BRANDS_PATH = path.join(ROOT, "public", "garage", "brands.json");
 const SWAPS_PATH = path.join(ROOT, "public", "forzaWikiSwaps.json");
 const API = "https://forza.fandom.com/api.php";
 const UA = "TrackSpec-Import/1.0 (personal)";
@@ -99,6 +101,126 @@ const SERIES4 = [
   },
 ];
 
+/** Series 5 cars missing from forzagarage.com (British Automotive, Sep 2026). */
+const SERIES5 = [
+  {
+    wiki: "Bentley Continental GT Speed (2025)",
+    slug: "bentley-continental-gt-speed-2025",
+    class: "A",
+    pi: 699,
+    drive: "AWD",
+    heroCode: "BEN_ContinentalGTSpeed_25",
+    logoCode: "BEN",
+    powerHp: 771,
+    torqueLbFt: 737,
+    acquisition:
+      "Festival Playlist Series 5 (British Automotive) — 80 PTS series reward, Sep 10 – Oct 8.",
+  },
+  {
+    wiki: "Ginetta G40 Junior",
+    slug: "ginetta-g40-junior-2019",
+    class: "B",
+    pi: 560,
+    drive: "RWD",
+    heroCode: "GIN_G40Junior_19",
+    logoCode: "GIN",
+    powerHp: 100,
+    torqueLbFt: 103,
+    acquisition: "Festival Playlist Series 5 — Summer, 20 PTS, Sep 10 – Sep 17.",
+  },
+  {
+    wiki: "Jaguar XKR-S GT",
+    slug: "jaguar-xkr-s-gt-2015",
+    class: "A",
+    pi: 671,
+    drive: "RWD",
+    heroCode: "JAG_XKRSGT_15",
+    logoCode: "JAG",
+    powerHp: 542,
+    torqueLbFt: 501,
+    acquisition: "Festival Playlist Series 5 — Autumn, 20 PTS, Sep 17 – Sep 24.",
+  },
+  {
+    wiki: "Vauxhall Astra VXR (2006)",
+    slug: "vauxhall-astra-vxr-2006",
+    class: "B",
+    pi: 512,
+    drive: "FWD",
+    heroCode: "VAU_AstraVXR_06",
+    logoCode: "VAU",
+    powerHp: 236,
+    torqueLbFt: 236,
+    acquisition: "Festival Playlist Series 5 — Winter, 20 PTS, Sep 24 – Oct 1.",
+  },
+  {
+    wiki: "Lotus Esprit V8",
+    slug: "lotus-esprit-v8-2002",
+    class: "A",
+    pi: 619,
+    drive: "RWD",
+    heroCode: "LOT_EspritV8_02",
+    logoCode: "LOT",
+    powerHp: 350,
+    torqueLbFt: 295,
+    acquisition: "Festival Playlist Series 5 — Spring, 20 PTS, Oct 1 – Oct 8.",
+  },
+  {
+    wiki: "Jaguar XJ-S",
+    slug: "jaguar-xj-s-1990",
+    heroCode: "JAG_XJS_90",
+    logoCode: "JAG",
+    acquisition: "Autoshow — added with Series 5 (British Automotive).",
+  },
+  {
+    wiki: "McLaren W1",
+    slug: "mclaren-w1-2025",
+    class: "R",
+    pi: 918,
+    drive: "RWD",
+    heroCode: "MCL_W1_25",
+    logoCode: "MCL",
+    powerHp: 1258,
+    torqueLbFt: 987,
+    acquisition: "Forza Horizon 6 Car Pass — available Sep 10.",
+  },
+  {
+    wiki: "Dodge Challenger SRT Demon 170",
+    slug: "dodge-challenger-srt-demon-170-2023",
+    class: "A",
+    pi: 683,
+    drive: "RWD",
+    heroCode: "DOD_ChallengerSRTDemon170_23",
+    logoCode: "DOD",
+    powerHp: 1025,
+    torqueLbFt: 945,
+    acquisition: "Forza Horizon 6 Car Pass — available Sep 17.",
+  },
+  {
+    wiki: "Renault Sport Spider",
+    slug: "renault-sport-spider-1998",
+    class: "B",
+    pi: 508,
+    drive: "RWD",
+    heroCode: "REN_SportSpider_98",
+    logoCode: "REN",
+    powerHp: 145,
+    torqueLbFt: 137,
+    acquisition: "Forza Horizon 6 Car Pass — available Sep 24.",
+  },
+  {
+    wiki: "Porsche 911 Carrera Coupe 'Luftauto 002'",
+    slug: "porsche-911-carrera-coupe-luftauto-002-1987",
+    class: "B",
+    pi: 561,
+    drive: "RWD",
+    heroCode: "POR_911Luftauto002_87",
+    logoCode: "POR",
+    powerHp: 250,
+    torqueLbFt: 232,
+    acquisition: "Forza Horizon 6 Car Pass — available Oct 1.",
+  },
+];
+
 const MAKE_NAMES = {
   honda: "Honda",
   chevrolet: "Chevrolet",
@@ -109,6 +231,14 @@ const MAKE_NAMES = {
   ford: "Ford",
   alfa: "Alfa Romeo",
   nissan: "Nissan",
+  bentley: "Bentley",
+  ginetta: "Ginetta",
+  jaguar: "Jaguar",
+  vauxhall: "Vauxhall",
+  lotus: "Lotus",
+  mclaren: "McLaren",
+  dodge: "Dodge",
+  renault: "Renault",
 };
 
 const LAYOUT_DRIVE = {
@@ -226,7 +356,10 @@ function parseCarStatsFh6(wikitext) {
     /\{\{CarStats\|fh6\s*\n\|([0-9.]+)\|([0-9.]+)\|([0-9.]+)\|([0-9.]+)\|([0-9.]+)\|([0-9.]+)\|(\d+)/,
   );
   const price = wikitext.match(/\|\s*price\s*=\s*([\d,]+)/);
-  if (!m) return { stats: {}, pi: null, cost: price ? parseInt(price[1].replace(/,/g, ""), 10) : null };
+  const block = wikitext.match(/\{\{CarStats\|fh6([\s\S]*?)\}\}/);
+  const tier = block?.[1]?.match(/\|\s*tier\s*=\s*([a-z0-9]+)/i);
+  const cls = tier ? tier[1].toUpperCase() : null;
+  if (!m) return { stats: {}, pi: null, cost: price ? parseInt(price[1].replace(/,/g, ""), 10) : null, class: cls };
   return {
     stats: {
       SPD: parseFloat(m[1]),
@@ -238,6 +371,7 @@ function parseCarStatsFh6(wikitext) {
     },
     pi: parseInt(m[7], 10),
     cost: price ? parseInt(price[1].replace(/,/g, ""), 10) : null,
+    class: cls,
   };
 }
 
@@ -316,10 +450,52 @@ async function saveHero(url, heroCode) {
   return `/garage/heros/${heroCode}.webp`;
 }
 
+async function saveLogo(url, code) {
+  fs.mkdirSync(LOGO_DIR, { recursive: true });
+  const dest = path.join(LOGO_DIR, `${code}.webp`);
+  if (fs.existsSync(dest)) return;
+  const buf = await fetchBuffer(url);
+  const sharp = require("sharp");
+  await sharp(buf)
+    .resize({ width: 256, withoutEnlargement: true })
+    .webp({ quality: 80, effort: 4 })
+    .toFile(dest);
+}
+
+function rememberBrand(make, code) {
+  if (!make || !code || !fs.existsSync(BRANDS_PATH)) return;
+  const brands = JSON.parse(fs.readFileSync(BRANDS_PATH, "utf8"));
+  brands.byMake = brands.byMake || {};
+  if (!brands.byMake[make]) {
+    brands.byMake[make] = code;
+    brands.brands = brands.brands || [];
+    if (!brands.brands.some((b) => b.code === code)) {
+      brands.brands.push({ make, code });
+      brands.brands.sort((a, b) => a.make.localeCompare(b.make));
+    }
+    brands.count = brands.brands.length;
+    brands.downloadedAt = new Date().toISOString();
+    fs.writeFileSync(BRANDS_PATH, `${JSON.stringify(brands)}\n`);
+  }
+}
+
+async function ensureManufacturerLogo(make, code) {
+  if (!make || !code) return;
+  const dest = path.join(LOGO_DIR, `${code}.webp`);
+  if (!fs.existsSync(dest)) {
+    const imgUrl = await pageImageUrl(make);
+    if (imgUrl) {
+      await saveLogo(imgUrl, code);
+      console.log(`logo ${code} ← ${make}`);
+    }
+  }
+  rememberBrand(make, code);
+}
+
 function buildCar(seed, wikitext, image) {
-  const year = infobox(wikitext, "year");
+  const year = infobox(wikitext, "year") || seed.year || null;
   const manufacturer = (infobox(wikitext, "manufacturer") || "").toLowerCase();
-  const model = infobox(wikitext, "model");
+  const model = infobox(wikitext, "model") || seed.model;
   const make = MAKE_NAMES[manufacturer] || manufacturer.replace(/^\w/, (c) => c.toUpperCase());
   const layout = (infobox(wikitext, "layout") || "").toLowerCase();
   const drive = LAYOUT_DRIVE[layout] || seed.drive || null;
@@ -350,8 +526,8 @@ function buildCar(seed, wikitext, image) {
     name: `${year} ${make} ${model}`,
     cost,
     rarity: rarityFromCost(cost),
-    class: seed.class,
-    pi: fh6.pi,
+    class: seed.class || fh6.class || undefined,
+    pi: fh6.pi ?? seed.pi ?? undefined,
     drive,
     powerHp,
     torqueLbFt,
@@ -387,7 +563,7 @@ async function main() {
   const added = [];
   const swapRows = [];
 
-  for (const seed of SERIES4) {
+  for (const seed of [...SERIES4, ...SERIES5]) {
     if (bySlug.has(seed.slug)) {
       console.log(`skip ${seed.slug} (already in garage)`);
       continue;
@@ -405,6 +581,7 @@ async function main() {
     garage.cars.unshift(car);
     bySlug.set(car.slug, car);
     added.push(car.slug);
+    if (car.make && car.logoCode) await ensureManufacturerLogo(car.make, car.logoCode);
 
     const swap = {
       title: seed.wiki,
